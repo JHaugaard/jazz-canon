@@ -1,0 +1,10 @@
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A Jazz Canon favicon">
+  <!-- Favicon / app glyph — the mark distilled for small sizes: 2 blue spines, the amber
+       leaning LP (seated on the baseline), 2 blue spines. Drops the record/grooves, which
+       turn to mush below ~24px. Square, bold, legible at 16px. Font-free. -->
+  <rect x="8"  y="10" width="6" height="44" rx="1.5" fill="#2b5f7a"/>
+  <rect x="17" y="10" width="6" height="44" rx="1.5" fill="#4a7c95"/>
+  <rect x="38" y="10" width="6" height="44" rx="1.5" fill="#21506a"/>
+  <rect x="47" y="10" width="6" height="44" rx="1.5" fill="#2b5f7a"/>
+  <rect x="26" y="9.2" width="6" height="44" rx="1" fill="#c4862a" transform="rotate(8 26 53.2)"/>
+</svg>

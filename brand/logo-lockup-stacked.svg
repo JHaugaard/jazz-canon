@@ -1,0 +1,36 @@
+<svg viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A Jazz Canon logo (stacked)">
+  <!-- STACKED LOCKUP: mark over wordmark, centred. For square-ish placements (social/OG,
+       larger displays). Live text — OUTLINE to paths for single-image/social use. -->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@600&display=swap');
+    .wm { font-family: 'Oswald', 'Helvetica Neue Condensed', sans-serif; }
+  </style>
+  <defs>
+    <clipPath id="ls-rec"><circle cx="250" cy="110" r="74"/></clipPath>
+  </defs>
+
+  <!-- mark, centred (content x18..324 → shift +8 to centre in 360) -->
+  <g transform="translate(9,8)">
+    <rect x="18"  y="24" width="8" height="172" rx="2" fill="#2b5f7a"/>
+    <rect x="30"  y="24" width="8" height="172" rx="2" fill="#4a7c95"/>
+    <rect x="42"  y="24" width="8" height="172" rx="2" fill="#21506a"/>
+    <rect x="54"  y="24" width="8" height="172" rx="2" fill="#2b5f7a"/>
+    <rect x="94"  y="24" width="8" height="172" rx="2" fill="#4a7c95"/>
+    <rect x="106" y="24" width="8" height="172" rx="2" fill="#21506a"/>
+    <rect x="118" y="24" width="8" height="172" rx="2" fill="#2b5f7a"/>
+    <rect x="130" y="24" width="8" height="172" rx="2" fill="#4a7c95"/>
+    <rect x="142" y="24" width="8" height="172" rx="2" fill="#21506a"/>
+    <ellipse cx="163" cy="110" rx="13" ry="82" fill="#4a7c95"/>
+    <circle cx="250" cy="110" r="74" fill="#2b5f7a"/>
+    <g clip-path="url(#ls-rec)" fill="none" stroke="#faf8f3" stroke-opacity="0.5" stroke-width="2">
+      <circle cx="250" cy="110" r="16"/><circle cx="250" cy="110" r="26"/><circle cx="250" cy="110" r="37"/>
+      <circle cx="250" cy="110" r="47"/><circle cx="250" cy="110" r="57"/><circle cx="250" cy="110" r="68"/>
+    </g>
+    <circle cx="250" cy="110" r="8" fill="#c4862a"/>
+    <rect x="62" y="22.9" width="8" height="172" rx="1" fill="#c4862a" transform="rotate(8 62 194.9)"/>
+  </g>
+
+  <!-- wordmark, centred under the mark -->
+  <text class="wm" x="180" y="278" text-anchor="middle" font-size="52" font-weight="600" font-variant="small-caps" letter-spacing="2" fill="#2b5f7a">A Jazz Canon</text>
+  <text class="wm" x="180" y="308" text-anchor="middle" font-size="18" font-weight="600" letter-spacing="6" fill="#6b6358">Jazz on Record</text>
+</svg>
