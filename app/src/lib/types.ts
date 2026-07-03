@@ -61,3 +61,11 @@ export interface GraphData {
 export type NavEntry =
   | { kind: 'album'; id: string }
   | { kind: 'person'; id: string };
+
+/* A hand-kept, site-side "what's new" entry. NOT canon data — `added` is the
+   date the album first appeared on the site (a site-update date), edited by
+   hand in public/data/recently-added.json when a batch ships. */
+export interface RecentAddition {
+  id: string;
+  added: string; // ISO date, YYYY-MM-DD
+}

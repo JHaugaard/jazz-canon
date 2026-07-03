@@ -121,7 +121,7 @@
 
   <main>
     {#if view === 'about'}
-      <About />
+      <About onopen={(id) => nav.openAlbum(id)} />
     {:else if loadError}
       <p class="fatal">Couldn’t load the canon data ({loadError}).</p>
     {:else if !albums}

@@ -1,5 +1,7 @@
 <script lang="ts">
-  // Placeholder copy — replace with final editorial text later.
+  import RecentlyAdded from './RecentlyAdded.svelte';
+
+  let { onopen }: { onopen: (id: string) => void } = $props();
 </script>
 
 <div class="about">
@@ -13,16 +15,15 @@
 
     <h2 class="display">What this is</h2>
     <p>
-      This is a discovery tool, not an encyclopedia. It exists to make one kind
+      This is a discovery tool, not an encyclopedia or work of music criticism. It exists to make one kind
       of question easy to ask: <em>who played on what, with whom, and when.</em>
       Travel the timeline, open a record, and follow a musician into the web of
-      sessions that surrounds them. Placeholder text follows so the layout can
-      be judged before the final writing lands.
+      sessions that surrounds them.
     </p>
 
     <h2 class="display">Sourced fact vs. editorial voice</h2>
     <p>
-      The personnel records. as shown in the Constellations, are the heart of the project, and every one carries
+      The personnel records, as shown in the Constellations, are the heart of the project, and every one carries
       an honesty label. A credit marked <strong>observed</strong> comes from a
       primary source such as liner notes; <strong>inferred</strong> is drawn
       from session logs and cross-references; <strong>uncertain</strong> is
@@ -48,7 +49,14 @@
       Cover Art Archive. The canon, the data, and the opinions are the owner's
       own.
     </p>
+    <RecentlyAdded {onopen} />
+
     <p class="tagline display">Jazz on Record</p>
+
+    <footer class="contact">
+      <span class="by">Gathered by John Haugaard · July 2026</span>
+      <a class="email" href="mailto:john@jazzcanon.com">john@jazzcanon.com</a>
+    </footer>
   </article>
 </div>
 
@@ -76,7 +84,6 @@
     margin: 34px 0 8px;
   }
   .lede {
-    font-family: var(--font-serif);
     font-size: 19px;
     line-height: 1.5;
     color: var(--ink);
@@ -92,6 +99,20 @@
     color: var(--impulse-amber);
     letter-spacing: 0.14em;
   }
+  .contact {
+    margin-top: 22px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    align-items: baseline;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .contact .by { font-family: var(--font-serif); }
+  .contact .email { color: var(--bn-blue); text-decoration: none; }
+  .contact .email:hover { text-decoration: underline; }
 
   @media (max-width: 620px) {
     article { padding: 28px 18px 60px; }
