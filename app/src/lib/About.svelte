@@ -6,9 +6,9 @@
   <article>
     <h1 class="display">About A Jazz Canon</h1>
     <p class="lede">
-      A personal, opinionated map of roughly one hundred records made between
-      1949 and 1972 — the years jazz moved out of bebop and had not yet crossed
-      into fusion.
+      A personal, opinionated map of records made after
+      1949 as jazz moved out of bebop and had not yet crossed
+      into fusion. The collection and canon will grow over time.
     </p>
 
     <h2 class="display">What this is</h2>
@@ -17,14 +17,12 @@
       of question easy to ask: <em>who played on what, with whom, and when.</em>
       Travel the timeline, open a record, and follow a musician into the web of
       sessions that surrounds them. Placeholder text follows so the layout can
-      be judged before the final writing lands. Lorem ipsum dolor sit amet,
-      consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
-      et dolore magna aliqua.
+      be judged before the final writing lands.
     </p>
 
     <h2 class="display">Sourced fact vs. editorial voice</h2>
     <p>
-      The personnel records are the heart of the project, and every one carries
+      The personnel records. as shown in the Constellations, are the heart of the project, and every one carries
       an honesty label. A credit marked <strong>observed</strong> comes from a
       primary source such as liner notes; <strong>inferred</strong> is drawn
       from session logs and cross-references; <strong>uncertain</strong> is
@@ -41,8 +39,7 @@
     <p>
       Cool Jazz, Hard Bop, Soul Jazz, Modal Jazz, and Post-Bop do not sit in
       tidy boxes; they overlap in time, which is why the timeline shows their
-      bands blending into one another. Ut enim ad minim veniam, quis nostrud
-      exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+      bands blending into one another.
     </p>
 
     <h2 class="display">Credits</h2>

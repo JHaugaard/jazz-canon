@@ -502,7 +502,7 @@
 </div>
 
 <style>
-  .net { padding: 8px 26px 24px; height: 100%; display: flex; flex-direction: column; }
+  .net { padding: 8px 40px 24px; height: 100%; display: flex; flex-direction: column; }
 
   .net-strip {
     display: flex;

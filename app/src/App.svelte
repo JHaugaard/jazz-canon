@@ -314,7 +314,7 @@
     user-select: none;
     touch-action: none;
     align-items: flex-start;
-    padding: 14px 26px;
+    padding: 14px 40px;
   }
   .win-bar:active { cursor: grabbing; }
   .win-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
