@@ -5,6 +5,7 @@
   import DeepDive from './lib/DeepDive.svelte';
   import Network from './lib/Network.svelte';
   import About from './lib/About.svelte';
+  import Search from './lib/Search.svelte';
   import type { AlbumCard } from './lib/types';
 
   let albums = $state<AlbumCard[] | null>(null);
@@ -113,6 +114,11 @@
       </span>
     </button>
 
+    <Search
+      onOpenPerson={(pid) => { view = 'timeline'; nav.openPerson(pid); }}
+      onOpenAlbum={(aid) => { view = 'timeline'; nav.openAlbum(aid); }}
+    />
+
     <nav class="mast-nav">
       <button class="nav-link" class:active={view === 'timeline'} onclick={goHome}>Home</button>
       <button class="nav-link" class:active={view === 'about'} onclick={() => (view = 'about')}>About</button>
@@ -215,6 +221,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 20px;
     padding: 0 26px;
     background: var(--surface);
     border-bottom: 1px solid var(--line);

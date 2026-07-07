@@ -57,8 +57,10 @@
 
   // viewBox units — a generous canvas the forces spread across; the
   // zoom/fit layer frames it to the window regardless of graph size.
-  const W = 1600;
+  // Width follows the stage's aspect ratio at build time, so a tall phone
+  // screen gets a tall canvas instead of a letterboxed miniature.
   const H = 1040;
+  let W = $state(1600);
 
   // simNodes/simLinks are d3's stable, mutable objects (positions live here).
   // nodes/links are per-frame *clones* pushed to Svelte — new references each
@@ -92,6 +94,8 @@
   let svgEl = $state<SVGSVGElement | null>(null);
   let gEl = $state<SVGGElement | null>(null);
   let stageEl = $state<HTMLDivElement | null>(null);
+  let stageW = $state(0);
+  let stageH = $state(0);
   let fitted = false;
 
   const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
@@ -130,6 +134,10 @@
 
   function buildGraph(graph: GraphData, albums: Map<string, AlbumCard>, id: string) {
     sim?.stop();
+
+    // match the canvas to the stage's shape (kept for this graph's lifetime;
+    // a later window resize just re-frames via zoom, it doesn't re-run forces)
+    if (stageW > 0 && stageH > 0) W = clamp((H * stageW) / stageH, 560, 2600);
 
     const myEdges = graph.edges.filter((e) => e.p === id);
     const myAlbumIds = new Set(myEdges.map((e) => e.a));
@@ -242,9 +250,9 @@
       maxY = Math.max(maxY, n.y + r + 50);
     }
     const bw = maxX - minX, bh = maxY - minY;
-    // never magnify past natural size (k > 1) — that made sparse graphs
-    // load correct, then jump too large; only shrink to fit big graphs
-    const k = clamp(Math.min(W / bw, H / bh), 0.4, 1);
+    // shrink big graphs to fit; let sparse graphs grow, but only modestly
+    // (unbounded magnification made small graphs load correct, then jump huge)
+    const k = clamp(Math.min(W / bw, H / bh), 0.4, 1.6);
     zoom = {
       k,
       tx: (W - k * (minX + maxX)) / 2,
@@ -403,7 +411,7 @@
     <button class="reset" onclick={resetView}>Reset view</button>
   </div>
 
-  <div class="stage" bind:this={stageEl}>
+  <div class="stage" bind:this={stageEl} bind:clientWidth={stageW} bind:clientHeight={stageH}>
     {#if loading}
       <p class="loading">Loading constellation…</p>
     {:else}

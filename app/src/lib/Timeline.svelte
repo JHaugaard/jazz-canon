@@ -54,6 +54,22 @@
       scroller.scrollLeft = Math.max(0, target);
     }
   });
+
+  // a plain vertical mouse wheel pans the timeline horizontally (trackpads
+  // already produce deltaX and keep their native behavior). Registered
+  // manually: wheel listeners added via markup are passive, and this one
+  // must preventDefault.
+  $effect(() => {
+    if (!scroller) return;
+    const el = scroller;
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaX !== 0 || e.deltaY === 0 || e.ctrlKey) return;
+      el.scrollLeft += e.deltaY;
+      e.preventDefault();
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  });
 </script>
 
 <div
@@ -154,13 +170,17 @@
     padding-top: 6px;
   }
   .band-chip {
-    /* sticky: stays readable at any horizontal scroll position while its band is in view */
+    /* sticky: stays readable at any horizontal scroll position while its
+       band is in view. Solid paper + border + shadow so that where it rides
+       over a card it reads as a pinned map label, not a text collision. */
     position: sticky;
     left: 12px;
     display: inline-flex;
     align-items: baseline;
     gap: 7px;
-    background: rgba(250, 248, 243, 0.85);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    box-shadow: 0 2px 6px rgba(28, 26, 23, 0.1);
     border-radius: 5px;
     padding: 2px 9px 3px;
   }
@@ -202,6 +222,6 @@
   }
   .tick-label.empty { opacity: 0.55; font-size: 11.5px; top: 10px; }
 
-  .cards { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; }
+  .cards { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; }
   .slot { position: absolute; }
 </style>

@@ -529,3 +529,39 @@ single-pointer drag regression (300px); discovery-loop walk. Scripts in
   brief's four-band list implies.
 - Year range in data is 1950–1972 (no 1949 albums, though the axis starts
   at 1949 per the brief).
+
+---
+
+## D22. Search + refinement round 5 (Fable 5 review, 2026-07-07)
+
+**Status:** ACCEPTED (owner picked scope from the review findings)
+
+A full look/feel/function review (production build driven headlessly at
+1512/1024/390px; code pass) led to one feature and three refinements:
+
+- **Unified search** (`Search.svelte`, masthead): typeahead over the 567
+  musicians in `graph.json` and the 100 albums in `albums.json`, built
+  client-side on first focus — no new data files. Selecting a musician opens
+  their Constellation (`nav.openPerson`); selecting an album opens its deep
+  dive (`nav.openAlbum`). Diacritic-folded matching, ranked
+  starts-with > word-prefix > substring; musicians disambiguated by
+  instruments + canon-album count. `/` focuses the field; on phones the
+  field collapses to an icon that drops a full-width bar under the masthead.
+- **Constellation canvas follows the stage aspect** (`Network.svelte`): the
+  viewBox width is derived from the window's shape at graph-build time
+  (H=1040 fixed, W clamped 560–2600), and the auto-fit cap rose from k≤1 to
+  k≤1.6. Fixes the letterboxed miniature on phones and lost-looking sparse
+  graphs; the "never jump huge" guard survives via the 1.6 cap.
+- **Era chips restyled as pinned map labels** (`Timeline.svelte`): solid
+  paper background, hairline border, soft shadow. Tried and rejected:
+  sliding the chips *under* the cards (kept cards pristine but hid the
+  labels through dense stretches and left odd slivers in card gutters).
+  A crisp opaque label that occasionally rides over a card corner reads as
+  intentional; the translucent text-on-text collision was the real defect.
+- **Vertical mouse wheel pans the timeline** (`Timeline.svelte`): manual
+  non-passive `wheel` listener (Svelte markup wheel handlers are passive);
+  trackpad deltaX and ctrl+wheel zoom keep native behavior.
+
+Deferred by owner choice: self-hosted cover art (CAA hotlink latency/500s),
+label decluttering in dense constellations, hash deep-links, misc. nits
+(reduced-motion, preview progress, richer loading state).
