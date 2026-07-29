@@ -9,6 +9,10 @@ export interface AlbumCard {
   catalog: string;
   style: string;
   styleCode: string;
+  /* Secondary style codes. `album_style` holds tags only — the primary style
+     lives in `styleCode` — so a label tag like `ecm`, which can never be a
+     primary style, is only ever visible here. Drives the gate accents. */
+  styleTags: string[];
   artUrl: string;
   appleAlbumId: string | null;
 }

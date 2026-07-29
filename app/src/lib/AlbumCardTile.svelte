@@ -1,12 +1,39 @@
 <script lang="ts">
   import type { AlbumCard } from './types';
+  import { GATES, gatesOf, primaryGate } from './gates';
 
-  let { album, onopen }: { album: AlbumCard; onopen: (id: string) => void } = $props();
+  let {
+    album,
+    onopen,
+    dimmed = false,
+  }: { album: AlbumCard; onopen: (id: string) => void; dimmed?: boolean } = $props();
 
   let artFailed = $state(false);
+
+  // Records that arrived through an opened genre gate are marked on the card
+  // rather than on the canvas: a top-edge accent for the genre gate, and a
+  // separate, quieter pip for the ECM label tag (a label should never read
+  // with a genre's weight).
+  let gates = $derived(gatesOf(album));
+  let accent = $derived(primaryGate(album));
+  let accentVar = $derived(GATES.find((g) => g.key === accent)?.cssVar ?? null);
+  let isEcm = $derived(gates.includes('ecm'));
+  let gateTitle = $derived(
+    gates.length
+      ? ` · via ${gates.map((k) => GATES.find((g) => g.key === k)!.label).join(' + ')}`
+      : ''
+  );
 </script>
 
-<button class="card" onclick={() => onopen(album.id)} title={`${album.title} — ${album.artist} (${album.year})`}>
+<button
+  class="card"
+  class:dimmed
+  onclick={() => onopen(album.id)}
+  title={`${album.title} — ${album.artist} (${album.year})${gateTitle}`}
+>
+  {#if accentVar}
+    <span class="gate-edge" style:background={accentVar}></span>
+  {/if}
   <div class="art">
     {#if !artFailed}
       <img
@@ -25,7 +52,10 @@
   <div class="meta">
     <span class="title">{album.title}</span>
     <span class="artist">{album.artist}</span>
-    <span class="style display">{album.style}</span>
+    <span class="style-line">
+      <span class="style display">{album.style}</span>
+      {#if isEcm}<span class="ecm-tag" title="ECM — a label tag, not a genre">ECM</span>{/if}
+    </span>
   </div>
 </button>
 
@@ -39,7 +69,21 @@
     background: var(--surface);
     text-align: left;
     overflow: hidden;
-    transition: box-shadow 120ms ease, transform 120ms ease, border-color 120ms ease;
+    transition: box-shadow 120ms ease, transform 120ms ease, border-color 120ms ease,
+      opacity 140ms ease, filter 140ms ease;
+  }
+  /* gate filter: non-matching cards recede but keep their place, so the
+     shape of the canon doesn't rearrange itself under the reader */
+  .card.dimmed { opacity: 0.24; filter: grayscale(0.7); }
+
+  /* genre-gate accent: a top edge, the card's own frame speaking */
+  .gate-edge {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    z-index: 2;
   }
   .card:hover, .card:focus-visible {
     border-color: var(--bn-blue-light);
@@ -109,10 +153,33 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  .style-line {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    min-width: 0;
+  }
   .style {
     font-size: 11px;
     color: var(--bn-blue);
     font-variant: small-caps;
     letter-spacing: 0.04em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* the label tag, deliberately smaller and quieter than the style it sits
+     beside — ECM is an imprint, not a genre */
+  .ecm-tag {
+    flex: 0 0 auto;
+    font-family: var(--font-body);
+    font-size: 8.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    border: 1px solid var(--gate-ecm);
+    border-radius: 3px;
+    padding: 0 3px;
+    line-height: 1.45;
   }
 </style>

@@ -38,9 +38,13 @@
 
     <h2 class="display">The eras</h2>
     <p>
-      Cool Jazz, Hard Bop, Soul Jazz, Modal Jazz, and Post-Bop do not sit in
-      tidy boxes; they overlap in time, which is why the timeline shows their
-      bands blending into one another.
+      Cool Jazz, Hard Bop, Soul Jazz, Modal Jazz, Post-Bop, Free Jazz, and
+      Fusion do not sit in tidy boxes; they overlap in time, which is why the
+      timeline shows their bands blending into one another.
+    </p>
+    <p>
+      ECM appears in this canon's metadata as a label tag, not a genre; every
+      ECM record here earned its place on musical continuity, not imprint.
     </p>
 
     <h2 class="display">Credits</h2>

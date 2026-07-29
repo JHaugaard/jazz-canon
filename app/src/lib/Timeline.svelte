@@ -1,9 +1,33 @@
 <script lang="ts">
   import type { AlbumCard } from './types';
-  import { computeLayout, eraLane, ERA_BANDS, CARD_H, CARD_GAP } from './timeline-layout';
+  import { computeLayout, eraLane, ERA_BANDS, CARD_H, CARD_GAP, START_YEAR, END_YEAR } from './timeline-layout';
+  import { GATES, matchesFilter, type GateFilter } from './gates';
   import AlbumCardTile from './AlbumCardTile.svelte';
 
   let { albums, onopen }: { albums: AlbumCard[]; onopen: (id: string) => void } = $props();
+
+  /* Gate filter (decision B2 + C). Non-matching cards dim in place rather
+     than leaving the layout — the timeline's shape is itself information, so
+     filtering must not silently redraw the canon. */
+  let filter = $state<GateFilter>('all');
+  const CHIPS: { key: GateFilter; label: string; cssVar: string | null }[] = [
+    { key: 'all', label: 'All', cssVar: null },
+    { key: 'tradition', label: 'Tradition', cssVar: null },
+    ...GATES.map((g) => ({ key: g.key as GateFilter, label: g.label, cssVar: g.cssVar })),
+  ];
+  let matchCount = $derived(
+    filter === 'all' ? albums.length : albums.filter((a) => matchesFilter(a, filter)).length
+  );
+
+  /* Choosing a gate parks the view on its first record. Without this the
+     reader keeps whatever year they were on and sees only a wall of dimmed
+     cards — the filter is meant to show a path, so it has to go there. */
+  function setFilter(next: GateFilter) {
+    filter = next;
+    if (next === 'all' || !scroller) return;
+    const first = layout.cards.find((pc) => matchesFilter(pc.album, next));
+    if (first) scroller.scrollLeft = Math.max(0, first.x - 120);
+  }
 
   // Year axis sits at the TOP (the bottom of the window is reserved for
   // future info surfaces). Bands and cards start below it.
@@ -72,11 +96,30 @@
   });
 </script>
 
+<div class="timeline">
+<div class="filterbar" role="group" aria-label="Filter the canon by gate">
+  {#each CHIPS as chip (chip.key)}
+    <button
+      class="chip"
+      class:on={filter === chip.key}
+      style:--chip-accent={chip.cssVar ?? 'var(--bn-blue)'}
+      aria-pressed={filter === chip.key}
+      onclick={() => setFilter(chip.key)}
+    >
+      {#if chip.cssVar}<span class="swatch" style:background={chip.cssVar}></span>{/if}
+      {chip.label}
+    </button>
+  {/each}
+  <span class="filter-count" aria-live="polite">
+    {#if filter !== 'all'}{matchCount} of {albums.length} albums{/if}
+  </span>
+</div>
+
 <div
   class="scroller"
   class:dragging
   role="region"
-  aria-label="Album timeline, 1949 to 1972"
+  aria-label={`Album timeline, ${START_YEAR} to ${END_YEAR}`}
   bind:this={scroller}
   bind:clientHeight={areaHeight}
   onpointerdown={onPointerDown}
@@ -133,16 +176,71 @@
     <div class="cards" style:top="{CONTENT_TOP + 12}px">
       {#each layout.cards as pc (pc.album.id)}
         <div class="slot" style:left="{pc.x}px" style:top="{pc.y}px">
-          <AlbumCardTile album={pc.album} {onopen} />
+          <AlbumCardTile album={pc.album} {onopen} dimmed={!matchesFilter(pc.album, filter)} />
         </div>
       {/each}
     </div>
   </div>
 </div>
+</div>
 
 <style>
-  .scroller {
+  .timeline {
     height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .filterbar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 26px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .filterbar::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 3px 11px;
+    font-family: var(--font-display);
+    font-variant: small-caps;
+    font-size: 14px;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    transition: color 120ms ease, border-color 120ms ease, background 120ms ease;
+  }
+  .chip:hover { color: var(--ink); border-color: var(--chip-accent); }
+  .chip.on {
+    color: var(--ink);
+    border-color: var(--chip-accent);
+    box-shadow: inset 0 -2px 0 var(--chip-accent);
+  }
+  .swatch {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+  }
+  .filter-count {
+    margin-left: 4px;
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .scroller {
+    flex: 1;
+    min-height: 0;
     overflow-x: auto;
     overflow-y: hidden;
     cursor: grab;

@@ -16,7 +16,20 @@
   --era-hardbop: rgba(196, 134, 42, 0.18);
   --era-modal: rgba(74, 124, 107, 0.18);
   --era-postbop: rgba(122, 82, 140, 0.18);
+  /* opened genre gates, 2026-07. Hues chosen to sit in the gaps the four
+     original tints leave (blue 200°, amber 38°, sage 158°, violet 281°):
+     burnt umber for free jazz, olive for fusion. Both are period-correct
+     sleeve colors and neither is red — the palette still has no red. */
+  --era-freejazz: rgba(156, 90, 52, 0.18);
+  --era-fusion: rgba(122, 140, 58, 0.18);
   --era-ink: #5a5249;
+
+  /* Gate accents: the same two hues at full strength for card treatment,
+     plus ECM. ECM is a label tag, not a genre, so its accent is a cool
+     neutral — deliberately the quietest of the three. */
+  --gate-freejazz: #9c5a34;
+  --gate-fusion: #7a8c3a;
+  --gate-ecm: #93a2ad;
 
   --font-display: 'Oswald', 'Helvetica Neue Condensed', sans-serif;
   --font-body: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;

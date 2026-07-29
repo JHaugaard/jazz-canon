@@ -7,7 +7,7 @@ import type { AlbumCard } from './types';
    Era bands and the year axis both derive from the same x(year) map. */
 
 export const START_YEAR = 1949;
-export const END_YEAR = 1972;
+export const END_YEAR = 1979;
 
 export const CARD_W = 148;
 export const CARD_H = 214; // 148 art + text block
@@ -101,11 +101,18 @@ export interface EraBand {
   cssVar: string;
 }
 
+/* Ordered by start year, so the overlap-blend runs chronologically down the
+   lanes. Free Jazz and Fusion joined in 2026-07 when the genre gates opened
+   (decision B2) — they are genres with genuine era shapes, so they belong in
+   this framework. ECM does not appear here and never will: it is a record
+   label, not an era, and shows up only as a card-level accent (gates.ts). */
 export const ERA_BANDS: EraBand[] = [
   { name: 'Cool Jazz', from: 1949, to: 1958, cssVar: 'var(--era-cool)' },
   { name: 'Hard Bop', from: 1955, to: 1965, cssVar: 'var(--era-hardbop)' },
-  { name: 'Modal Jazz', from: 1958, to: 1972, cssVar: 'var(--era-modal)' },
+  { name: 'Modal Jazz', from: 1958, to: 1979, cssVar: 'var(--era-modal)' },
+  { name: 'Free Jazz', from: 1959, to: 1979, cssVar: 'var(--era-freejazz)' },
   { name: 'Post-Bop', from: 1962, to: 1968, cssVar: 'var(--era-postbop)' },
+  { name: 'Fusion', from: 1968, to: 1979, cssVar: 'var(--era-fusion)' },
 ];
 
 /** Overlapping lanes: each era's lane rises into the one above it by
