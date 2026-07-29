@@ -2,6 +2,13 @@
   import RecentlyAdded from './RecentlyAdded.svelte';
 
   let { onopen }: { onopen: (id: string) => void } = $props();
+
+  /* Computed at view time rather than baked in at build, so the notice can't
+     go stale in a year the site isn't rebuilt. 2026 is the year of first
+     publication and stays fixed. */
+  const FIRST_YEAR = 2026;
+  const thisYear = new Date().getFullYear();
+  const years = thisYear > FIRST_YEAR ? `${FIRST_YEAR}–${thisYear}` : `${FIRST_YEAR}`;
 </script>
 
 <div class="about">
@@ -61,6 +68,21 @@
       <span class="by">Gathered by John Haugaard · July 2026</span>
       <a class="email" href="mailto:john@jazzcanon.com">john@jazzcanon.com</a>
     </footer>
+
+    <footer class="legal">
+      <p class="copyright">
+        Copyright &copy; {years} John Haugaard. All rights reserved.
+      </p>
+      <p class="rights">
+        The canon, the written commentary, and the compiled personnel data are
+        the author's own work. Album cover art remains the property of its
+        respective copyright holders and is reproduced here, via the Cover Art
+        Archive and Apple Music, for identification and commentary. Audio
+        previews are served by Apple Music under its terms. Album, track, and
+        performer names are the trademarks of their respective owners; their
+        use here is descriptive and implies no affiliation or endorsement.
+      </p>
+    </footer>
   </article>
 </div>
 
@@ -117,6 +139,26 @@
   .contact .by { font-family: var(--font-serif); }
   .contact .email { color: var(--bn-blue); text-decoration: none; }
   .contact .email:hover { text-decoration: underline; }
+
+  /* Legal notice: present and readable, but the quietest thing on the page —
+     it should never compete with the writing above it. */
+  .legal {
+    margin-top: 26px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+  }
+  .legal .copyright {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 0 0 6px;
+  }
+  .legal .rights {
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--muted);
+    opacity: 0.85;
+    margin: 0;
+  }
 
   @media (max-width: 620px) {
     article { padding: 28px 18px 60px; }

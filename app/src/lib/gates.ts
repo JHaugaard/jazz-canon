@@ -63,9 +63,17 @@ export function primaryGate(album: AlbumCard): GateKey | null {
   return gates.find((g) => g !== 'ecm') ?? gates[0] ?? null;
 }
 
+/* ── Gate filter — DEFERRED, not cancelled ────────────────────────────────
+   Option C of the swim-lanes decision (filter chips that dim non-matching
+   cards). Built and verified 2026-07-29, then pulled from the UI the same
+   day: John's call was "nice touch, but not ready for that yet". The
+   classification below is kept because it is the whole of the logic and it
+   is already correct; only the chip bar was removed. Nothing calls it now.
+   ─────────────────────────────────────────────────────────────────────── */
+
 export type GateFilter = 'all' | 'tradition' | GateKey;
 
-/** Filter-chip test. 'tradition' is the complement of the gates: records that
+/** Filter test. 'tradition' is the complement of the gates: records that
  *  arrived before the gates opened, plus anything with no gate style. */
 export function matchesFilter(album: AlbumCard, filter: GateFilter): boolean {
   if (filter === 'all') return true;

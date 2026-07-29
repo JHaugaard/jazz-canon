@@ -2,11 +2,7 @@
   import type { AlbumCard } from './types';
   import { GATES, gatesOf, primaryGate } from './gates';
 
-  let {
-    album,
-    onopen,
-    dimmed = false,
-  }: { album: AlbumCard; onopen: (id: string) => void; dimmed?: boolean } = $props();
+  let { album, onopen }: { album: AlbumCard; onopen: (id: string) => void } = $props();
 
   let artFailed = $state(false);
 
@@ -27,7 +23,6 @@
 
 <button
   class="card"
-  class:dimmed
   onclick={() => onopen(album.id)}
   title={`${album.title} — ${album.artist} (${album.year})${gateTitle}`}
 >
@@ -69,12 +64,8 @@
     background: var(--surface);
     text-align: left;
     overflow: hidden;
-    transition: box-shadow 120ms ease, transform 120ms ease, border-color 120ms ease,
-      opacity 140ms ease, filter 140ms ease;
+    transition: box-shadow 120ms ease, transform 120ms ease, border-color 120ms ease;
   }
-  /* gate filter: non-matching cards recede but keep their place, so the
-     shape of the canon doesn't rearrange itself under the reader */
-  .card.dimmed { opacity: 0.24; filter: grayscale(0.7); }
 
   /* genre-gate accent: a top edge, the card's own frame speaking */
   .gate-edge {
