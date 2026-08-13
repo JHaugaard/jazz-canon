@@ -1,42 +1,226 @@
 [
-  { "id": "woody-shaw-blackstone-legacy-1970", "added": "2026-07-29" },
-  { "id": "mccoy-tyner-extensions-1970", "added": "2026-07-29" },
-  { "id": "freddie-hubbard-first-light-1971", "added": "2026-07-29" },
-  { "id": "miles-davis-in-a-silent-way-1969", "added": "2026-07-29" },
-  { "id": "alice-coltrane-journey-in-satchidananda-1970", "added": "2026-07-29" },
-  { "id": "charles-mingus-let-my-children-hear-music-1972", "added": "2026-07-29" },
-  { "id": "joe-henderson-power-to-the-people-1969", "added": "2026-07-29" },
-  { "id": "wayne-shorter-schizophrenia-1969", "added": "2026-07-29" },
-  { "id": "stanley-turrentine-sugar-1970", "added": "2026-07-29" },
-  { "id": "herbie-hancock-the-prisoner-1969", "added": "2026-07-29" },
-  { "id": "ike-quebec-blue-and-sentimental-1962", "added": "2026-07-29" },
-  { "id": "pharoah-sanders-karma-1969", "added": "2026-07-29" },
-  { "id": "miles-davis-round-about-midnight-1957", "added": "2026-07-27" },
-  { "id": "thelonious-monk-monks-dream-1963", "added": "2026-07-27" },
-  { "id": "art-blakey-and-the-jazz-messengers-a-night-in-tunisia-1960", "added": "2026-07-27" },
-  { "id": "ornette-coleman-the-shape-of-jazz-to-come-1959", "added": "2026-07-27" },
-  { "id": "sonny-rollins-a-night-at-the-village-vanguard-1957", "added": "2026-07-25" },
-  { "id": "thelonious-monk-brilliant-corners-1956", "added": "2026-07-25" },
-  { "id": "art-blakey-the-jazz-messengers-free-for-all-1964", "added": "2026-07-25" },
-  { "id": "joe-henderson-in-n-out-1964", "added": "2026-07-25" },
-  { "id": "mccoy-tyner-inception-1962", "added": "2026-07-25" },
-  { "id": "duke-ellington-money-jungle-1962", "added": "2026-07-25" },
-  { "id": "john-coltrane-ole-coltrane-1961", "added": "2026-07-25" },
-  { "id": "freddie-hubbard-open-sesame-1960", "added": "2026-07-25" },
-  { "id": "miles-davis-relaxin-with-the-miles-davis-quintet-1958", "added": "2026-07-25" },
-  { "id": "horace-silver-serenade-to-a-soul-sister-1968", "added": "2026-07-25" },
-  { "id": "shorty-rogers-and-his-giants-1953", "added": "2026-07-25" },
-  { "id": "miles-davis-sketches-of-spain-1960", "added": "2026-07-25" },
-  { "id": "wes-montgomery-smokin-at-the-half-note-1965", "added": "2026-07-25" },
-  { "id": "herbie-hancock-takin-off-1962", "added": "2026-07-25" },
-  { "id": "charles-mingus-the-black-saint-and-the-sinner-lady-1963", "added": "2026-07-25" },
-  { "id": "benny-golson-the-modern-touch-1957", "added": "2026-07-25" },
-  { "id": "max-roach-we-insist-1960", "added": "2026-07-25" },
-  { "id": "kenny-dorham-whistle-stop-1961", "added": "2026-07-25" },
-  { "id": "hank-mobley-workout-1961", "added": "2026-07-25" },
-  { "id": "mccoy-tyner-the-real-mccoy-1967", "added": "2026-07-02" },
-  { "id": "wayne-shorter-adams-apple-1966", "added": "2026-07-02" },
-  { "id": "herbie-hancock-speak-like-a-child-1968", "added": "2026-07-02" },
-  { "id": "chick-corea-now-he-sings-now-he-sobs-1968", "added": "2026-07-02" },
-  { "id": "miles-davis-nefertiti-1967", "added": "2026-07-02" }
+  {
+    "id": "sonny-rollins-tenor-madness-1956",
+    "added": "2026-08-13"
+  },
+  {
+    "id": "thelonious-monk-monks-music-1957",
+    "added": "2026-08-13"
+  },
+  {
+    "id": "duke-jordan-flight-to-jordan-1960",
+    "added": "2026-08-13"
+  },
+  {
+    "id": "john-coltrane-ascension-1965",
+    "added": "2026-08-13"
+  },
+  {
+    "id": "the-tony-williams-lifetime-emergency-1969",
+    "added": "2026-08-13"
+  },
+  {
+    "id": "miles-davis-bitches-brew-1970",
+    "added": "2026-08-13"
+  },
+  {
+    "id": "freddie-hubbard-red-clay-1970",
+    "added": "2026-08-13"
+  },
+  {
+    "id": "mahavishnu-orchestra-the-inner-mounting-flame-1971",
+    "added": "2026-08-13"
+  },
+  {
+    "id": "herbie-hancock-head-hunters-1973",
+    "added": "2026-08-13"
+  },
+  {
+    "id": "miles-davis-seven-steps-to-heaven-1963",
+    "added": "2026-08-13"
+  },
+  {
+    "id": "cannonball-adderley-mercy-mercy-mercy-live-at-the-club-1966",
+    "added": "2026-08-13"
+  },
+  {
+    "id": "woody-shaw-blackstone-legacy-1970",
+    "added": "2026-07-29"
+  },
+  {
+    "id": "mccoy-tyner-extensions-1970",
+    "added": "2026-07-29"
+  },
+  {
+    "id": "freddie-hubbard-first-light-1971",
+    "added": "2026-07-29"
+  },
+  {
+    "id": "miles-davis-in-a-silent-way-1969",
+    "added": "2026-07-29"
+  },
+  {
+    "id": "alice-coltrane-journey-in-satchidananda-1970",
+    "added": "2026-07-29"
+  },
+  {
+    "id": "charles-mingus-let-my-children-hear-music-1972",
+    "added": "2026-07-29"
+  },
+  {
+    "id": "joe-henderson-power-to-the-people-1969",
+    "added": "2026-07-29"
+  },
+  {
+    "id": "wayne-shorter-schizophrenia-1969",
+    "added": "2026-07-29"
+  },
+  {
+    "id": "stanley-turrentine-sugar-1970",
+    "added": "2026-07-29"
+  },
+  {
+    "id": "herbie-hancock-the-prisoner-1969",
+    "added": "2026-07-29"
+  },
+  {
+    "id": "ike-quebec-blue-and-sentimental-1962",
+    "added": "2026-07-29"
+  },
+  {
+    "id": "pharoah-sanders-karma-1969",
+    "added": "2026-07-29"
+  },
+  {
+    "id": "miles-davis-round-about-midnight-1957",
+    "added": "2026-07-27"
+  },
+  {
+    "id": "thelonious-monk-monks-dream-1963",
+    "added": "2026-07-27"
+  },
+  {
+    "id": "art-blakey-and-the-jazz-messengers-a-night-in-tunisia-1960",
+    "added": "2026-07-27"
+  },
+  {
+    "id": "ornette-coleman-the-shape-of-jazz-to-come-1959",
+    "added": "2026-07-27"
+  },
+  {
+    "id": "sonny-rollins-a-night-at-the-village-vanguard-1957",
+    "added": "2026-07-25"
+  },
+  {
+    "id": "thelonious-monk-brilliant-corners-1956",
+    "added": "2026-07-25"
+  },
+  {
+    "id": "art-blakey-the-jazz-messengers-free-for-all-1964",
+    "added": "2026-07-25"
+  },
+  {
+    "id": "joe-henderson-in-n-out-1964",
+    "added": "2026-07-25"
+  },
+  {
+    "id": "mccoy-tyner-inception-1962",
+    "added": "2026-07-25"
+  },
+  {
+    "id": "duke-ellington-money-jungle-1962",
+    "added": "2026-07-25"
+  },
+  {
+    "id": "john-coltrane-ole-coltrane-1961",
+    "added": "2026-07-25"
+  },
+  {
+    "id": "freddie-hubbard-open-sesame-1960",
+    "added": "2026-07-25"
+  },
+  {
+    "id": "miles-davis-relaxin-with-the-miles-davis-quintet-1958",
+    "added": "2026-07-25"
+  },
+  {
+    "id": "horace-silver-serenade-to-a-soul-sister-1968",
+    "added": "2026-07-25"
+  },
+  {
+    "id": "shorty-rogers-and-his-giants-1953",
+    "added": "2026-07-25"
+  },
+  {
+    "id": "miles-davis-sketches-of-spain-1960",
+    "added": "2026-07-25"
+  },
+  {
+    "id": "wes-montgomery-smokin-at-the-half-note-1965",
+    "added": "2026-07-25"
+  },
+  {
+    "id": "herbie-hancock-takin-off-1962",
+    "added": "2026-07-25"
+  },
+  {
+    "id": "charles-mingus-the-black-saint-and-the-sinner-lady-1963",
+    "added": "2026-07-25"
+  },
+  {
+    "id": "benny-golson-the-modern-touch-1957",
+    "added": "2026-07-25"
+  },
+  {
+    "id": "max-roach-we-insist-1960",
+    "added": "2026-07-25"
+  },
+  {
+    "id": "kenny-dorham-whistle-stop-1961",
+    "added": "2026-07-25"
+  },
+  {
+    "id": "hank-mobley-workout-1961",
+    "added": "2026-07-25"
+  },
+  {
+    "id": "mccoy-tyner-the-real-mccoy-1967",
+    "added": "2026-07-02"
+  },
+  {
+    "id": "wayne-shorter-adams-apple-1966",
+    "added": "2026-07-02"
+  },
+  {
+    "id": "herbie-hancock-speak-like-a-child-1968",
+    "added": "2026-07-02"
+  },
+  {
+    "id": "chick-corea-now-he-sings-now-he-sobs-1968",
+    "added": "2026-07-02"
+  },
+  {
+    "id": "miles-davis-nefertiti-1967",
+    "added": "2026-07-02"
+  },
+  {
+    "id": "mal-waldron-trio-free-at-last-1969",
+    "added": "2026-08-08"
+  },
+  {
+    "id": "keith-jarrett-facing-you-1971",
+    "added": "2026-08-08"
+  },
+  {
+    "id": "gary-burton-chick-corea-crystal-silence-1972",
+    "added": "2026-08-08"
+  },
+  {
+    "id": "jan-garbarek-bobo-stenson-quartet-witchi-tai-to-1973",
+    "added": "2026-08-08"
+  },
+  {
+    "id": "pat-metheny-bright-size-life-1976",
+    "added": "2026-08-08"
+  }
 ]
