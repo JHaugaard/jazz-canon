@@ -92,6 +92,7 @@
   >
     <span class="win-name">
       <span class="win-title display">{title}</span>
+      <!-- guide is trusted author-literal markup only — never interpolate data (it is the codebase's only {@html}). -->
       {#if guide}<span class="win-guide">{@html guide}</span>{/if}
     </span>
     <span class="win-actions">

@@ -22,37 +22,43 @@ export interface PlacesData {
 }
 
 export function buildPlacesData(raw: Place[]): PlacesData {
-  /* merged-* slugs never export by contract; filter defensively. */
-  const places = raw.filter((p) => {
-    if (p.id.startsWith('merged-')) {
-      if (DEV) console.warn(`places.json: unexpected merged slug "${p.id}" — filtered`);
-      return false;
-    }
-    return true;
-  });
+  /* merged-* slugs never export by contract; filter defensively. Each kept
+     place is rebuilt fresh with its own albums deduped by albumId — a place
+     listing the same album twice would otherwise crash PlaceWindow's keyed
+     {#each} (row.album.id) and duplicate the pin in MiniMap. Dedup here, at
+     the source, so every downstream consumer inherits the guarantee; the
+     raw objects are never mutated. */
+  const places = raw
+    .filter((p) => {
+      if (p.id.startsWith('merged-')) {
+        if (DEV) console.warn(`places.json: unexpected merged slug "${p.id}" — filtered`);
+        return false;
+      }
+      return true;
+    })
+    .map((p) => {
+      const albums: PlaceAlbumRef[] = [];
+      for (const ref of p.albums) {
+        const dup = albums.findIndex((a) => a.albumId === ref.albumId);
+        if (dup >= 0) {
+          albums[dup] = {
+            albumId: ref.albumId,
+            year: Math.min(albums[dup].year, ref.year),
+            dates: [...albums[dup].dates, ...ref.dates],
+          };
+        } else {
+          albums.push(ref);
+        }
+      }
+      return { ...p, albums };
+    });
   const byId = new Map(places.map((p) => [p.id, p]));
   const byAlbum = new Map<string, AlbumPlace[]>();
   for (const place of places) {
+    /* uniqueness is guaranteed at source now — plain push, no merge */
     for (const ref of place.albums) {
       const list = byAlbum.get(ref.albumId) ?? [];
-      /* One entry per (album, place). A place listing the same album twice
-         would otherwise yield two entries sharing a place id, which
-         duplicates the pin and collides the keyed {#each} in the card.
-         Merge into a fresh ref — the raw objects stay untouched. */
-      const dup = list.findIndex((e) => e.place.id === place.id);
-      if (dup >= 0) {
-        const existing = list[dup].ref;
-        list[dup] = {
-          place,
-          ref: {
-            albumId: ref.albumId,
-            year: Math.min(existing.year, ref.year),
-            dates: [...existing.dates, ...ref.dates],
-          },
-        };
-      } else {
-        list.push({ place, ref });
-      }
+      list.push({ place, ref });
       byAlbum.set(ref.albumId, list);
     }
   }

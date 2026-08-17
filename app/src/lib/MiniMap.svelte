@@ -2,11 +2,15 @@
   import type { AlbumPlace } from './places-data';
   import { DEV } from './places-data';
   import type { Basemap, BasemapRegion } from './places-geo';
+  import type { PlaceKind } from './types';
   import {
     fitBbox, project, pinsBbox, expandBbox, ensureMinExtent, metroExtent,
     chooseRegion, ringPath, linePath, spreadPins,
   } from './places-geo';
 
+  /* entries must be non-empty — DeepDive only renders this component once
+     placeEntries.length > 0; the geometry helpers below (pinsBbox,
+     metroExtent, spreadPins) throw on empty input. */
   let {
     entries,
     basemap,
@@ -70,7 +74,7 @@
     return views;
   });
 
-  const venueKinds = new Set(['club', 'hall', 'festival']);
+  const venueKinds = new Set<PlaceKind>(['club', 'hall', 'festival']);
   function keyActivate(e: KeyboardEvent, id: string) {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -153,9 +157,9 @@
      at the visual gate with John. */
   .water { fill: rgba(43, 95, 122, 0.12); }
   .paper { fill: var(--bg); }
-  .land { fill: #f3eee2; stroke: rgba(43, 95, 122, 0.35); stroke-width: 0.8; }
+  .land { fill: var(--map-land); stroke: rgba(43, 95, 122, 0.35); stroke-width: 0.8; }
   .lake { fill: rgba(43, 95, 122, 0.12); stroke: rgba(43, 95, 122, 0.25); stroke-width: 0.6; }
-  .border { fill: none; stroke: #d4cbba; stroke-width: 0.8; }
+  .border { fill: none; stroke: var(--map-border); stroke-width: 0.8; }
 
   .pin { cursor: pointer; }
   .dot.studio { fill: var(--bn-blue); stroke: var(--surface); stroke-width: 1.5; }

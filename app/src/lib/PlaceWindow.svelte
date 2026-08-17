@@ -1,7 +1,7 @@
 <script lang="ts">
   import { loadAlbums, loadPlaces } from './data';
   import { sessionSortKey, DEV } from './places-data';
-  import type { AlbumCard, Place, PlaceAlbumRef } from './types';
+  import type { AlbumCard, Place, PlaceAlbumRef, PlaceKind } from './types';
 
   let {
     placeId,
@@ -23,7 +23,7 @@
   let rows = $state<Row[] | null>(null);
   let error = $state<string | null>(null);
 
-  const kindLabel: Record<string, string> = {
+  const kindLabel: Record<PlaceKind, string> = {
     studio: 'Studio',
     club: 'Club',
     home: 'Home studio',
@@ -77,7 +77,7 @@
   {:else}
     <div class="meta">
       <span class="city">{place.city}</span>
-      <span class="chip display">{kindLabel[place.kind] ?? 'Venue'}</span>
+      <span class="chip display">{kindLabel[place.kind]}</span>
       {#if place.precision === 'city'}
         <span class="precision">located to city level</span>
       {/if}
