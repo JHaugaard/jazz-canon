@@ -73,3 +73,31 @@ export interface RecentAddition {
   id: string;
   added: string; // ISO date, YYYY-MM-DD
 }
+
+/* ---- Places (ratified places.json contract, 2026-08-14) ---------------- */
+
+export type PlaceKind = 'studio' | 'club' | 'home' | 'hall' | 'festival' | 'other';
+export type PlacePrecision = 'address' | 'city';
+
+export interface PlaceAlbumRef {
+  albumId: string;
+  year: number;
+  /* Session-date strings. Contract: each leads with a 4-digit year; ISO
+     day precision when known; non-ISO strings are year-grade. Empty means
+     "use `year`". */
+  dates: string[];
+}
+
+export interface Place {
+  id: string; // name_slug, stable across exports
+  name: string;
+  kind: PlaceKind;
+  city: string;
+  lat: number;
+  lon: number;
+  /* "address" = exact dot (block/street grade included); "city" = soft
+     halo — geographic epistemic honesty, never render a soft location as
+     an exact point. */
+  precision: PlacePrecision;
+  albums: PlaceAlbumRef[];
+}

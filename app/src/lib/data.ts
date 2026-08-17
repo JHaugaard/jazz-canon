@@ -1,9 +1,11 @@
-import type { AlbumCard, AlbumDetail, GraphData, RecentAddition } from './types';
+import type { AlbumCard, AlbumDetail, GraphData, RecentAddition, Place } from './types';
+import { buildPlacesData, type PlacesData } from './places-data';
 
 let albumsPromise: Promise<AlbumCard[]> | null = null;
 let detailsPromise: Promise<Record<string, AlbumDetail>> | null = null;
 let graphPromise: Promise<GraphData> | null = null;
 let recentPromise: Promise<RecentAddition[]> | null = null;
+let placesPromise: Promise<PlacesData> | null = null;
 
 async function fetchJson<T>(path: string): Promise<T> {
   const res = await fetch(path);
@@ -25,6 +27,10 @@ export function loadGraph(): Promise<GraphData> {
 
 export function loadRecentlyAdded(): Promise<RecentAddition[]> {
   return (recentPromise ??= fetchJson<RecentAddition[]>('/data/recently-added.json'));
+}
+
+export function loadPlaces(): Promise<PlacesData> {
+  return (placesPromise ??= fetchJson<Place[]>('/data/places.json').then(buildPlacesData));
 }
 
 export async function albumMap(): Promise<Map<string, AlbumCard>> {
