@@ -51,6 +51,7 @@ export function project(p: LonLat, t: Transform): { x: number; y: number } {
 }
 
 export function pinsBbox(pins: LonLat[]): Bbox {
+  if (!pins.length) throw new Error('pinsBbox: empty pins array');
   return {
     west: Math.min(...pins.map((p) => p.lon)),
     east: Math.max(...pins.map((p) => p.lon)),
@@ -102,6 +103,7 @@ export function bboxContains(b: Bbox, p: LonLat): boolean {
 /* The smallest region whose bbox contains every pin; null when none does
    (the coverage-honesty path: render pins on paper, warn in dev). */
 export function chooseRegion(pins: LonLat[], regions: BasemapRegion[]): BasemapRegion | null {
+  if (!pins.length) return null;
   const area = (b: Bbox) => (mercX(b.east) - mercX(b.west)) * (mercY(b.north) - mercY(b.south));
   const containing = regions.filter((r) => pins.every((p) => bboxContains(r.bbox, p)));
   if (!containing.length) return null;
