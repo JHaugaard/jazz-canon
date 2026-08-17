@@ -169,8 +169,12 @@
       {#if detail.recordingDates}
         <div class="rec-row"><span class="rec-k">Recorded</span>{detail.recordingDates}</div>
       {/if}
-      {#if placesError}
-        <!-- no silent fallback: keep the legacy text row, name the failed file -->
+      {#if placesError && !(placeEntries !== null && placeEntries.length === 0)}
+        <!-- no silent fallback: keep the legacy text row, name the failed file.
+             A confirmed-placeless album is exempt — it would never have shown a
+             map, so an error there would read as "recorded nowhere". A
+             places.json failure leaves placeEntries null, so that error still
+             shows: we don't know the album is placeless. -->
         {#if detail.studios.length}
           <div class="rec-row"><span class="rec-k">Studio</span>{detail.studios.join(' · ')}</div>
         {/if}

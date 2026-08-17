@@ -35,7 +35,24 @@ export function buildPlacesData(raw: Place[]): PlacesData {
   for (const place of places) {
     for (const ref of place.albums) {
       const list = byAlbum.get(ref.albumId) ?? [];
-      list.push({ place, ref });
+      /* One entry per (album, place). A place listing the same album twice
+         would otherwise yield two entries sharing a place id, which
+         duplicates the pin and collides the keyed {#each} in the card.
+         Merge into a fresh ref — the raw objects stay untouched. */
+      const dup = list.findIndex((e) => e.place.id === place.id);
+      if (dup >= 0) {
+        const existing = list[dup].ref;
+        list[dup] = {
+          place,
+          ref: {
+            albumId: ref.albumId,
+            year: Math.min(existing.year, ref.year),
+            dates: [...existing.dates, ...ref.dates],
+          },
+        };
+      } else {
+        list.push({ place, ref });
+      }
       byAlbum.set(ref.albumId, list);
     }
   }
