@@ -92,7 +92,8 @@ function clipLine(line, [W, S, E, N]) {
   return segs;
 }
 
-function simplify(pts, tol) {
+// Plain Douglas–Peucker over an open chain (first/last are distinct).
+function simplifyOpen(pts, tol) {
   if (pts.length < 3) return pts;
   const keep = new Uint8Array(pts.length);
   keep[0] = keep[pts.length - 1] = 1;
@@ -110,6 +111,28 @@ function simplify(pts, tol) {
     if (maxD > tol) { keep[maxI] = 1; stack.push([i0, maxI], [maxI, i1]); }
   }
   return pts.filter((_, i) => keep[i]);
+}
+
+// Douglas–Peucker anchors first/last, so a closed ring (first point ===
+// last point) collapses: both anchors are the same coordinate, every
+// intermediate distance is 0, nothing survives. Split the ring at its
+// farthest-from-start point into two open chains, simplify each, and
+// rejoin — this keeps the ring's true extent instead of degenerating to
+// a point.
+function simplify(pts, tol) {
+  const first = pts[0], last = pts[pts.length - 1];
+  const closed = pts.length > 2 && first[0] === last[0] && first[1] === last[1];
+  if (!closed) return simplifyOpen(pts, tol);
+
+  const open = pts.slice(0, -1); // drop the duplicated closing point
+  let maxD = -1, k = 0;
+  for (let i = 1; i < open.length; i++) {
+    const d = Math.hypot(open[i][0] - first[0], open[i][1] - first[1]);
+    if (d > maxD) { maxD = d; k = i; }
+  }
+  const chainA = simplifyOpen(open.slice(0, k + 1), tol);
+  const chainB = simplifyOpen(open.slice(k), tol);
+  return [...chainA, ...chainB.slice(1), first];
 }
 
 const roundPts = (pts, dec) => {
@@ -188,6 +211,47 @@ for (const { id, bbox, tol, dec } of REGIONS) {
     `borders ${region.borders.length} lines, ${verts} vertices`,
   );
   regions.push(region);
+}
+
+// Ray-cast point-in-ring (even-odd rule). `ring` is [lon, lat] pairs.
+function pointInRing(pt, ring) {
+  const [x, y] = pt;
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i], [xj, yj] = ring[j];
+    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
+// Guard born from the 2026-08-17 closed-ring simplify collapse: every
+// place must land on drawn land, not open water. Region choice mirrors
+// the app's chooseRegion — smallest-bbox region containing the pin.
+{
+  const regionArea = ({ west, south, east, north }) => (east - west) * (north - south);
+  const badPlaces = [];
+  for (const p of places) {
+    const pt = [p.lon, p.lat];
+    const candidates = regions
+      .filter((r) => p.lon >= r.bbox.west && p.lon <= r.bbox.east && p.lat >= r.bbox.south && p.lat <= r.bbox.north)
+      .sort((a, b) => regionArea(a.bbox) - regionArea(b.bbox));
+    const region = candidates[0];
+    if (!region) { badPlaces.push({ p, reason: 'no covering region' }); continue; }
+    const onLand = region.land.some((ring) => pointInRing(pt, ring));
+    const inLake = region.lakes.some((ring) => pointInRing(pt, ring));
+    if (!onLand || inLake) {
+      badPlaces.push({ p, reason: !onLand ? 'not on any land ring' : 'inside a lake ring', region: region.id });
+    }
+  }
+  if (badPlaces.length) {
+    console.error('places not on land in their chosen region:');
+    for (const { p, reason, region } of badPlaces) {
+      console.error(`  ${p.id} (${p.lat}, ${p.lon}) region=${region ?? 'none'} — ${reason}`);
+    }
+    process.exit(1);
+  }
 }
 
 const json = JSON.stringify({ regions });
