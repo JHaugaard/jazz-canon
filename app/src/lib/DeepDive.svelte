@@ -1,20 +1,28 @@
 <script lang="ts">
   import type { AlbumCard, AlbumDetail } from './types';
-  import { loadDetails } from './data';
+  import { loadDetails, loadPlaces, loadBasemap } from './data';
   import EpistemicBadge from './EpistemicBadge.svelte';
+  import MiniMap from './MiniMap.svelte';
+  import type { AlbumPlace } from './places-data';
+  import type { Basemap } from './places-geo';
 
   let {
     album,
     onOpenPerson,
+    onOpenPlace,
   }: {
     album: AlbumCard;
     onOpenPerson: (personId: string) => void;
+    onOpenPlace: (placeId: string) => void;
   } = $props();
 
   let detail = $state<AlbumDetail | null>(null);
   let error = $state<string | null>(null);
   let personnelOpen = $state(false);
   let artFailed = $state(false);
+  let placeEntries = $state<AlbumPlace[] | null>(null);
+  let basemap = $state<Basemap | null>(null);
+  let placesError = $state<string | null>(null); // holds the FAILED FILE's name
 
   // --- 30-second Apple preview playback ---
   // one shared audio element; `playing` is the previewUrl currently sounding.
@@ -84,6 +92,16 @@
         if (album.id === id) detail = all[id] ?? null;
       })
       .catch((err) => (error = String(err)));
+    placeEntries = null;
+    placesError = null;
+    loadPlaces()
+      .then((pd) => {
+        if (album.id === id) placeEntries = pd.byAlbum.get(id) ?? [];
+      })
+      .catch(() => (placesError = 'places.json'));
+    loadBasemap()
+      .then((bm) => (basemap = bm))
+      .catch(() => (placesError = 'basemap.json'));
   });
 
   // stop audio when the panel is torn down or the album changes
@@ -151,7 +169,17 @@
       {#if detail.recordingDates}
         <div class="rec-row"><span class="rec-k">Recorded</span>{detail.recordingDates}</div>
       {/if}
-      {#if detail.studios.length}
+      {#if placesError}
+        <!-- no silent fallback: keep the legacy text row, name the failed file -->
+        {#if detail.studios.length}
+          <div class="rec-row"><span class="rec-k">Studio</span>{detail.studios.join(' · ')}</div>
+        {/if}
+        <p class="map-err">Couldn’t load {placesError} — map unavailable.</p>
+      {:else if placeEntries !== null && basemap !== null && placeEntries.length > 0}
+        <MiniMap entries={placeEntries} {basemap} {onOpenPlace} />
+      {:else if detail.studios.length}
+        <!-- placeless album (absence of a pin must never read as "recorded
+             nowhere") — or places still loading; either way the text row -->
         <div class="rec-row"><span class="rec-k">Studio</span>{detail.studios.join(' · ')}</div>
       {/if}
       {#if detail.leader}
@@ -362,6 +390,7 @@
 
   .loading, .error { color: var(--muted); padding: 12px 0; }
   .error { color: var(--impulse-amber); }
+  .map-err { font-size: 12.5px; color: var(--impulse-amber); margin: 2px 0 0; }
 
   @media (max-width: 620px) {
     .dd { padding: 14px 16px 40px; }

@@ -107,7 +107,11 @@
       </div>
       <div class="panel-body">
         {#if byId.get(top.id)}
-          <DeepDive album={byId.get(top.id)!} onOpenPerson={(pid) => nav.openPerson(pid)} />
+          <DeepDive
+            album={byId.get(top.id)!}
+            onOpenPerson={(pid) => nav.openPerson(pid)}
+            onOpenPlace={(pid) => nav.openPlace(pid)}
+          />
         {/if}
       </div>
     </aside>
