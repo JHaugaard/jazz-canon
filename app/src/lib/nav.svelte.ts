@@ -23,6 +23,12 @@ class Nav {
     this.stack.push({ kind: 'person', id });
   }
 
+  openPlace(id: string) {
+    const t = this.top;
+    if (t && t.kind === 'place' && t.id === id) return;
+    this.stack.push({ kind: 'place', id });
+  }
+
   back() {
     this.stack.pop();
   }
@@ -33,3 +39,9 @@ class Nav {
 }
 
 export const nav = new Nav();
+
+/* Dev-only test seam: the repo has no test suite, and behavioral probes
+   (playwright against `npm run dev`) need a way to drive navigation
+   without scripting the full click path. Absent from production builds. */
+import { DEV } from './places-data';
+if (DEV) (window as unknown as { __nav?: Nav }).__nav = nav;

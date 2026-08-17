@@ -64,7 +64,8 @@ export interface GraphData {
 
 export type NavEntry =
   | { kind: 'album'; id: string }
-  | { kind: 'person'; id: string };
+  | { kind: 'person'; id: string }
+  | { kind: 'place'; id: string };
 
 /* A hand-kept, site-side "what's new" entry. NOT canon data — `added` is the
    date the album first appeared on the site (a site-update date), edited by

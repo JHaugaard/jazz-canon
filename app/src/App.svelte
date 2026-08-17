@@ -5,6 +5,7 @@
   import DeepDive from './lib/DeepDive.svelte';
   import Network from './lib/Network.svelte';
   import FloatingWindow from './lib/FloatingWindow.svelte';
+  import PlaceWindow from './lib/PlaceWindow.svelte';
   import About from './lib/About.svelte';
   import Search from './lib/Search.svelte';
   import type { AlbumCard } from './lib/types';
@@ -30,6 +31,7 @@
   }
 
   let constName = $state('');
+  let placeName = $state('');
 </script>
 
 <svelte:window onkeydown={onKeydown} />
@@ -124,6 +126,22 @@
         onOpenAlbum={(aid) => nav.openAlbum(aid)}
         onRecenter={(pid) => nav.openPerson(pid)}
         onmeta={(m) => (constName = m.name)}
+      />
+    </FloatingWindow>
+  {:else if top?.kind === 'place'}
+    <FloatingWindow
+      variant="place"
+      title={placeName}
+      guide="Every canon album recorded here, oldest first&ensp;·&ensp;click one to open"
+      ariaLabel="Place"
+      showBack={nav.stack.length > 1}
+      onBack={() => nav.back()}
+      onClose={() => nav.close()}
+    >
+      <PlaceWindow
+        placeId={top.id}
+        onOpenAlbum={(aid) => nav.openAlbum(aid)}
+        onmeta={(m) => (placeName = m.name)}
       />
     </FloatingWindow>
   {/if}
