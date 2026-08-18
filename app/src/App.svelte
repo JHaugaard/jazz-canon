@@ -103,7 +103,10 @@
     {#if route === 'about'}
       <About onopen={(id) => nav.openAlbum(id)} />
     {:else if route === 'working'}
-      <Working onOpenPerson={(pid) => nav.openPerson(pid)} />
+      <Working
+        onOpenPerson={(pid) => nav.openPerson(pid)}
+        onOpenAlbum={(aid) => nav.openAlbum(aid)}
+      />
     {:else if loadError}
       <p class="fatal">Couldn’t load the canon data ({loadError}).</p>
     {:else if !albums}

@@ -6,7 +6,10 @@
   import type { AlbumCard } from './types';
   import introRaw from './content/working-intro.txt?raw';
 
-  let { onOpenPerson }: { onOpenPerson: (pid: string) => void } = $props();
+  let {
+    onOpenPerson,
+    onOpenAlbum,
+  }: { onOpenPerson: (pid: string) => void; onOpenAlbum: (aid: string) => void } = $props();
 
   const paragraphs = introRaw.trim().split(/\n\s*\n/);
 
@@ -129,6 +132,27 @@
   function hideTip() {
     tip = null;
     placed = false;
+  }
+
+  /* Two destinations, one handler, no nested click target: a click on a mark
+     opens that album, a click anywhere else on the row opens the musician's
+     constellation. Delegating here rather than putting a handler on the mark
+     is what keeps the row a plain <button> — the marks stay decoration
+     (aria-hidden), so there is no button inside a button and no second tab
+     stop. Constraint: the dots are a pointer shortcut only; every album they
+     reach is still keyboard-reachable through the constellation the row
+     opens, so their lack of focus is deliberate, not an oversight. */
+  function onRowClick(e: MouseEvent, personId: string) {
+    hideTip();
+    const el = e.target as Element | null;
+    if (el instanceof Element && el.classList.contains('hit')) {
+      const albumId = el.getAttribute('data-album');
+      if (albumId) {
+        onOpenAlbum(albumId);
+        return;
+      }
+    }
+    onOpenPerson(personId);
   }
 
   $effect(() => {
@@ -265,7 +289,7 @@
               class:hl={p.personId === highlightId}
               id="lane-{p.personId}"
               aria-label="{p.name} — open constellation"
-              onclick={() => onOpenPerson(p.personId)}
+              onclick={(e) => onRowClick(e, p.personId)}
               onmouseover={showTip}
               onmouseout={hideTip}
               onfocus={hideTip}
@@ -299,7 +323,14 @@
                     <circle cx={xm(mk.m)} cy={ROW_H / 2} r="3.2" fill="var(--bn-blue)" />
                     <!-- invisible hit target: a 6.4px dot is a fiddly thing to
                          land on, so hover is sensed on a 12px one over it -->
-                    <circle class="hit" cx={xm(mk.m)} cy={ROW_H / 2} r="6" data-tip={label} />
+                    <circle
+                      class="hit"
+                      cx={xm(mk.m)}
+                      cy={ROW_H / 2}
+                      r="6"
+                      data-tip={label}
+                      data-album={mk.albumId}
+                    />
                   {/each}
                   <!-- final exit: the last session in this canon, nothing more -->
                   <rect x={lastX - 0.75} y="6" width="1.5" height={ROW_H - 12} fill="var(--bn-blue)" />
@@ -540,7 +571,7 @@
      mark's hover. Clicks still reach the row: they bubble from the hit circle
      (or from .lane-cell) up to the button. */
   .lane-cell svg { position: relative; display: block; pointer-events: none; }
-  .hit { fill: transparent; pointer-events: all; }
+  .hit { fill: transparent; pointer-events: all; cursor: pointer; }
 
   .lane-tip {
     position: fixed;
