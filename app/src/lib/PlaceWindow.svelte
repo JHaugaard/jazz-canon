@@ -81,6 +81,12 @@
       {#if place.precision === 'city'}
         <span class="precision">located to city level</span>
       {/if}
+      <a
+        class="gmaps"
+        href={`https://www.google.com/maps/search/?api=1&query=${place.lat},${place.lon}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >Open in Google Maps&thinsp;↗</a>
     </div>
     <ol class="rows">
       {#each rows as row (row.album.id)}
@@ -125,6 +131,13 @@
     background: var(--bg);
   }
   .precision { font-size: 12.5px; color: var(--muted); font-style: italic; }
+  .gmaps {
+    margin-left: auto;
+    font-size: 12.5px;
+    color: var(--bn-blue);
+    text-decoration: none;
+  }
+  .gmaps:hover { text-decoration: underline; }
 
   /* One long, scrollable list — Van Gelder Englewood Cliffs is 59 albums;
      the story reads top to bottom, no pagination. Scrolling comes from

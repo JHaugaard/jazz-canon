@@ -74,6 +74,21 @@
     return views;
   });
 
+  /* Orientation label: the distinct cities on the map, in entry order —
+     tells the reader WHERE they're looking (a beige basemap alone doesn't
+     say "Hollywood" or "Chicago"). Derived from data, never hardcoded. */
+  const groundLabel = $derived.by(() => {
+    const seen = new Set<string>();
+    const cities: string[] = [];
+    for (const e of entries) {
+      if (!seen.has(e.place.city)) {
+        seen.add(e.place.city);
+        cities.push(e.place.city);
+      }
+    }
+    return cities.join(' · ');
+  });
+
   const venueKinds = new Set<PlaceKind>(['club', 'hall', 'festival']);
   function keyActivate(e: KeyboardEvent, id: string) {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -132,6 +147,9 @@
         >{pv.place.name}</text>
       </g>
     {/each}
+    <!-- ground label: annotation only, not a pin — the city is already
+         announced via the Place window and caption paths below -->
+    <text x="10" y={VP.height - 10} class="ground-label display" aria-hidden="true">{groundLabel}</text>
   </svg>
   <figcaption>
     {#each entries as e, i (e.place.id)}
@@ -174,6 +192,17 @@
     font-size: 13px;
     letter-spacing: 0.04em;
     fill: var(--ink);
+    paint-order: stroke;
+    stroke: var(--surface);
+    stroke-width: 3px;
+    stroke-linejoin: round;
+  }
+
+  .ground-label {
+    font-variant: small-caps;
+    font-size: 11.5px;
+    letter-spacing: 0.04em;
+    fill: var(--muted);
     paint-order: stroke;
     stroke: var(--surface);
     stroke-width: 3px;
