@@ -1,6 +1,7 @@
 <script lang="ts">
+  import { tick } from 'svelte';
   import { albumMap, loadPeopleActivity } from './data';
-  import { filterByYears, laneMarks, monthOffset } from './people-data';
+  import { laneMarks, monthOffset } from './people-data';
   import type { PeopleData } from './people-data';
   import type { AlbumCard } from './types';
   import introRaw from './content/working-intro.txt?raw';
@@ -41,7 +42,65 @@
     .catch((e) => (albumsError = String(e)));
 
   let minYears = $state(4);
-  let roster = $derived(data ? filterByYears(data.people, minYears) : []);
+
+  /* Search + pin. Threshold governs the default roster, never access: once a
+     musician is pinned by search they stay in the field at their arrival
+     position regardless of later threshold changes. */
+  let query = $state('');
+  let searchOpen = $state(false);
+  let activeIndex = $state(-1);
+  let pinned = $state<Set<string>>(new Set());
+  let highlightId = $state<string | null>(null);
+
+  let roster = $derived(
+    data ? data.people.filter((p) => p.yearsActive >= minYears || pinned.has(p.personId)) : []
+  );
+
+  let results = $derived.by(() => {
+    const q = query.trim().toLowerCase();
+    if (!data || !q) return [];
+    return data.people.filter((p) => p.name.toLowerCase().includes(q)).slice(0, 8);
+  });
+  let showDropdown = $derived(searchOpen && results.length > 0);
+
+  function onSearchInput() {
+    searchOpen = true;
+    activeIndex = -1;
+  }
+
+  function onSearchKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape') {
+      searchOpen = false;
+      activeIndex = -1;
+    } else if (e.key === 'ArrowDown') {
+      if (results.length) {
+        e.preventDefault();
+        activeIndex = (activeIndex + 1) % results.length;
+      }
+    } else if (e.key === 'ArrowUp') {
+      if (results.length) {
+        e.preventDefault();
+        activeIndex = (activeIndex - 1 + results.length) % results.length;
+      }
+    } else if (e.key === 'Enter') {
+      const pick = results[activeIndex] ?? results[0];
+      if (pick) {
+        e.preventDefault();
+        pickPerson(pick.personId);
+      }
+    }
+  }
+
+  async function pickPerson(pid: string) {
+    pinned = new Set([...pinned, pid]);
+    query = '';
+    searchOpen = false;
+    activeIndex = -1;
+    highlightId = pid;
+    await tick();
+    document.getElementById(`lane-${pid}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    setTimeout(() => (highlightId = null), 2400);
+  }
 
   let years = $derived.by(() => {
     const d = data;
@@ -72,11 +131,58 @@
       style:--gutter="{GUTTER}px"
     >
       <div class="controls">
-        <!-- Task 5 hangs the threshold stepper and the search box here. -->
+        <div class="stepper" role="group" aria-label="Minimum years active">
+          {#each [1, 2, 3, 4] as n}
+            <button
+              type="button"
+              class="nav-btn step-btn"
+              class:active={minYears === n}
+              aria-pressed={minYears === n}
+              onclick={() => (minYears = n)}
+            >{n === 4 ? '4+' : n}</button>
+          {/each}
+        </div>
+
         <p class="count">
           {roster.length} musicians · active in at least {minYears}
           {minYears === 1 ? 'year' : 'years'} of the canon
         </p>
+
+        <div class="search-wrap">
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Find any musician…"
+            bind:value={query}
+            oninput={onSearchInput}
+            onkeydown={onSearchKeydown}
+            onblur={() => (searchOpen = false)}
+            role="combobox"
+            aria-expanded={showDropdown}
+            aria-controls="search-results"
+            aria-autocomplete="list"
+            aria-label="Find any musician"
+          />
+          {#if showDropdown}
+            <ul
+              class="search-results"
+              id="search-results"
+              role="listbox"
+              onmousedown={(e) => e.preventDefault()}
+            >
+              {#each results as r, i (r.personId)}
+                <li role="option" aria-selected={i === activeIndex}>
+                  <button
+                    type="button"
+                    class="result-btn"
+                    class:active={i === activeIndex}
+                    onclick={() => pickPerson(r.personId)}
+                  >{r.name}</button>
+                </li>
+              {/each}
+            </ul>
+          {/if}
+        </div>
       </div>
 
       {#if albumsError}
@@ -108,6 +214,7 @@
             {@const instruments = p.instruments.join(', ')}
             <button
               class="lane-row"
+              class:hl={p.personId === highlightId}
               id="lane-{p.personId}"
               aria-label="{p.name} — open constellation"
               onclick={() => onOpenPerson(p.personId)}
@@ -188,6 +295,67 @@
   .count { margin: 0; font-size: 13px; color: var(--muted); }
   .degraded { margin: 0 0 9px; font-size: 12.5px; color: var(--impulse-amber); }
 
+  .stepper { display: flex; gap: 4px; }
+  .step-btn { color: var(--muted); cursor: pointer; }
+  .step-btn:hover { color: var(--bn-blue); border-color: var(--bn-blue-light); }
+  .step-btn.active {
+    color: var(--bn-blue);
+    border-color: var(--bn-blue-light);
+    background: var(--surface);
+  }
+  /* echoes the masthead's .nav-link.active: bn-blue text + amber underline */
+  .step-btn.active::after {
+    content: '';
+    display: block;
+    height: 2px;
+    background: var(--impulse-amber);
+    margin-top: 3px;
+    border-radius: 2px;
+  }
+
+  .search-wrap { position: relative; margin-left: auto; }
+  .search-input {
+    width: 220px;
+    max-width: 100%;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 5px 10px;
+  }
+  .search-input:focus { outline: none; border-color: var(--bn-blue-light); }
+  .search-results {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 4px;
+    list-style: none;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    max-height: 260px;
+    overflow-y: auto;
+  }
+  .result-btn {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: 0;
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 13px;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .result-btn:hover,
+  .result-btn.active { background: var(--surface); color: var(--bn-blue); }
+
   /* The field scrolls in its own box so the year axis stays pinned above the
      lanes however far down the roster you read. */
   .lanes-scroll {
@@ -241,9 +409,15 @@
     background: var(--row-bg);
     text-align: left;
     color: inherit;
+    /* transition lives on the base rule (not just .hl) so the amber tint
+       fades in on pin AND fades out again when highlightId clears */
+    transition: background-color 0.9s ease;
   }
   .lane-row:hover { --row-bg: var(--surface); }
   .lane-row:focus-visible { outline: 2px solid var(--bn-blue-light); outline-offset: -2px; }
+  /* search-pinned row: tints --row-bg (not background directly) so the
+     sticky name cell, which reads the same custom property, tints too */
+  .lane-row.hl { --row-bg: rgba(196, 134, 42, 0.14); }
 
   .lane-name {
     position: sticky;
