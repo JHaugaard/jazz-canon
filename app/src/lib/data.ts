@@ -7,6 +7,7 @@ import type {
   PeopleActivityFile
 } from './types';
 import { buildPlacesData, type PlacesData } from './places-data';
+import { buildPeopleData, type PeopleData } from './people-data';
 import type { Basemap } from './places-geo';
 
 let albumsPromise: Promise<AlbumCard[]> | null = null;
@@ -15,7 +16,7 @@ let graphPromise: Promise<GraphData> | null = null;
 let recentPromise: Promise<RecentAddition[]> | null = null;
 let placesPromise: Promise<PlacesData> | null = null;
 let basemapPromise: Promise<Basemap> | null = null;
-let peopleActivityPromise: Promise<PeopleActivityFile> | null = null;
+let peopleActivityPromise: Promise<PeopleData> | null = null;
 
 async function fetchJson<T>(path: string): Promise<T> {
   const res = await fetch(path);
@@ -47,8 +48,8 @@ export function loadBasemap(): Promise<Basemap> {
   return (basemapPromise ??= fetchJson<Basemap>('/map/basemap.json'));
 }
 
-export function loadPeopleActivity(): Promise<PeopleActivityFile> {
-  return (peopleActivityPromise ??= fetchJson<PeopleActivityFile>('/data/people-activity.json'));
+export function loadPeopleActivity(): Promise<PeopleData> {
+  return (peopleActivityPromise ??= fetchJson<PeopleActivityFile>('/data/people-activity.json').then(buildPeopleData));
 }
 
 export async function albumMap(): Promise<Map<string, AlbumCard>> {
