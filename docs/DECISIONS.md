@@ -565,3 +565,40 @@ A full look/feel/function review (production build driven headlessly at
 Deferred by owner choice: self-hosted cover art (CAA hotlink latency/500s),
 label decluttering in dense constellations, hash deep-links, misc. nits
 (reduced-motion, preview progress, richer loading state).
+
+---
+
+## D23. "Working" page — people-over-time lanes (spec + gate rulings, 2026-08-18)
+
+**Status:** ACCEPTED (built on branch `working`; deploy deferred to a John-attended session)
+
+**Decision:** New first-class nav route `#/working` (hash router replaces the
+view-state toggle; About inherits `#/about`): every canon musician is a
+horizontal lane across a data-driven span, marks at month-exact session
+dates, faint continuity line through hiatus, quiet end-cap at final canon
+appearance. Threshold stepper (4+ · 3 · 2 · 1, default 4+) over distinct
+active years; always-access search pins any musician into view; click-through
+to the existing Constellation by shared person id. New pipeline export
+`people-activity.json` (mccoy-tyner `export.sh`; ship.sh/publish.sh now carry
+all five data files — fixing the latent places.json gap).
+
+**Spec rulings (John, 2026-08-18, spec §6):** T=4 default roster; day-ordered
+jitter for same-month doubles; hash routing; arrival-order lanes; dateless
+musicians excluded and counted in a meta-driven footnote; page named
+"Working"; verbatim `YYYY-MM` session_date_text values admitted as month-grade
+dates (string length = precision — recovered Metheny/Jaco/Head Hunters band
+and extended the axis to 1975-12 with zero DB changes).
+
+**Gate tuning (John, 2026-08-18):** month width 3.4px → 5.0px ("let the field
+breathe"; horizontal scroll deliberately in play); 12px invisible hover hit
+targets; instant house-styled tooltip replacing the laggy native title;
+complete instrument list per row (alphabetical-but-complete over invented
+primacy). Look LOCKED. Post-lock addendum (John): split click-through —
+name/lane → Constellation, dot → that album's deep-dive panel (the album the
+tooltip names); row button stays the sole keyboard tab stop, dots are pointer
+shortcuts with albums keyboard-reachable via the Constellation.
+
+**Reference:** spec `docs/2026-08-18-who-was-working-spec.md`; brief
+`docs/2026-08-18-who-was-working-brief.md`; plan
+`docs/superpowers/plans/2026-08-18-working-page.md`. Intro copy is John's
+pen: `app/src/lib/content/working-intro.txt` (lorem ipsum until he writes it).
