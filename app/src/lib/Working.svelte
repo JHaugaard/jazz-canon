@@ -243,7 +243,10 @@
                     stroke-width="1"
                   />
                   {#each laneMarks(p, yearStart) as mk}
-                    <circle cx={xm(mk.m)} cy={ROW_H / 2} r="3.2" fill="var(--bn-blue)">
+                    <circle cx={xm(mk.m)} cy={ROW_H / 2} r="3.2" fill="var(--bn-blue)" />
+                    <!-- invisible hit target: a 6.4px dot is a fiddly thing to
+                         land on, so hover is sensed on a 12px one over it -->
+                    <circle class="hit" cx={xm(mk.m)} cy={ROW_H / 2} r="6">
                       <title>{albums.get(mk.albumId)?.title ?? mk.albumId} — {mk.date}</title>
                     </circle>
                   {/each}
@@ -472,6 +475,9 @@
     pointer-events: none;
   }
   .lane-cell svg { position: relative; display: block; }
+  /* fill:transparent alone would already take pointer events, but
+     pointer-events:all says it outright and survives a fill change */
+  .hit { fill: transparent; pointer-events: all; }
 
   @media (max-width: 620px) {
     article { padding: 26px 18px 6px; }
