@@ -2,8 +2,8 @@
   import { tick } from 'svelte';
   import { albumMap, loadPeopleActivity } from './data';
   import { laneMarks, monthOffset } from './people-data';
-  import type { PeopleData } from './people-data';
-  import type { AlbumCard } from './types';
+  import type { Mark, PeopleData } from './people-data';
+  import type { AlbumCard, PersonActivity } from './types';
   import introRaw from './content/working-intro.txt?raw';
 
   let {
@@ -105,50 +105,128 @@
     setTimeout(() => (highlightId = null), 2400);
   }
 
-  /* Mark tooltip. The native <title> it replaces was correct but arrived on
-     the OS's ~1s delay, so nobody discovered it: this one is instant. Anchor
-     is the hovered hit circle in viewport coordinates (position: fixed, so
-     the field's own overflow can never clip it); the effect below measures
-     the rendered card and clamps it inside the viewport, and `placed` keeps
-     it hidden for the frame before that measurement exists. */
-  let tip = $state<{ text: string; ax: number; ay: number } | null>(null);
+  /* One month, one target. Marks are grouped back into the calendar month they
+     came from: laneMarks spreads a shared month across ±0.22 of a month around
+     its centre, so flooring m recovers the month index exactly, and a mark's
+     own x is always nearer its own month's centre (≤1.1px) than any
+     neighbouring month's (≥3.9px at this pitch). Per-mark hit shapes cannot
+     make that promise — at 5px per month a 12px target covers its neighbours,
+     which is how the field spent a while naming the wrong session. */
+  interface MonthGroup {
+    mi: number; // month index from January of yearStart
+    cx: number; // that month's centre, in the lane SVG's coordinates
+    marks: Mark[];
+  }
+
+  function monthGroups(p: PersonActivity, yearStart: number): MonthGroup[] {
+    const byMonth = new Map<number, Mark[]>();
+    for (const mk of laneMarks(p, yearStart)) {
+      const mi = Math.floor(mk.m);
+      const list = byMonth.get(mi);
+      if (list) list.push(mk);
+      else byMonth.set(mi, [mk]);
+    }
+    return [...byMonth.entries()]
+      .map(([mi, marks]) => ({ mi, cx: xm(mi + 0.5), marks }))
+      .sort((a, b) => a.mi - b.mi);
+  }
+
+  /* How far from a month's centre still counts as pointing at it. Half the old
+     12px target: generous, and — unlike that target — it cannot resolve to the
+     wrong month, because the nearest centre wins and centres are a whole month
+     apart. */
+  const HOVER_PX = 6;
+
+  function groupAt(groups: MonthGroup[], x: number): MonthGroup | null {
+    let best: MonthGroup | null = null;
+    let bestD = Infinity;
+    for (const g of groups) {
+      const d = Math.abs(g.cx - x);
+      if (d < bestD) {
+        bestD = d;
+        best = g;
+      }
+    }
+    return best && bestD <= HOVER_PX ? best : null;
+  }
+
+  /* x inside the lane SVG. The band spans the SVG exactly and the SVG has no
+     viewBox, so its client rect maps 1:1 onto lane coordinates. */
+  function laneX(e: MouseEvent, band: Element): number {
+    return e.clientX - band.getBoundingClientRect().left;
+  }
+
+  /* Tooltip. The native <title> it replaces was correct but arrived on the
+     OS's ~1s delay, so nobody discovered it: this one is instant. It names
+     every session in the month it resolved, one per line — a month can hold
+     five of them, and saying so is the honest reading of a cluster that is
+     physically one dot wide. Anchor is the month's centre in viewport
+     coordinates (position: fixed, so the field's own overflow can never clip
+     it); the effect below measures the rendered card and clamps it inside the
+     viewport, and `placed` keeps it hidden for the frame before that
+     measurement exists. */
+  let tip = $state<{ lines: string[]; key: string; ax: number; ay: number } | null>(null);
   let tipEl = $state<HTMLDivElement | null>(null);
   let tipPos = $state({ left: 0, top: 0 });
   let placed = $state(false);
 
-  /* Delegated from the row button — mouse handlers belong on an element that
-     is already interactive (the marks themselves are aria-hidden decoration),
-     and one pair of handlers per row beats two per mark across 450 lanes.
-     mouseover/mouseout are used rather than enter/leave because they bubble. */
-  function showTip(e: MouseEvent) {
-    const el = e.target as Element | null;
-    if (!(el instanceof Element) || !el.classList.contains('hit')) return;
-    const text = el.getAttribute('data-tip');
-    if (!text) return;
-    const box = el.getBoundingClientRect();
-    placed = false;
-    tip = { text, ax: box.left + box.width / 2, ay: box.top };
+  function sessionLine(mk: Mark): string {
+    return `${albums.get(mk.albumId)?.title ?? mk.albumId} — ${mk.date}`;
   }
+
+  /* Delegated from the row button: mouse handlers belong on an element that is
+     already interactive, and the band itself is aria-hidden decoration. */
+  function onLaneMove(e: MouseEvent, personId: string, groups: MonthGroup[]) {
+    const band = e.target as Element | null;
+    if (!(band instanceof Element) || !band.classList.contains('hit-band')) {
+      hideTip();
+      return;
+    }
+    const box = band.getBoundingClientRect();
+    const g = groupAt(groups, e.clientX - box.left);
+    if (!g) {
+      hideTip();
+      return;
+    }
+    const key = `${personId}:${g.mi}`;
+    if (tip?.key === key) return; // same month: don't re-render on every pixel
+    placed = false;
+    tip = { lines: g.marks.map(sessionLine), key, ax: box.left + g.cx, ay: box.top };
+  }
+
   function hideTip() {
     tip = null;
     placed = false;
   }
 
-  /* Two destinations, one handler, no nested click target: a click on a mark
-     opens that album, a click anywhere else on the row opens the musician's
-     constellation. Delegating here rather than putting a handler on the mark
-     is what keeps the row a plain <button> — the marks stay decoration
-     (aria-hidden), so there is no button inside a button and no second tab
-     stop. Constraint: the dots are a pointer shortcut only; every album they
-     reach is still keyboard-reachable through the constellation the row
-     opens, so their lack of focus is deliberate, not an oversight. */
-  function onRowClick(e: MouseEvent, personId: string) {
+  /* Two destinations, one handler, no nested click target: a click that lands
+     on a month opens that month's album, a click anywhere else on the row
+     opens the musician's constellation. Delegating here is what keeps the row
+     a plain <button> — the band and the marks stay decoration (aria-hidden),
+     so there is no button inside a button and no second tab stop.
+
+     When a month holds sessions from more than one album, the exact x picks
+     the nearest mark: the marks are spread within the month in date order, so
+     the choice follows where the pointer actually is. It is a sub-pixel
+     distinction at this pitch, which is why the tooltip lists every session in
+     the month — the reader is told what is there before they click.
+
+     Constraint: the band is a pointer shortcut only; every album it reaches is
+     still keyboard-reachable through the constellation the row opens, so its
+     lack of focus is deliberate, not an oversight. */
+  function onRowClick(e: MouseEvent, personId: string, groups: MonthGroup[]) {
     hideTip();
-    const el = e.target as Element | null;
-    if (el instanceof Element && el.classList.contains('hit')) {
-      const albumId = el.getAttribute('data-album');
-      if (albumId) {
-        onOpenAlbum(albumId);
+    const band = e.target as Element | null;
+    if (band instanceof Element && band.classList.contains('hit-band')) {
+      const x = laneX(e, band);
+      const g = groupAt(groups, x);
+      if (g) {
+        const ids = new Set(g.marks.map((mk) => mk.albumId));
+        const pick =
+          ids.size === 1
+            ? g.marks[0]
+            : g.marks.reduce((a, b) => (Math.abs(xm(b.m) - x) < Math.abs(xm(a.m) - x) ? b : a));
+        onOpenAlbum(pick.albumId);
         return;
       }
     }
@@ -284,13 +362,14 @@
             {@const firstX = xm(monthOffset(p.first, yearStart))}
             {@const lastX = xm(monthOffset(p.last, yearStart))}
             {@const instruments = p.instruments.join(', ')}
+            {@const groups = monthGroups(p, yearStart)}
             <button
               class="lane-row"
               class:hl={p.personId === highlightId}
               id="lane-{p.personId}"
               aria-label="{p.name} — open constellation"
-              onclick={(e) => onRowClick(e, p.personId)}
-              onmouseover={showTip}
+              onclick={(e) => onRowClick(e, p.personId, groups)}
+              onmousemove={(e) => onLaneMove(e, p.personId, groups)}
               onmouseout={hideTip}
               onfocus={hideTip}
               onblur={hideTip}
@@ -305,8 +384,8 @@
                 {/if}
               </span>
               <span class="lane-cell">
-                <!-- aria-hidden: the row's own label carries the meaning; the
-                     <title>s here are hover affordances, not a second reading. -->
+                <!-- aria-hidden: the row's own label carries the meaning, and
+                     the marks are a picture of it, not a second reading. -->
                 <svg width={svgW} height={ROW_H} aria-hidden="true">
                   <!-- first→last, drawn straight through every gap: a hiatus is
                        this line continuing, and is never special-cased. -->
@@ -318,22 +397,24 @@
                     stroke="var(--line)"
                     stroke-width="1"
                   />
-                  {#each laneMarks(p, yearStart) as mk}
-                    {@const label = `${albums.get(mk.albumId)?.title ?? mk.albumId} — ${mk.date}`}
-                    <circle cx={xm(mk.m)} cy={ROW_H / 2} r="3.2" fill="var(--bn-blue)" />
-                    <!-- invisible hit target: a 6.4px dot is a fiddly thing to
-                         land on, so hover is sensed on a 12px one over it -->
-                    <circle
-                      class="hit"
-                      cx={xm(mk.m)}
-                      cy={ROW_H / 2}
-                      r="6"
-                      data-tip={label}
-                      data-album={mk.albumId}
-                    />
+                  {#each groups as g}
+                    {#each g.marks as mk}
+                      <circle cx={xm(mk.m)} cy={ROW_H / 2} r="3.2" fill="var(--bn-blue)" />
+                    {/each}
                   {/each}
                   <!-- final exit: the last session in this canon, nothing more -->
-                  <rect x={lastX - 0.75} y="6" width="1.5" height={ROW_H - 12} fill="var(--bn-blue)" />
+                  <rect
+                    class="cap"
+                    x={lastX - 0.75}
+                    y="6"
+                    width="1.5"
+                    height={ROW_H - 12}
+                    fill="var(--bn-blue)"
+                  />
+                  <!-- one hit target for the whole lane: the month under the
+                       pointer is worked out from x, never from which shape the
+                       browser happened to find first -->
+                  <rect class="hit-band" x="0" y="0" width={svgW} height={ROW_H} />
                 </svg>
               </span>
             </button>
@@ -359,7 +440,11 @@
       bind:this={tipEl}
       style:left="{tipPos.left}px"
       style:top="{tipPos.top}px"
-    >{tip.text}</div>
+    >
+      {#each tip.lines as line}
+        <div class="tip-line">{line}</div>
+      {/each}
+    </div>
   {/if}
 </div>
 
@@ -571,7 +656,7 @@
      mark's hover. Clicks still reach the row: they bubble from the hit circle
      (or from .lane-cell) up to the button. */
   .lane-cell svg { position: relative; display: block; pointer-events: none; }
-  .hit { fill: transparent; pointer-events: all; cursor: pointer; }
+  .hit-band { fill: transparent; pointer-events: all; cursor: pointer; }
 
   .lane-tip {
     position: fixed;
@@ -587,11 +672,12 @@
     font-size: 12.5px;
     line-height: 1.35;
     color: var(--ink);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
   .lane-tip.placed { visibility: visible; }
+  /* one line per session in the month — a five-session month is one dot wide,
+     so the card is the only place the reader can see all five */
+  .tip-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tip-line + .tip-line { margin-top: 1px; }
 
   @media (max-width: 620px) {
     article { padding: 26px 18px 6px; }
