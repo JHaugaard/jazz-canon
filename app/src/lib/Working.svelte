@@ -94,7 +94,12 @@
     }
   }
 
+  /* One timer, cancelled on every new pin: two searches inside 2.4s would
+     otherwise let the first pin's timer clear the second pin's highlight. */
+  let highlightTimer: ReturnType<typeof setTimeout> | null = null;
+
   async function pickPerson(pid: string) {
+    if (highlightTimer !== null) clearTimeout(highlightTimer);
     pinned = new Set([...pinned, pid]);
     query = '';
     searchOpen = false;
@@ -102,8 +107,17 @@
     highlightId = pid;
     await tick();
     document.getElementById(`lane-${pid}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    setTimeout(() => (highlightId = null), 2400);
+    highlightTimer = setTimeout(() => {
+      highlightId = null;
+      highlightTimer = null;
+    }, 2400);
   }
+
+  /* and cancelled on teardown, so it can't fire into a destroyed component
+     when the route changes mid-highlight */
+  $effect(() => () => {
+    if (highlightTimer !== null) clearTimeout(highlightTimer);
+  });
 
   /* One month, one target. Marks are grouped back into the calendar month they
      came from: laneMarks spreads a shared month across ±0.22 of a month around
@@ -257,6 +271,23 @@
   });
   let fieldW = $derived(years.length * PX_PER_YEAR);
   let svgW = $derived(fieldW + GUTTER * 2);
+
+  /* The undated clause disappears entirely once every session carries a date —
+     it must never claim something about a set that no longer exists — and each
+     count carries its own noun, because "1 sessions across 1 albums" is one
+     data ship away. */
+  let undatedNote = $derived.by(() => {
+    const m = data?.meta;
+    if (!m || m.undatedSessions === 0) return '';
+    const s = m.undatedSessions;
+    const a = m.undatedAlbums.length;
+    const q = m.undatedOnlyPeople;
+    return (
+      `${s} ${s === 1 ? 'session' : 'sessions'} across ${a} ${a === 1 ? 'album' : 'albums'} ` +
+      `${s === 1 ? 'carries' : 'carry'} no usable date and ${s === 1 ? 'is' : 'are'} not drawn; ` +
+      `${q} ${q === 1 ? 'musician appears' : 'musicians appear'} only on those sessions.`
+    );
+  });
 </script>
 
 <div class="working">
@@ -424,10 +455,9 @@
     </section>
 
     <p class="footnote">
-      {data.meta.undatedSessions} sessions across {data.meta.undatedAlbums.length}
-      albums carry no usable date and are not drawn; {data.meta.undatedOnlyPeople}
-      musicians appear only on those sessions. “Final exit” marks a musician's
-      last appearance in this canon — not death or retirement.
+      {#if undatedNote}{undatedNote}{/if}
+      “Final exit” marks a musician's last appearance in this canon — not death
+      or retirement.
     </p>
   {:else}
     <p class="fatal">Loading…</p>
