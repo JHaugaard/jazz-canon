@@ -7,15 +7,30 @@
   import FloatingWindow from './lib/FloatingWindow.svelte';
   import PlaceWindow from './lib/PlaceWindow.svelte';
   import About from './lib/About.svelte';
+  import Working from './lib/Working.svelte';
   import Search from './lib/Search.svelte';
   import type { AlbumCard } from './lib/types';
 
   let albums = $state<AlbumCard[] | null>(null);
   let loadError = $state<string | null>(null);
-  let view = $state<'timeline' | 'about'>('timeline');
+
+  type Route = 'home' | 'working' | 'about';
+
+  function parseHash(): Route {
+    const h = window.location.hash;
+    if (h.startsWith('#/working')) return 'working';
+    if (h.startsWith('#/about')) return 'about';
+    return 'home';
+  }
+
+  let route = $state<Route>(parseHash());
+
+  function go(r: Route) {
+    window.location.hash = r === 'home' ? '#/' : `#/${r}`;
+  }
 
   function goHome() {
-    view = 'timeline';
+    go('home');
     nav.close();
   }
 
@@ -34,7 +49,7 @@
   let placeName = $state('');
 </script>
 
-<svelte:window onkeydown={onKeydown} />
+<svelte:window onkeydown={onKeydown} onhashchange={() => (route = parseHash())} />
 
 <div class="shell">
   <header class="masthead">
@@ -73,19 +88,22 @@
     </button>
 
     <Search
-      onOpenPerson={(pid) => { view = 'timeline'; nav.openPerson(pid); }}
-      onOpenAlbum={(aid) => { view = 'timeline'; nav.openAlbum(aid); }}
+      onOpenPerson={(pid) => { go('home'); nav.openPerson(pid); }}
+      onOpenAlbum={(aid) => { go('home'); nav.openAlbum(aid); }}
     />
 
     <nav class="mast-nav">
-      <button class="nav-link" class:active={view === 'timeline'} onclick={goHome}>Home</button>
-      <button class="nav-link" class:active={view === 'about'} onclick={() => (view = 'about')}>About</button>
+      <button class="nav-link" class:active={route === 'home'} onclick={goHome}>Home</button>
+      <button class="nav-link" class:active={route === 'working'} onclick={() => go('working')}>Working</button>
+      <button class="nav-link" class:active={route === 'about'} onclick={() => go('about')}>About</button>
     </nav>
   </header>
 
   <main>
-    {#if view === 'about'}
+    {#if route === 'about'}
       <About onopen={(id) => nav.openAlbum(id)} />
+    {:else if route === 'working'}
+      <Working onOpenPerson={(pid) => nav.openPerson(pid)} />
     {:else if loadError}
       <p class="fatal">Couldn’t load the canon data ({loadError}).</p>
     {:else if !albums}
