@@ -102,3 +102,34 @@ export interface Place {
   precision: PlacePrecision;
   albums: PlaceAlbumRef[];
 }
+
+/* ---- Working page (people-activity.json contract, ratified 2026-08-18) ---- */
+
+/* date is YYYY-MM-DD or YYYY-MM — string length IS the precision (spec D7). */
+export interface PersonSession {
+  date: string;
+  albumId: string;
+}
+
+export interface PersonActivity {
+  personId: string; // same id space as GraphData.people — never join on names
+  name: string;
+  instruments: string[];
+  yearsActive: number; // distinct calendar years with ≥1 dated session
+  first: string; // earliest dated session — lane start
+  last: string; // latest dated session — end-cap
+  sessions: PersonSession[];
+}
+
+export interface PeopleActivityMeta {
+  spanStart: string;
+  spanEnd: string;
+  undatedSessions: number;
+  undatedOnlyPeople: number;
+  undatedAlbums: string[];
+}
+
+export interface PeopleActivityFile {
+  people: PersonActivity[];
+  meta: PeopleActivityMeta;
+}
