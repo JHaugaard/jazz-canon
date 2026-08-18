@@ -16,6 +16,13 @@
   const PX_PER_MONTH = 3.4;
   const PX_PER_YEAR = PX_PER_MONTH * 12;
   const ROW_H = 26;
+  /* A mark at January of yearStart sits 1.7px into the field and is 6.4px
+     wide, so without a gutter the SVG viewport (overflow: hidden by default)
+     shaves the 1949 cohort's first marks — and the same at the far end. The
+     gutter pads both ends and every x in the field is offset through xm(),
+     axis ticks and hairlines included, so the year columns still line up. */
+  const GUTTER = 5;
+  const xm = (months: number) => GUTTER + months * PX_PER_MONTH;
 
   let data = $state<PeopleData | null>(null);
   let loadError = $state<string | null>(null);
@@ -42,6 +49,7 @@
     return Array.from({ length: d.yearEnd - d.yearStart + 1 }, (_, i) => d.yearStart + i);
   });
   let fieldW = $derived(years.length * PX_PER_YEAR);
+  let svgW = $derived(fieldW + GUTTER * 2);
 </script>
 
 <div class="working">
@@ -61,6 +69,7 @@
       style:--field-w="{fieldW}px"
       style:--year-w="{PX_PER_YEAR}px"
       style:--row-h="{ROW_H}px"
+      style:--gutter="{GUTTER}px"
     >
       <div class="controls">
         <!-- Task 5 hangs the threshold stepper and the search box here. -->
@@ -82,19 +91,21 @@
             <div class="axis-name"></div>
             <div class="axis-track">
               {#each years as y}
-                <span class="tick" style:left="{(y - yearStart) * PX_PER_YEAR}px"></span>
+                {@const yearX = xm((y - yearStart) * 12)}
+                <span class="tick" style:left="{yearX}px"></span>
                 <span
                   class="tick-label display"
                   class:minor={y % 5 !== 0}
-                  style:left="{(y - yearStart) * PX_PER_YEAR + 4}px"
+                  style:left="{yearX + 4}px"
                 >{y % 5 === 0 ? y : `’${String(y).slice(2)}`}</span>
               {/each}
             </div>
           </div>
 
           {#each roster as p (p.personId)}
-            {@const firstX = monthOffset(p.first, yearStart) * PX_PER_MONTH}
-            {@const lastX = monthOffset(p.last, yearStart) * PX_PER_MONTH}
+            {@const firstX = xm(monthOffset(p.first, yearStart))}
+            {@const lastX = xm(monthOffset(p.last, yearStart))}
+            {@const instruments = p.instruments.join(', ')}
             <button
               class="lane-row"
               id="lane-{p.personId}"
@@ -103,14 +114,17 @@
             >
               <span class="lane-name">
                 <span class="who">{p.name}</span>
-                {#if p.instruments.length > 0}
-                  <span class="inst" title={p.instruments.join(', ')}>{p.instruments[0]}</span>
+                {#if instruments}
+                  <!-- the export's instruments array is alphabetical, not
+                       primacy-ordered, so the whole list goes out: picking one
+                       would name Miles Davis a flugelhorn player. -->
+                  <span class="inst" title={instruments}>{instruments}</span>
                 {/if}
               </span>
               <span class="lane-cell">
                 <!-- aria-hidden: the row's own label carries the meaning; the
                      <title>s here are hover affordances, not a second reading. -->
-                <svg width={fieldW} height={ROW_H} aria-hidden="true">
+                <svg width={svgW} height={ROW_H} aria-hidden="true">
                   <!-- first→last, drawn straight through every gap: a hiatus is
                        this line continuing, and is never special-cased. -->
                   <line
@@ -122,7 +136,7 @@
                     stroke-width="1"
                   />
                   {#each laneMarks(p, yearStart) as mk}
-                    <circle cx={mk.m * PX_PER_MONTH} cy={ROW_H / 2} r="3.2" fill="var(--bn-blue)">
+                    <circle cx={xm(mk.m)} cy={ROW_H / 2} r="3.2" fill="var(--bn-blue)">
                       <title>{albums.get(mk.albumId)?.title ?? mk.albumId} — {mk.date}</title>
                     </circle>
                   {/each}
@@ -159,7 +173,7 @@
      phones; --field-w / --year-w / --row-h come from the data's own span. */
   .field-wrap {
     --name-w: 200px;
-    max-width: calc(var(--name-w) + var(--field-w) + 56px);
+    max-width: calc(var(--name-w) + var(--field-w) + 2 * var(--gutter) + 56px);
     margin: 26px auto 0;
     padding: 0 28px;
   }
@@ -183,7 +197,7 @@
     border-radius: 6px;
     background: var(--bg);
   }
-  .field { width: calc(var(--name-w) + var(--field-w)); }
+  .field { width: calc(var(--name-w) + var(--field-w) + 2 * var(--gutter)); }
 
   .axis {
     position: sticky;
@@ -278,6 +292,8 @@
       var(--line) 0 1px,
       transparent 1px var(--year-w)
     );
+    /* the gutter shifts the field's x=0, so the hairlines shift with it */
+    background-position-x: var(--gutter);
     opacity: 0.55;
     pointer-events: none;
   }
@@ -286,7 +302,11 @@
   @media (max-width: 620px) {
     article { padding: 26px 18px 6px; }
     h1 { font-size: 30px; }
-    .field-wrap { --name-w: 124px; padding: 0 14px; max-width: calc(var(--name-w) + var(--field-w) + 28px); }
+    .field-wrap {
+      --name-w: 124px;
+      padding: 0 14px;
+      max-width: calc(var(--name-w) + var(--field-w) + 2 * var(--gutter) + 28px);
+    }
     .who { font-size: 12.5px; }
     .inst { display: none; }
   }
