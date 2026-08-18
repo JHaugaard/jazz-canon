@@ -178,7 +178,9 @@
     >
       <div class="controls">
         <div class="stepper" role="group" aria-label="Minimum years active">
-          {#each [1, 2, 3, 4] as n}
+          <!-- widest threshold first: 4+ is the default and the reading most
+               people want, so it sits where the eye lands -->
+          {#each [4, 3, 2, 1] as n}
             <button
               type="button"
               class="nav-btn step-btn"
