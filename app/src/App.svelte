@@ -25,14 +25,28 @@
 
   let route = $state<Route>(parseHash());
 
+  /* One rule for every top-level destination: changing route closes whatever
+     panel or window was open. Home used to be the only one that did. */
   function go(r: Route) {
+    nav.close();
     window.location.hash = r === 'home' ? '#/' : `#/${r}`;
   }
 
   function goHome() {
     go('home');
-    nav.close();
   }
+
+  const BASE_TITLE = 'A Jazz Canon — Jazz on Record';
+  const ROUTE_TITLE: Record<Route, string> = {
+    home: BASE_TITLE,
+    working: 'A Jazz Canon — Working',
+    about: 'A Jazz Canon — About',
+  };
+  /* the routes are linkable (D3), so a bookmark or a tab strip has to be able
+     to tell them apart */
+  $effect(() => {
+    document.title = ROUTE_TITLE[route];
+  });
 
   loadAlbums()
     .then((a) => (albums = a))

@@ -15,7 +15,6 @@ export interface Mark {
 
 export interface PeopleData {
   people: PersonActivity[];
-  byId: Map<string, PersonActivity>;
   meta: PeopleActivityMeta;
   yearStart: number;
   yearEnd: number;
@@ -45,14 +44,28 @@ export function buildPeopleData(raw: PeopleActivityFile): PeopleData {
       continue;
     }
     sessions.sort((a, b) => (a.date === b.date ? compareStr(a.albumId, b.albumId) : compareStr(a.date, b.date)));
-    people.push({ ...p, sessions });
+
+    /* first/last/yearsActive are recomputed from the sessions that survived,
+       not taken on trust: they place the lane line, the end-cap and the
+       threshold, and a drifting export would otherwise put them silently out
+       of step with the marks. Dates are YYYY-MM-DD or YYYY-MM, which compare
+       correctly as strings in both directions. */
+    const first = sessions[0].date;
+    const last = sessions[sessions.length - 1].date;
+    const yearsActive = new Set(sessions.map((s) => s.date.slice(0, 4))).size;
+    if (DEV && (first !== p.first || last !== p.last || yearsActive !== p.yearsActive)) {
+      console.warn(
+        `people-activity.json: person "${p.personId}" states first/last/yearsActive ` +
+          `${p.first}/${p.last}/${p.yearsActive} but its sessions give ` +
+          `${first}/${last}/${yearsActive} — using the sessions`
+      );
+    }
+    people.push({ ...p, sessions, first, last, yearsActive });
   }
   people.sort((a, b) => (a.first === b.first ? compareStr(a.personId, b.personId) : compareStr(a.first, b.first)));
 
-  const byId = new Map(people.map((p) => [p.personId, p]));
   return {
     people,
-    byId,
     meta: raw.meta,
     yearStart: Number(raw.meta.spanStart.slice(0, 4)),
     yearEnd: Number(raw.meta.spanEnd.slice(0, 4)),
@@ -111,8 +124,4 @@ export function laneMarks(p: PersonActivity, yearStart: number): Mark[] {
     });
   }
   return marks;
-}
-
-export function filterByYears(people: PersonActivity[], minYears: number): PersonActivity[] {
-  return people.filter((p) => p.yearsActive >= minYears);
 }
