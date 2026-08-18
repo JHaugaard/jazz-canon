@@ -14,14 +14,14 @@
      so the field is measured in months and the year is simply twelve of them.
      Span, width and axis all derive from the loaded data — nothing here knows
      which years the canon covers. */
-  const PX_PER_MONTH = 3.4;
+  const PX_PER_MONTH = 5;
   const PX_PER_YEAR = PX_PER_MONTH * 12;
   const ROW_H = 26;
-  /* A mark at January of yearStart sits 1.7px into the field and is 6.4px
-     wide, so without a gutter the SVG viewport (overflow: hidden by default)
-     shaves the 1949 cohort's first marks — and the same at the far end. The
-     gutter pads both ends and every x in the field is offset through xm(),
-     axis ticks and hairlines included, so the year columns still line up. */
+  /* A mark at January of yearStart sits half a month into the field and is
+     6.4px wide, so without a gutter the SVG viewport (overflow: hidden by
+     default) shaves the 1949 cohort's first marks — and the same at the far
+     end. The gutter pads both ends and every x in the field is offset through
+     xm(), axis ticks and hairlines included, so the year columns still line up. */
   const GUTTER = 5;
   const xm = (months: number) => GUTTER + months * PX_PER_MONTH;
 
