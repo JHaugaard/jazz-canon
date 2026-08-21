@@ -1,61 +1,75 @@
-# Deployment — Cloudflare Pages (live)
+# Deployment — Cloudflare Pages
 
-Production: **https://jazz-canon.pages.dev** — Cloudflare Pages project
-**`jazz-canon`** (pinned in `app/wrangler.toml`, first deployed 2026-07-03).
+Production: https://jazzcanon.com/
+Cloudflare Pages project: `jazz-canon`
+Static artifact: `app/dist/`
 
-The build artifact is a fully static directory: `app/dist/` (HTML + JS + CSS
-+ the data JSON files + brand SVGs). No server, no environment variables, no
-build-time secrets. Cover art is hotlinked from Cover Art Archive / iTunes
-CDN per DECISIONS.md D6.
+This repository has two deployment lanes. Do not combine them.
 
-## Every deploy (owner runs these)
+## Code lane — jazz-canon
 
-```bash
-cd app
-npm run build                 # emits app/dist
-npx wrangler pages deploy     # project + output dir come from wrangler.toml
-```
-
-Wrangler prints a `*.jazz-canon.pages.dev` preview URL and promotes the
-deploy to production on success. That's the whole procedure for code-only
-changes — the data JSONs in `app/public/data/` pass through the build
-unchanged.
-
-## When the dataset changes
-
-The data exporter lives in the platform project, not this repo. Most of
-`app/public/data/*.json` are gitignored and generated — `places.json` is the
-exception: it's tracked, so after a re-export rewrites it, review the diff
-and commit the change. After a re-export lands new `albums.json` /
-`details.json` / `graph.json` / `places.json`:
+Use this lane for site code, styling, routes, or approved copy when no export
+has changed since the last data ship.
 
 ```bash
-node scripts/enrich-previews.mjs   # re-add Apple 30-second preview URLs (needs network)
-node scripts/build-basemap.mjs     # rebuild basemap.json after any export touching places
-cd app && npm run build
-npx wrangler pages deploy
+scripts/deploy.sh --dry-run
+scripts/deploy.sh --expect "literal changed text" --probe-path /data/albums.json
 ```
 
-`enrich-previews.mjs` must run after every export — the export regenerates
-`details.json` without preview URLs. It is resilient: albums it can't look
-up are simply left without preview buttons, and the build never depends on
-it. It's also idempotent and safe to re-run any time (e.g. if Apple's CDN
-preview links rot months from now).
+Use `--probe-path /` for route copy bundled into the application JavaScript.
+Use the exact runtime resource path for JSON/content changes.
 
-`build-basemap.mjs` must run after any export that touches places — it's
-the only coverage guard, and it exits 1 if a place falls outside every
-basemap region. Skip it and production silently renders that pin on blank
-paper with no warning. Commit the refreshed `basemap.json` alongside
-`places.json`.
+`scripts/deploy.sh` is attended. It:
 
-## Notes
+1. Requires the checksum manifest to name exactly the five canonical exports,
+   then verifies every hash. Alternate manifests are dry-run-only test inputs.
+2. Runs `npm --prefix app run check` and `npm --prefix app run build`.
+3. Serves `app/dist`, prints `http://vps8-core:4173/`, and displays the exact
+   dirty working tree included in the build.
+4. Waits for John's explicit `go` after he reviews both preview and working
+   tree. Silence is not assent.
+5. Runs the lockfile-pinned local Wrangler from `app/`; it cannot download a
+   surprise current release after approval.
+6. Verifies the unique Pages deployment URL first, including all
+   release-specific JavaScript and stylesheet asset filenames plus the caller's
+   changed content. It then retries the custom domain until that same release
+   asset set and content are live.
 
-- `app/wrangler.toml` pins the project name (`jazz-canon`) and `dist` output
-  dir, so the bare `npx wrangler pages deploy` form works from `app/`.
-  Don't pass `--project-name` — a mistyped name silently creates a new,
-  empty Pages project.
-- Wrangler auth is interactive (`npx wrangler login`, already done on vps8);
-  headless/scripted deploys would need a `CLOUDFLARE_API_TOKEN` instead.
-- No `_redirects` needed: the app is a single page with no client routes.
-- Custom domain, if wanted later, is attached in the Cloudflare dashboard
-  under the Pages project.
+`--dry-run` proves the exact manifest, type checks, build, and preview without
+deploying or asking for approval.
+
+A data mismatch means: stop. DM mccoy or ask John. Do not refresh the checksum
+record and do not edit the export locally to make the gate pass.
+
+## Data lane — mccoy
+
+Any export regeneration or status transition belongs to mccoy. From the
+mccoy-tyner workbench, mccoy runs its canonical `ship.sh --go` pipeline:
+export, copy, enrich, basemap, build, preview, deploy, and approved-to-live
+status flip.
+
+jazz-canon never runs `ship.sh`, `export.sh`, or `publish.sh`. For mixed work,
+mccoy completes the data ship first; jazz-canon may then run the attended code
+lane.
+
+## Data-file facts
+
+Every site build carries the complete local snapshot in `app/public/data/`.
+The checksum gate covers:
+
+- `albums.json`
+- `details.json`
+- `graph.json`
+- `places.json`
+- `people-activity.json`
+
+`places.json` and `people-activity.json` are git-tracked. The first three are
+generated and ignored. `recently-added.json` is separately tracked and
+hand-maintained until mccoy's durable ship manifest exists.
+
+## Routing and configuration
+
+The app uses hash routes: `#/`, `#/working`, and `#/about`. No `_redirects`
+file is required for these routes. `app/wrangler.toml` is read-and-invoke-only
+in the jazz-canon lane. Cloudflare project settings, DNS, custom-domain state,
+and account-level anomalies go to the-super.
