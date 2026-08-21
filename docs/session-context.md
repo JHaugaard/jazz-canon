@@ -27,13 +27,20 @@ gitignored `.claude/session-context.md` as shared truth.
 - Remaining build step: independent re-review, then commit only the intended
   deployment/profile-handshake files. No push or deploy is part of this build.
 
-## 2026-08-21 — copy edits (uncommitted, awaiting John's preview nod)
+## 2026-08-21 — copy edits LIVE on jazzcanon.com
 
-- Branch: `profile/jazz-canon-build`.
 - About lede: "had not yet crossed into fusion" → "into fusion".
 - About: Jon Milavec dedication added below the "Jazz on Record" tagline.
 - Working intro: added "Hover on any dot for clickable album information."
 - Working footnote: dropped the "sessions across albums carry no usable
-  date" clause; undated-only musician count now spelled out in words.
-- Verified: `npm run check` 0/0, Vite build clean, strings confirmed in bundle.
-- Next gate: John's preview nod before any deploy via `scripts/deploy.sh`.
+  date" clause; undated-only musician count now spelled out in words
+  (live data: 33 → "Thirty-three musicians appear only on undated sessions.").
+- Deploy: John's in-session nod; committed on the branch, fast-forwarded
+  main (65a21d5..1751040), ran scripts/deploy.sh from main. First attempt
+  from the branch produced a preview-only deployment (branch alias) that
+  could not advance the custom domain — main is the production branch.
+- Live verified: bundle index-BB5S7NQt.js serves all four changes;
+  checksum gate, svelte-check, and build all green.
+- Note: git committer identity was auto-derived (john@srv1086450.hstgr.cloud);
+  not changed here — git config is the-super's lane.
+- Branch is merged to main; no remote push (push posture pending the-super).
