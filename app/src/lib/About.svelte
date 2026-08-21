@@ -16,8 +16,8 @@
     <h1 class="display">About A Jazz Canon</h1>
     <p class="lede">
       A personal, opinionated map of records made after
-      1949 as jazz moved out of bebop and had not yet crossed
-      into fusion. The collection and canon will grow over time.
+      1949 as jazz moved out of bebop and into fusion.
+      The collection and canon will grow over time.
     </p>
 
     <h2 class="display">What this is</h2>
@@ -63,6 +63,14 @@
     <RecentlyAdded {onopen} />
 
     <p class="tagline display">Jazz on Record</p>
+
+    <p class="dedication">
+      This project and site are dedicated to the memory of Jon Milavec
+      (1974–2025). Jon was a musician and artist who loved and was loved by
+      his family and friends. Jon is the only person I know who reinforced
+      the floor of his music room to handle the weight of his record
+      collection. We miss him.
+    </p>
 
     <footer class="contact">
       <span class="by">Gathered by John Haugaard · July 2026</span>
@@ -124,6 +132,13 @@
     font-size: 20px;
     color: var(--impulse-amber);
     letter-spacing: 0.14em;
+  }
+  .dedication {
+    font-family: var(--font-serif);
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--ink);
+    margin: 20px 0 0;
   }
   .contact {
     margin-top: 22px;

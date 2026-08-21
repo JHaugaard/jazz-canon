@@ -272,21 +272,28 @@
   let fieldW = $derived(years.length * PX_PER_YEAR);
   let svgW = $derived(fieldW + GUTTER * 2);
 
-  /* The undated clause disappears entirely once every session carries a date —
-     it must never claim something about a set that no longer exists — and each
-     count carries its own noun, because "1 sessions across 1 albums" is one
-     data ship away. */
+  /* Small counts are spelled out in the footnote's voice; anything larger
+     than ninety-nine falls back to digits rather than risk a wrong word. */
+  const ONES = [
+    'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight',
+    'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen',
+    'sixteen', 'seventeen', 'eighteen', 'nineteen',
+  ];
+  const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+  function words(n: number): string {
+    if (n < 20) return ONES[n];
+    if (n < 100) return TENS[Math.floor(n / 10)] + (n % 10 ? '-' + ONES[n % 10] : '');
+    return String(n);
+  }
+  const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  /* The note disappears entirely once every session carries a date — it must
+     never claim something about a set that no longer exists. */
   let undatedNote = $derived.by(() => {
     const m = data?.meta;
     if (!m || m.undatedSessions === 0) return '';
-    const s = m.undatedSessions;
-    const a = m.undatedAlbums.length;
     const q = m.undatedOnlyPeople;
-    return (
-      `${s} ${s === 1 ? 'session' : 'sessions'} across ${a} ${a === 1 ? 'album' : 'albums'} ` +
-      `${s === 1 ? 'carries' : 'carry'} no usable date and ${s === 1 ? 'is' : 'are'} not drawn; ` +
-      `${q} ${q === 1 ? 'musician appears' : 'musicians appear'} only on those sessions.`
-    );
+    return `${cap(words(q))} ${q === 1 ? 'musician appears' : 'musicians appear'} only on undated sessions. `;
   });
 </script>
 

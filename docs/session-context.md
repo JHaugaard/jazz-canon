@@ -26,3 +26,14 @@ gitignored `.claude/session-context.md` as shared truth.
   lockfile-pinned Wrangler 4.125.0, dry-run preview, and profile audit all pass.
 - Remaining build step: independent re-review, then commit only the intended
   deployment/profile-handshake files. No push or deploy is part of this build.
+
+## 2026-08-21 — copy edits (uncommitted, awaiting John's preview nod)
+
+- Branch: `profile/jazz-canon-build`.
+- About lede: "had not yet crossed into fusion" → "into fusion".
+- About: Jon Milavec dedication added below the "Jazz on Record" tagline.
+- Working intro: added "Hover on any dot for clickable album information."
+- Working footnote: dropped the "sessions across albums carry no usable
+  date" clause; undated-only musician count now spelled out in words.
+- Verified: `npm run check` 0/0, Vite build clean, strings confirmed in bundle.
+- Next gate: John's preview nod before any deploy via `scripts/deploy.sh`.
