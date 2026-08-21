@@ -38,6 +38,11 @@ Use the exact runtime resource path for JSON/content changes.
 `--dry-run` proves the exact manifest, type checks, build, and preview without
 deploying or asking for approval.
 
+Run the real deploy from `main` only. Wrangler infers the branch from git
+HEAD; any other branch produces a preview deployment that the custom domain
+will never advance to, and step 6 will fail after the upload has already
+happened. Merge the named branch to `main` (with John's nod) first.
+
 A data mismatch means: stop. DM mccoy or ask John. Do not refresh the checksum
 record and do not edit the export locally to make the gate pass.
 
