@@ -61,3 +61,20 @@ gitignored `.claude/session-context.md` as shared truth.
   ship was underway (by design), green at deploy preflight and after.
 - Protected pre-existing changes (places.json, people-activity.json,
   .docs/, places brief) remain unstaged per this file.
+
+## 2026-08-22 — straight-through ship plan APPROVED
+
+- John approved the joint jazz-canon/mccoy plan: his instruction to mccoy to
+  ship is the only human authorization. There are no intervening approval
+  checkpoints through verified site follow-through.
+- Proposed mechanics (implementation pending a Claude Code handoff in both
+  repos): ship.sh writes an in-progress flag, then only after verified ship
+  writes a machine-readable last-ship manifest and checksum refresh; a
+  jazz-canon follow-through script validates that handoff, updates
+  recently-added.json, commits, deploys from main, verifies served batch ids,
+  and sends John one final report.
+- Automatic safety tripwires remain: in-progress flag, exact checksum gate,
+  manifest/export cross-check, main-only deploy, and independent live
+  verification. These stop bad state; they do not request another human nod.
+- John confirmed the operative date for all landing, shipping, and deployment:
+  2026-08-22.
