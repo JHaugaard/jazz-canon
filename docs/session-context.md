@@ -57,6 +57,7 @@ gitignored `.claude/session-context.md` as shared truth.
   mccoy's post-ship checksum manifest refresh; committed on the branch,
   fast-forwarded main (e8cf744..a83b698), deployed from main.
 - Live verified independently: /data/recently-added.json serves 74 entries,
-  all 10 new ids on top dated 2026-08-22; checksum gate green throughout.
+  all 10 new ids on top dated 2026-08-22. Gate was red 11:13–11:18 while the
+  ship was underway (by design), green at deploy preflight and after.
 - Protected pre-existing changes (places.json, people-activity.json,
   .docs/, places brief) remain unstaged per this file.
