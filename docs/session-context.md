@@ -47,8 +47,10 @@ gitignored `.claude/session-context.md` as shared truth.
 
 ## 2026-08-22 — recently-added follow-through LIVE (10 albums)
 
-- mccoy's ship of 10 albums completed 2026-08-21 (169 live, verified from
-  both seats); recently-added.json follow-through was held for a nod.
+- mccoy's ship of 10 albums completed 2026-08-22 (169 live, verified from
+  both seats; session timestamps straddled midnight but John's clock rules:
+  ship, landing, and deploy all date 2026-08-22). The recently-added.json
+  follow-through was held overnight for a nod.
 - John ruled 2026-08-22: recently-added updates derived from mccoy's ship
   manifest are pre-authorized ship follow-through, no per-ship nod.
 - Deployed under that ruling: 10 entries prepended (added 2026-08-22) plus
