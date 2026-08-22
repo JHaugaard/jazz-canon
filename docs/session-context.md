@@ -44,3 +44,17 @@ gitignored `.claude/session-context.md` as shared truth.
 - Note: git committer identity was auto-derived (john@srv1086450.hstgr.cloud);
   not changed here — git config is the-super's lane.
 - Branch is merged to main; no remote push (push posture pending the-super).
+
+## 2026-08-22 — recently-added follow-through LIVE (10 albums)
+
+- mccoy's ship of 10 albums completed 2026-08-21 (169 live, verified from
+  both seats); recently-added.json follow-through was held for a nod.
+- John ruled 2026-08-22: recently-added updates derived from mccoy's ship
+  manifest are pre-authorized ship follow-through, no per-ship nod.
+- Deployed under that ruling: 10 entries prepended (added 2026-08-22) plus
+  mccoy's post-ship checksum manifest refresh; committed on the branch,
+  fast-forwarded main (e8cf744..a83b698), deployed from main.
+- Live verified independently: /data/recently-added.json serves 74 entries,
+  all 10 new ids on top dated 2026-08-22; checksum gate green throughout.
+- Protected pre-existing changes (places.json, people-activity.json,
+  .docs/, places brief) remain unstaged per this file.
