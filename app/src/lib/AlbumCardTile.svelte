@@ -6,6 +6,11 @@
 
   let artFailed = $state(false);
 
+  // Cover-art URLs arrive from mccoy's export; a minority are plain http and
+  // pay a 307 redirect to https on every load. Upgrade at render time — the
+  // export is never edited, only the URL the browser is handed.
+  let artSrc = $derived(album.artUrl.replace(/^http:\/\//, 'https://'));
+
   // Records that arrived through an opened genre gate are marked on the card
   // rather than on the canvas: a top-edge accent for the genre gate, and a
   // separate, quieter pip for the ECM label tag (a label should never read
@@ -32,9 +37,10 @@
   <div class="art">
     {#if !artFailed}
       <img
-        src={album.artUrl}
+        src={artSrc}
         alt={`${album.title} cover`}
         loading="lazy"
+        decoding="async"
         onerror={() => (artFailed = true)}
       />
     {:else}
