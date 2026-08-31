@@ -79,7 +79,7 @@ gitignored `.claude/session-context.md` as shared truth.
 - John confirmed the operative date for all landing, shipping, and deployment:
   2026-08-22.
 
-## 2026-08-30 — Open Graph preview fix committed (not deployed)
+## 2026-08-30 — Open Graph preview fix LIVE
 
 - Branch: `main`; John explicitly authorized this narrow OG commit directly on
   main in the active session.
@@ -98,7 +98,12 @@ gitignored `.claude/session-context.md` as shared truth.
 - Protected pre-existing work remains untouched:
   `app/public/data/places.json`, `app/public/data/people-activity.json`, and
   `.docs/`.
-- Committed as `Site: add Open Graph social card` (not pushed).
-- Next gate: the stale five-file checksum manifest must be refreshed by mccoy,
-  then John's in-session review and explicit preview/deploy nod. No deploy,
-  merge, or push has occurred.
+- Committed as `4ba102d` (`Site: add Open Graph social card`). mccoy refreshed
+  the exact five-file checksum manifest in `079aa14`; all five checks now pass.
+- Deployed from `main` after John's active-session finalization authorization.
+  Wrangler deployment: `https://8c624b37.jazz-canon.pages.dev`.
+- Independently live-verified: the custom-domain HTML serves every canonical,
+  Open Graph, and X/Twitter tag; `/brand/open-graph.png` returns HTTP 200 as a
+  1200×630 `image/png` whose SHA-256 exactly matches the committed card.
+- Protected pre-existing work remains unstaged: `places.json`,
+  `people-activity.json`, and `.docs/`.
