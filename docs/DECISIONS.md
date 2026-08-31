@@ -602,3 +602,34 @@ shortcuts with albums keyboard-reachable via the Constellation.
 `docs/2026-08-18-who-was-working-brief.md`; plan
 `docs/superpowers/plans/2026-08-18-working-page.md`. Intro copy is John's
 pen: `app/src/lib/content/working-intro.txt` (lorem ipsum until he writes it).
+
+---
+
+## D24. Social card typography — all-caps permitted on the Open Graph raster
+
+**Status:** ACCEPTED (John, 2026-08-30)
+
+**Decision:** `app/public/brand/open-graph.png` (1200×630) sets "A JAZZ CANON"
+and "JAZZ ON RECORD" in uniform all-caps. This is an explicit, narrow exception
+to `style-guide.md` §3, which requires display text to use
+`font-variant: small-caps` with source text left in title-case, and forbids
+`text-transform: uppercase`.
+
+**Scope:** the raster social card only. The §3 small-caps rule remains binding
+everywhere else — every rendered surface in `app/src`, and any future brand
+asset. This entry is not a general relaxation of the case treatment.
+
+**Rationale:** raised at review as a brand-consistency break and ruled on
+directly by John: "exception is acceptable." The card is a flattened image
+consumed by third-party link scrapers at small sizes, not a page the browser
+types; the small-caps synthesis §3 relies on has no meaning in a PNG, and
+uniform caps hold up better at preview scale.
+
+**Why this is recorded:** without it, `style-guide.md` §3 and the shipped card
+contradict each other with nothing explaining the gap — a future session reads
+the rule, sees the asset, and re-raises the same question. That round trip
+already happened once (2026-08-30).
+
+**Reference:** card assets `app/public/brand/open-graph.png` and
+`open-graph.svg`; the `og:*` / `twitter:*` tags that consume them are in
+`app/index.html`. Rule waived: `style-guide.md` §3 "Case treatment".
