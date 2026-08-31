@@ -17,7 +17,7 @@
       <circle cx="562" cy="128" r="26"/><circle cx="562" cy="128" r="44"/><circle cx="562" cy="128" r="62"/><circle cx="562" cy="128" r="80"/><circle cx="562" cy="128" r="98"/>
     </g>
     <circle cx="562" cy="128" r="13" fill="#C4862A"/>
-    <rect x="132" y="-2" width="24" height="256" rx="4" transform="rotate(8 132 -2)" fill="#C4862A"/>
+    <rect x="132" y="-2" width="24" height="256" rx="4" transform="rotate(8 132 254)" fill="#C4862A"/>
   </g>
   <text x="110" y="482" fill="#2B5F7A" font-family="DejaVu Sans, sans-serif" font-size="84" font-weight="700" letter-spacing="2">A JAZZ CANON</text>
   <text x="116" y="540" fill="#6B6358" font-family="DejaVu Sans, sans-serif" font-size="30" font-weight="700" letter-spacing="8">JAZZ ON RECORD</text>
