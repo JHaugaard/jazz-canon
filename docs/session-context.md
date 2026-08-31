@@ -78,3 +78,27 @@ gitignored `.claude/session-context.md` as shared truth.
   verification. These stop bad state; they do not request another human nod.
 - John confirmed the operative date for all landing, shipping, and deployment:
   2026-08-22.
+
+## 2026-08-30 — Open Graph preview fix committed (not deployed)
+
+- Branch: `main`; John explicitly authorized this narrow OG commit directly on
+  main in the active session.
+- Observed production state: `https://jazzcanon.com/` serves a title and
+  description but no `og:*` or `twitter:*` metadata, and no social image is
+  referenced by the page.
+- Added a 1200×630 PNG social card at
+  `app/public/brand/open-graph.png`, retained its SVG source alongside it, and
+  added canonical, Open Graph, and X/Twitter card metadata in `app/index.html`.
+- Verified locally: `npm run check` (0 errors, 0 warnings) and `npm run build`
+  pass; the built HTML carries all metadata and the built PNG is 1200×630.
+- No prepared raster social image was found in the repository or its history.
+  Claude Code independently confirmed that result. Its small-caps concern was
+  superseded by John's narrowly scoped all-caps exception for this social card
+  in `docs/DECISIONS.md` D24.
+- Protected pre-existing work remains untouched:
+  `app/public/data/places.json`, `app/public/data/people-activity.json`, and
+  `.docs/`.
+- Committed as `Site: add Open Graph social card` (not pushed).
+- Next gate: the stale five-file checksum manifest must be refreshed by mccoy,
+  then John's in-session review and explicit preview/deploy nod. No deploy,
+  merge, or push has occurred.

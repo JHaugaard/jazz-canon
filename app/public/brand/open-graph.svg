@@ -1,0 +1,24 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#FAF8F3"/>
+  <rect x="0" y="0" width="24" height="630" fill="#C4862A"/>
+  <g transform="translate(110 122)">
+    <rect x="0" y="0" width="24" height="256" rx="5" fill="#2B5F7A"/>
+    <rect x="36" y="0" width="24" height="256" rx="5" fill="#4A7C95"/>
+    <rect x="72" y="0" width="24" height="256" rx="5" fill="#21506A"/>
+    <rect x="108" y="0" width="24" height="256" rx="5" fill="#2B5F7A"/>
+    <rect x="192" y="0" width="24" height="256" rx="5" fill="#4A7C95"/>
+    <rect x="228" y="0" width="24" height="256" rx="5" fill="#21506A"/>
+    <rect x="264" y="0" width="24" height="256" rx="5" fill="#2B5F7A"/>
+    <rect x="300" y="0" width="24" height="256" rx="5" fill="#4A7C95"/>
+    <rect x="336" y="0" width="24" height="256" rx="5" fill="#21506A"/>
+    <ellipse cx="396" cy="128" rx="38" ry="122" fill="#4A7C95"/>
+    <circle cx="562" cy="128" r="122" fill="#2B5F7A"/>
+    <g stroke="#FAF8F3" stroke-opacity=".5" stroke-width="4">
+      <circle cx="562" cy="128" r="26"/><circle cx="562" cy="128" r="44"/><circle cx="562" cy="128" r="62"/><circle cx="562" cy="128" r="80"/><circle cx="562" cy="128" r="98"/>
+    </g>
+    <circle cx="562" cy="128" r="13" fill="#C4862A"/>
+    <rect x="132" y="-2" width="24" height="256" rx="4" transform="rotate(8 132 -2)" fill="#C4862A"/>
+  </g>
+  <text x="110" y="482" fill="#2B5F7A" font-family="DejaVu Sans, sans-serif" font-size="84" font-weight="700" letter-spacing="2">A JAZZ CANON</text>
+  <text x="116" y="540" fill="#6B6358" font-family="DejaVu Sans, sans-serif" font-size="30" font-weight="700" letter-spacing="8">JAZZ ON RECORD</text>
+</svg>
