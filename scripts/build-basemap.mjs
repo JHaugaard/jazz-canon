@@ -37,6 +37,7 @@ const REGIONS = [
   { id: 'chicago',        bbox: [-88.6, 41.2, -86.6, 42.6],   tol: 0.0008, dec: 4 },
   { id: 'oslo',           bbox: [9.5, 59.2, 12.0, 60.6],      tol: 0.0008, dec: 4 },
   { id: 'stuttgart',      bbox: [8.0, 48.2, 10.4, 49.6],      tol: 0.0008, dec: 4 },
+  { id: 'cologne',        bbox: [5.8, 50.2, 8.2, 51.6],       tol: 0.0008, dec: 4 },
   { id: 'paris',          bbox: [1.3, 48.1, 3.3, 49.5],       tol: 0.0008, dec: 4 },
   { id: 'continental-us', bbox: [-125.5, 24.0, -66.5, 49.8],  tol: 0.02,   dec: 2 },
 ];
