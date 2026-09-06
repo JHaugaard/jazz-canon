@@ -633,3 +633,41 @@ already happened once (2026-08-30).
 **Reference:** card assets `app/public/brand/open-graph.png` and
 `open-graph.svg`; the `og:*` / `twitter:*` tags that consume them are in
 `app/index.html`. Rule waived: `style-guide.md` §3 "Case treatment".
+
+## D25. Constellation groups — "Add musician", same-album matching, cap of 4 (2026-09-06)
+
+**Status:** ACCEPTED (owner-directed; possibilities paper in the vault,
+`ideas/expanded-constellation.md`, Option A)
+
+**Decision:** The constellation can hold two to four musicians. Only albums
+crediting **every** selected musician are drawn ("same album", not "same
+track" — the graph export carries no track scope, and a shared release is a
+weaker claim than a shared performance). The selection is a chip row above
+the stage with one way in: **+ Add musician**, an autocomplete that, with an
+empty query, lists the people already on the shared albums with the album
+count each would leave ("who completes the group"), and with a typed query
+matches any musician in the canon, count included, zero allowed.
+
+1. **Cap = 4** (`MAX_GROUP` in `group-query.ts`, edited in one place). Owner's
+   rule: a starting musician plus three covers the interesting questions — a
+   rhythm section (Carter + two), a front line (Davis + the Kind of Blue horns).
+   Data would allow more (largest set of people sharing ≥2 albums is 15); the
+   limit is an interface choice, not a musical one.
+2. **Group edits are not history steps.** `NavEntry` person entries carry
+   `ids: string[]`; `nav.setGroup` replaces the top entry in place, so Back
+   returns to where the constellation was opened from, not through every chip
+   change. Removing the last chip pops the entry.
+3. **Empty intersection stays empty.** The stage shows "No shared albums in
+   this canon" with the chips preserved; it never silently widens to "any".
+4. **Clicking a collaborator still follows them alone** (unchanged). Adding is
+   only via the chip row, so "follow" and "add to group" never share a gesture.
+5. **Layout:** selected musicians are pinned on a ring (two: opposite; three or
+   four: polygon) with the shared albums seeded inside and pushed apart by a
+   stronger album charge; other collaborators float outside. Single-musician
+   constellations are untouched.
+
+Verified: `group-query.ts` under Node against the paper's three sets
+(Carter+Williams 7; +Hancock 6, Fuchsia Swing Song drops; Davis+Shorter 5),
+order/duplicate independence, monotone narrowing, and a union mutation that
+fails 5 checks. Playwright at 1512×900 and 390×844: 38 interaction checks,
+no console errors. `npm run check` clean.

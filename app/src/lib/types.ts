@@ -64,7 +64,10 @@ export interface GraphData {
 
 export type NavEntry =
   | { kind: 'album'; id: string }
-  | { kind: 'person'; id: string }
+  /* ids: one musician is the classic constellation; two to MAX_GROUP is a
+     group — albums crediting every one of them. Editing the group replaces
+     the entry in place; it is not a history step. */
+  | { kind: 'person'; ids: string[] }
   | { kind: 'place'; id: string };
 
 /* A hand-kept, site-side "what's new" entry. NOT canon data — `added` is the

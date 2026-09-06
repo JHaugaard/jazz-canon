@@ -10,20 +10,27 @@
   } from 'd3-force';
   import type { AlbumCard, GraphData } from './types';
   import { loadGraph, albumMap } from './data';
+  import { groupQuery, MAX_GROUP, type Collaborator } from './group-query';
 
   /* DOM ownership (DECISIONS.md D4): d3-force computes positions only.
      Svelte owns every SVG element; the tick handler updates state and
      Svelte re-renders. d3 never selects or mutates a DOM node. */
 
+  /* personIds: one musician is the classic constellation; two to MAX_GROUP
+     is a group, and only albums crediting every one of them are drawn. The
+     selection lives in the nav entry — this component asks for changes via
+     onGroupChange and never edits it locally. */
   let {
-    personId,
+    personIds,
     onOpenAlbum,
     onRecenter,
+    onGroupChange,
     onmeta,
   }: {
-    personId: string;
+    personIds: string[];
     onOpenAlbum: (albumId: string) => void;
     onRecenter: (personId: string) => void;
+    onGroupChange: (ids: string[]) => void;
     onmeta?: (m: { name: string }) => void;
   } = $props();
 
@@ -40,7 +47,7 @@
     kind: 'person';
     id: string;
     name: string;
-    shared: number; // albums shared with the center musician
+    shared: number; // albums shared with the selected musician(s)
     instruments: string;
     center: boolean;
     x: number;
@@ -77,8 +84,21 @@
     nodes = simNodes.map((n) => ({ ...n }));
     links = simLinks.map((l) => ({ ...l }));
   };
-  let centerName = $state('');
+  let centerName = $state(''); // selected names, ' · ' joined
   let centerInstruments = $state('');
+  let selected = $state<{ id: string; name: string }[]>([]);
+  let isGroup = $derived(selected.length > 1);
+  let centerProse = $derived(
+    selected.length < 2
+      ? selected.map((p) => p.name).join('')
+      : selected.slice(0, -1).map((p) => p.name).join(', ') + ' and ' + selected[selected.length - 1].name
+  );
+  // for the Add-musician suggestions: everyone else on the shared albums,
+  // best first, and each person's whole album set for typed lookups
+  let collaborators = $state<Collaborator[]>([]);
+  let graphRef: GraphData | null = null;
+  let albumSetOf = new Map<string, Set<string>>();
+  let sharedAlbumIds = new Set<string>();
   let albumCount = $state(0);
   let peopleCount = $state(0);
   let loading = $state(true);
@@ -111,7 +131,8 @@
   }
 
   $effect(() => {
-    const id = personId;
+    const ids = [...personIds];
+    const key = ids.join('|');
     loading = true;
     hovered = null;
     userAdjusted = false;
@@ -120,8 +141,8 @@
     let cancelled = false;
 
     Promise.all([loadGraph(), albumMap()]).then(([graph, albums]) => {
-      if (cancelled || id !== personId) return;
-      buildGraph(graph, albums, id);
+      if (cancelled || key !== personIds.join('|')) return;
+      buildGraph(graph, albums, ids);
       loading = false;
     });
 
@@ -132,73 +153,87 @@
     };
   });
 
-  function buildGraph(graph: GraphData, albums: Map<string, AlbumCard>, id: string) {
+  function buildGraph(graph: GraphData, albums: Map<string, AlbumCard>, ids: string[]) {
     sim?.stop();
+    graphRef = graph;
+    if (albumSetOf.size === 0) {
+      for (const e of graph.edges) {
+        let set = albumSetOf.get(e.p);
+        if (!set) albumSetOf.set(e.p, (set = new Set()));
+        set.add(e.a);
+      }
+    }
 
     // match the canvas to the stage's shape (kept for this graph's lifetime;
     // a later window resize just re-frames via zoom, it doesn't re-run forces)
     if (stageW > 0 && stageH > 0) W = clamp((H * stageW) / stageH, 560, 2600);
 
-    const myEdges = graph.edges.filter((e) => e.p === id);
-    const myAlbumIds = new Set(myEdges.map((e) => e.a));
-
-    // collaborators: everyone sharing at least one of those albums
-    const sharedCount = new Map<string, number>();
-    const collabInstruments = new Map<string, Set<string>>();
-    for (const e of graph.edges) {
-      if (!myAlbumIds.has(e.a) || e.p === id) continue;
-      sharedCount.set(e.p, (sharedCount.get(e.p) ?? 0) + 1);
-      let set = collabInstruments.get(e.p);
-      if (!set) collabInstruments.set(e.p, (set = new Set()));
-      for (const en of e.entries) set.add(en.instrument);
-    }
-
-    centerName = graph.people[id] ?? '?';
-    centerInstruments = [...new Set(myEdges.flatMap((e) => e.entries.map((en) => en.instrument)))].join(', ');
+    const q = groupQuery(graph, ids);
+    sharedAlbumIds = new Set(q.albumIds);
+    collaborators = q.collaborators;
+    selected = q.ids.map((id) => ({ id, name: graph.people[id] ?? '?' }));
+    centerName = selected.map((p) => p.name).join(' · ');
+    // instruments are only a clean one-liner for a single musician; a group's
+    // instruments belong on the chips, not the strip
+    centerInstruments = q.ids.length === 1 ? (q.instruments.get(q.ids[0]) ?? []).join(', ') : '';
     onmeta?.({ name: centerName });
 
     const cx = W / 2;
     const cy = H / 2;
+    const n = q.ids.length;
+    const group = n > 1;
 
-    const center: PersonNode = {
-      kind: 'person', id, name: centerName, shared: myAlbumIds.size,
-      instruments: centerInstruments, center: true,
-      x: cx, y: cy, fx: cx, fy: cy,
-    };
+    // selected musicians: one sits at the center; a group is pinned on a
+    // ring around it with the shared albums seeded inside, so every selected
+    // name is equally prominent and the albums read as what they have in common
+    const ringR = n === 2 ? 300 : 330;
+    const centers: PersonNode[] = q.ids.map((id, i) => {
+      const angle = n === 2 ? Math.PI * i : (2 * Math.PI * i) / n - Math.PI / 2;
+      const x = group ? cx + ringR * Math.cos(angle) : cx;
+      const y = group ? cy + ringR * Math.sin(angle) : cy;
+      return {
+        kind: 'person', id, name: graph.people[id] ?? '?', shared: q.albumIds.length,
+        instruments: (q.instruments.get(id) ?? []).join(', '), center: true,
+        x, y, fx: x, fy: y,
+      };
+    });
 
-    const albumNodes: AlbumNode[] = [...myAlbumIds].map((aid, i) => {
-      const angle = (2 * Math.PI * i) / myAlbumIds.size - Math.PI / 2;
+    const albumR = group ? 150 : 320;
+    const albumNodes: AlbumNode[] = q.albumIds.map((aid, i) => {
+      const angle = (2 * Math.PI * i) / q.albumIds.length - Math.PI / 2;
       return {
         kind: 'album', id: aid, album: albums.get(aid)!,
-        x: cx + 320 * Math.cos(angle), y: cy + 320 * Math.sin(angle),
+        x: cx + albumR * Math.cos(angle), y: cy + albumR * Math.sin(angle),
       };
     });
     const albumNodeById = new Map(albumNodes.map((n) => [n.id, n]));
 
-    const personNodes: PersonNode[] = [...sharedCount.entries()].map(([pid, count]) => {
+    const personNodes: PersonNode[] = q.collaborators.map((c) => {
       // seed near one of their shared albums
-      const firstAlbum = graph.edges.find((e) => e.p === pid && myAlbumIds.has(e.a))!;
+      const firstAlbum = graph.edges.find((e) => e.p === c.id && sharedAlbumIds.has(e.a))!;
       const anchor = albumNodeById.get(firstAlbum.a)!;
       const jitter = () => (Math.random() - 0.5) * 80;
+      const spread = group ? 2.4 : 0.6;
       return {
-        kind: 'person', id: pid, name: graph.people[pid] ?? '?', shared: count,
-        instruments: [...(collabInstruments.get(pid) ?? [])].join(', '),
+        kind: 'person', id: c.id, name: c.name, shared: c.shared,
+        instruments: c.instruments.join(', '),
         center: false,
-        x: anchor.x + (anchor.x - cx) * 0.6 + jitter(),
-        y: anchor.y + (anchor.y - cy) * 0.6 + jitter(),
+        x: anchor.x + (anchor.x - cx) * spread + jitter(),
+        y: anchor.y + (anchor.y - cy) * spread + jitter(),
       };
     });
 
-    simNodes = [center, ...albumNodes, ...personNodes];
+    simNodes = [...centers, ...albumNodes, ...personNodes];
     const allNodes = simNodes;
 
     const allLinks: Link[] = [];
-    for (const an of albumNodes) {
-      allLinks.push({ source: center, target: an, weight: 1 });
+    for (const c of centers) {
+      for (const an of albumNodes) allLinks.push({ source: c, target: an, weight: 1 });
     }
+    const personNodeById = new Map(personNodes.map((n) => [n.id, n]));
     for (const e of graph.edges) {
-      if (!myAlbumIds.has(e.a) || e.p === id) continue;
-      const pn = personNodes.find((n) => n.id === e.p)!;
+      const pn = personNodeById.get(e.p);
+      if (!pn || !sharedAlbumIds.has(e.a)) continue;
       allLinks.push({ source: pn, target: albumNodeById.get(e.a)!, weight: pn.shared });
     }
 
@@ -208,14 +243,16 @@
 
     sim = forceSimulation<Node>(allNodes)
       .force('link', forceLink<Node, Link>(allLinks)
-        .distance((l) => ((l.source as Node) as PersonNode).center ? 300 : 145)
+        .distance((l) => ((l.source as Node) as PersonNode).center ? (group ? 220 : 300) : 145)
         .strength(0.5))
       .force('charge', forceManyBody<Node>().strength((n) =>
-        n.kind === 'album' ? -900 : (n as PersonNode).center ? -1400 : -260))
+        // in a group the shared albums all sit between the same few pinned
+        // centers; stronger album repulsion keeps them from stacking there
+        n.kind === 'album' ? (group ? -2600 : -900) : (n as PersonNode).center ? -1400 : -260))
       .force('collide', forceCollide<Node>()
         // the center node gets a wide collision halo; every musician carries
         // a visible name label, so each gets generous personal space
-        .radius((n) => (n.kind === 'person' && n.center ? 110 : radius(n) + 16))
+        .radius((n) => (n.kind === 'person' && n.center ? (group ? 80 : 110) : radius(n) + (group && n.kind === 'album' ? 40 : 16)))
         .iterations(2))
       .force('x', forceX<Node>(cx).strength(0.03))
       .force('y', forceY<Node>(cy).strength(0.03))
@@ -394,31 +431,196 @@
     hoverPos = { x: sx - sr.left, y: sy - sr.top - radius(n) * Math.abs(m.d) - 8 };
   }
 
+  // --- Add musician (chips + autocomplete) ---
+  let addOpen = $state(false);
+  let addQuery = $state('');
+  let addActive = $state(0);
+  let addInput = $state<HTMLInputElement | null>(null);
+  let addBox = $state<HTMLElement | null>(null);
+  let atCap = $derived(selected.length >= MAX_GROUP);
+  const MAX_SUGGEST = 8;
+
+  const fold = (str: string) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+  interface Suggestion { id: string; name: string; shared: number; instruments: string }
+
+  /* Empty query: the people who'd narrow this group least, best first — "who
+     completes the group". Typed query: any musician in the canon, with the
+     album count they'd leave (0 is allowed and shown, never hidden: an empty
+     result is a real answer). */
+  let suggestions = $derived.by((): Suggestion[] => {
+    const q = fold(addQuery.trim());
+    const chosen = new Set(selected.map((p) => p.id));
+    if (!q) {
+      return collaborators
+        .slice(0, MAX_SUGGEST)
+        .map((c) => ({ id: c.id, name: c.name, shared: c.shared, instruments: c.instruments.slice(0, 2).join(', ') }));
+    }
+    if (!graphRef) return [];
+    const byId = new Map(collaborators.map((c) => [c.id, c]));
+    const hits: (Suggestion & { r: number })[] = [];
+    for (const [id, name] of Object.entries(graphRef.people)) {
+      if (chosen.has(id)) continue;
+      const norm = fold(name);
+      const at = norm.indexOf(q);
+      if (at < 0) continue;
+      const r = at === 0 ? 0 : norm[at - 1] === ' ' ? 1 : 2;
+      const c = byId.get(id);
+      let shared = c?.shared ?? 0;
+      if (!c) {
+        const mine = albumSetOf.get(id);
+        if (mine) for (const a of sharedAlbumIds) if (mine.has(a)) shared++;
+      }
+      hits.push({ id, name, shared, instruments: c?.instruments.slice(0, 2).join(', ') ?? '', r });
+    }
+    return hits
+      .sort((a, b) => a.r - b.r || b.shared - a.shared || a.name.localeCompare(b.name))
+      .slice(0, MAX_SUGGEST);
+  });
+
+  $effect(() => {
+    void suggestions.length;
+    addActive = 0;
+  });
+
+  function openAdd() {
+    if (atCap) return;
+    addOpen = true;
+    addQuery = '';
+    requestAnimationFrame(() => addInput?.focus());
+  }
+  function closeAdd() {
+    addOpen = false;
+    addQuery = '';
+  }
+  function addMusician(id: string) {
+    if (atCap || selected.some((p) => p.id === id)) return;
+    closeAdd();
+    onGroupChange([...selected.map((p) => p.id), id]);
+  }
+  function removeMusician(id: string) {
+    onGroupChange(selected.filter((p) => p.id !== id).map((p) => p.id));
+  }
+  function addKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape') {
+      e.stopPropagation(); // the window's Escape pops the nav stack
+      closeAdd();
+      return;
+    }
+    if (!suggestions.length) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      addActive = (addActive + 1) % suggestions.length;
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      addActive = (addActive - 1 + suggestions.length) % suggestions.length;
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      addMusician(suggestions[addActive].id);
+    }
+  }
+  function onWinDown(e: PointerEvent) {
+    if (addOpen && addBox && !addBox.contains(e.target as HTMLElement)) closeAdd();
+  }
+
   function truncate(s: string, n: number) {
     return s.length > n ? s.slice(0, n - 1) + '…' : s;
   }
 </script>
 
-<svelte:window onpointermove={onWinMove} onpointerup={onWinUp} />
+<svelte:window onpointermove={onWinMove} onpointerup={onWinUp} onpointerdown={onWinDown} />
 
 <div class="net">
   <div class="net-strip">
     <span class="const-label display">Constellation</span>
     <span class="stats">
       {#if centerInstruments}{centerInstruments}&ensp;·&ensp;{/if}
-      {albumCount} canon album{albumCount === 1 ? '' : 's'} · {peopleCount} collaborator{peopleCount === 1 ? '' : 's'}
+      {#if isGroup}
+        {albumCount} canon album{albumCount === 1 ? '' : 's'} featuring all {selected.length} · {peopleCount} other collaborator{peopleCount === 1 ? '' : 's'}
+      {:else}
+        {albumCount} canon album{albumCount === 1 ? '' : 's'} · {peopleCount} collaborator{peopleCount === 1 ? '' : 's'}
+      {/if}
     </span>
     <button class="reset" onclick={resetView}>Reset view</button>
+  </div>
+
+  <!-- the selection: who is in the group, and the one way to add to it.
+       Adding narrows (only albums crediting everyone stay); removing widens. -->
+  <div class="group-bar" role="group" aria-label="Selected musicians">
+    {#each selected as p (p.id)}
+      <span class="chip">
+        <span class="chip-name">{p.name}</span>
+        {#if isGroup}
+          <button class="chip-x" onclick={() => removeMusician(p.id)} aria-label={`Remove ${p.name} from the group`}>×</button>
+        {/if}
+      </span>
+    {/each}
+    {#if !atCap}
+      <div class="add" bind:this={addBox}>
+        {#if addOpen}
+          <input
+            class="add-input"
+            type="search"
+            placeholder="Add a musician…"
+            autocomplete="off"
+            spellcheck="false"
+            role="combobox"
+            aria-label="Add a musician to the group"
+            aria-expanded={addOpen}
+            aria-controls="add-results"
+            aria-activedescendant={suggestions.length ? `add-opt-${addActive}` : undefined}
+            bind:value={addQuery}
+            bind:this={addInput}
+            onkeydown={addKeydown}
+          />
+          <div class="add-results" id="add-results" role="listbox" aria-label="Musicians to add">
+            {#if !suggestions.length}
+              <div class="add-empty">No matches in the canon.</div>
+            {:else}
+              {#if !addQuery.trim()}<div class="add-group display">Also on these albums</div>{/if}
+              {#each suggestions as sg, i (sg.id)}
+                <button
+                  class="add-row"
+                  class:active={addActive === i}
+                  id={`add-opt-${i}`}
+                  role="option"
+                  aria-selected={addActive === i}
+                  onpointerenter={() => (addActive = i)}
+                  onclick={() => addMusician(sg.id)}
+                >
+                  <span class="add-main">{sg.name}</span>
+                  <span class="add-meta">
+                    {#if sg.instruments}{sg.instruments}&ensp;·&ensp;{/if}{sg.shared} shared album{sg.shared === 1 ? '' : 's'}
+                  </span>
+                </button>
+              {/each}
+            {/if}
+          </div>
+        {:else}
+          <button class="add-btn" onclick={openAdd}>+ Add musician</button>
+        {/if}
+      </div>
+    {:else}
+      <span class="cap-note">Up to {MAX_GROUP} musicians</span>
+    {/if}
   </div>
 
   <div class="stage" bind:this={stageEl} bind:clientWidth={stageW} bind:clientHeight={stageH}>
     {#if loading}
       <p class="loading">Loading constellation…</p>
+    {:else if isGroup && albumCount === 0}
+      <div class="none">
+        <p class="none-head display">No shared albums in this canon</p>
+        <p class="none-body">
+          No album here credits all of {centerProse}. That is a fact about this
+          collection, not about the musicians — remove a name to widen the question.
+        </p>
+      </div>
     {:else}
       <svg
         viewBox="0 0 {W} {H}"
         role="img"
-        aria-label={`Constellation for ${centerName}`}
+        aria-label={isGroup ? `Albums featuring ${centerName}` : `Constellation for ${centerName}`}
         bind:this={svgEl}
         onpointerdown={bgDown}
         onwheel={onWheel}
@@ -489,7 +691,7 @@
                 stroke-width={n.center ? 2.5 : 1.6}
               />
               {#if n.center}
-                <text class="center-label" y={radius(n) + 20}>{n.name}</text>
+                <text class="center-label" class:small={isGroup} y={radius(n) + 20}>{n.name}</text>
               {:else}
                 <text class="person-label" y={radius(n) + 14}>{n.name}</text>
               {/if}
@@ -502,7 +704,7 @@
         <div class="tip" style:left="{hoverPos.x}px" style:top="{hoverPos.y}px">
           <strong>{hovered.name}</strong>
           {#if hovered.instruments}<span class="tip-inst">{hovered.instruments}</span>{/if}
-          <span class="tip-shared">{hovered.shared} shared album{hovered.shared === 1 ? '' : 's'} with {centerName}</span>
+          <span class="tip-shared">{hovered.shared} shared album{hovered.shared === 1 ? '' : 's'} with {isGroup ? `all ${selected.length}` : centerName}</span>
         </div>
       {/if}
     {/if}
@@ -536,7 +738,115 @@
   }
   .reset:hover { border-color: var(--bn-blue-light); background: var(--bg); }
 
+  .group-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: -4px 0 10px;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--bn-blue);
+    color: var(--bg);
+    border-radius: 999px;
+    padding: 5px 8px 5px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+  }
+  .chip-name { padding-right: 4px; }
+  .chip-x {
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 16px;
+    line-height: 1;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    padding: 0;
+    cursor: pointer;
+    opacity: 0.8;
+  }
+  .chip-x:hover, .chip-x:focus-visible { opacity: 1; background: rgba(255, 255, 255, 0.18); }
+  .add { position: relative; }
+  .add-btn {
+    background: none;
+    border: 1px dashed var(--bn-blue-light);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--bn-blue);
+    line-height: 1;
+    cursor: pointer;
+  }
+  .add-btn:hover, .add-btn:focus-visible { border-style: solid; background: var(--bg); }
+  .add-input {
+    width: 240px;
+    height: 32px;
+    padding: 0 12px;
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--bn-blue-light);
+    border-radius: 999px;
+    outline: none;
+  }
+  .add-input::-webkit-search-cancel-button { -webkit-appearance: none; }
+  .add-results {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    width: 300px;
+    max-width: calc(100vw - 40px);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(28, 26, 23, 0.16);
+    max-height: min(400px, 60vh);
+    overflow-y: auto;
+    z-index: 40;
+    padding: 4px;
+  }
+  .add-group { font-size: 12.5px; color: var(--bn-blue); letter-spacing: 0.06em; padding: 7px 10px 3px; }
+  .add-row {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+  .add-row.active { background: rgba(43, 95, 122, 0.09); }
+  .add-main { font-size: 13.5px; font-weight: 600; color: var(--ink); }
+  .add-meta { font-size: 12px; color: var(--muted); }
+  .add-empty { padding: 12px; font-size: 13px; color: var(--muted); }
+  .cap-note { font-size: 12px; color: var(--muted); }
+
   .stage { position: relative; flex: 1; min-height: 0; }
+  .none {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  .none-head { font-size: 22px; color: var(--bn-blue); margin: 0 0 8px; }
+  .none-body { max-width: 46ch; color: var(--muted); font-size: 14px; line-height: 1.5; margin: 0; }
   svg {
     width: 100%;
     height: 100%;
@@ -570,6 +880,7 @@
     font-weight: 600;
     font-size: 18px;
   }
+  .center-label.small { font-size: 16px; }
 
   .tip {
     position: absolute;
@@ -597,5 +908,7 @@
     .const-label { font-size: 18px; }
     .stats { font-size: 12px; }
     .reset { margin-left: auto; }
+    .chip { font-size: 12px; padding: 4px 6px 4px 10px; }
+    .add-input { width: 190px; }
   }
 </style>

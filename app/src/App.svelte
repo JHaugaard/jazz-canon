@@ -154,16 +154,17 @@
     <FloatingWindow
       variant="constellation"
       title={constName}
-      guide="Click an album to open&ensp;·&ensp;click a musician to follow the thread&ensp;·&ensp;drag to rearrange&ensp;·&ensp;scroll to zoom"
+      guide="Click an album to open&ensp;·&ensp;click a musician to follow the thread&ensp;·&ensp;add a musician to see only the albums they share&ensp;·&ensp;drag to rearrange&ensp;·&ensp;scroll to zoom"
       ariaLabel="Constellation"
       showBack={nav.stack.length > 1}
       onBack={() => nav.back()}
       onClose={() => nav.close()}
     >
       <Network
-        personId={top.id}
+        personIds={top.ids}
         onOpenAlbum={(aid) => nav.openAlbum(aid)}
         onRecenter={(pid) => nav.openPerson(pid)}
+        onGroupChange={(ids) => nav.setGroup(ids)}
         onmeta={(m) => (constName = m.name)}
       />
     </FloatingWindow>
