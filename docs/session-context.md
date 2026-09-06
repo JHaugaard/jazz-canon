@@ -107,3 +107,19 @@ gitignored `.claude/session-context.md` as shared truth.
   1200×630 `image/png` whose SHA-256 exactly matches the committed card.
 - Protected pre-existing work remains unstaged: `places.json`,
   `people-activity.json`, and `.docs/`.
+
+## 2026-09-06 — constellation groups LIVE; 193-album ship landed
+
+- mccoy's 193-album ship (20 added 2026-09-02) and the 2026-09-06 recently-added
+  update (5 albums) are on main and live; checksum manifest matches live for all
+  five exports.
+- Constellation groups (D25): "Add musician" chips, same-album matching, cap of
+  4. Built on branch `constellation-group` by John's explicit one-off exception
+  to main-only; merged to main (db5f038), pushed to GitHub, branch deleted.
+- Deployed from main via `scripts/deploy.sh --expect "Add musician" --probe-path /`;
+  LIVE VERIFIED, bundle index-B50Utbr4.js.
+- Tidy: `.superpowers/sdd/` (Places build workspace), `screenshots-temp/`, and
+  `.docs/deployment-log.json` moved to `~/dev/cruft/jazz-canon-site/2026-09-06-tidy/`.
+  `.docs/` is now gitignored (session-end status file only).
+- Branch: `main`, clean. Next gate: none pending. Deferred ideas listed in D25 /
+  the vault paper (same-track matching, add-from-album-personnel, shareable URLs).
