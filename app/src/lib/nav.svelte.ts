@@ -19,8 +19,21 @@ class Nav {
 
   openPerson(id: string) {
     const t = this.top;
-    if (t && t.kind === 'person' && t.id === id) return;
-    this.stack.push({ kind: 'person', id });
+    if (t && t.kind === 'person' && t.ids.length === 1 && t.ids[0] === id) return;
+    this.stack.push({ kind: 'person', ids: [id] });
+  }
+
+  /* Add/remove within the open constellation: an edit of the current step,
+     not a new one, so Back returns to where the constellation was opened
+     from rather than replaying every chip change. */
+  setGroup(ids: string[]) {
+    const t = this.top;
+    if (!t || t.kind !== 'person') return;
+    if (ids.length === 0) {
+      this.stack.pop();
+      return;
+    }
+    this.stack[this.stack.length - 1] = { kind: 'person', ids };
   }
 
   openPlace(id: string) {
