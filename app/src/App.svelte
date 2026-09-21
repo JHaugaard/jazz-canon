@@ -8,17 +8,19 @@
   import PlaceWindow from './lib/PlaceWindow.svelte';
   import About from './lib/About.svelte';
   import Working from './lib/Working.svelte';
+  import Where from './lib/Where.svelte';
   import Search from './lib/Search.svelte';
   import type { AlbumCard } from './lib/types';
 
   let albums = $state<AlbumCard[] | null>(null);
   let loadError = $state<string | null>(null);
 
-  type Route = 'home' | 'working' | 'about';
+  type Route = 'home' | 'working' | 'where' | 'about';
 
   function parseHash(): Route {
     const h = window.location.hash;
     if (h.startsWith('#/working')) return 'working';
+    if (h.startsWith('#/where')) return 'where';
     if (h.startsWith('#/about')) return 'about';
     return 'home';
   }
@@ -40,6 +42,7 @@
   const ROUTE_TITLE: Record<Route, string> = {
     home: BASE_TITLE,
     working: 'A Jazz Canon — Working',
+    where: 'A Jazz Canon — Where',
     about: 'A Jazz Canon — About',
   };
   /* the routes are linkable (D3), so a bookmark or a tab strip has to be able
@@ -109,6 +112,7 @@
     <nav class="mast-nav">
       <button class="nav-link" class:active={route === 'home'} onclick={goHome}>Home</button>
       <button class="nav-link" class:active={route === 'working'} onclick={() => go('working')}>Working</button>
+      <button class="nav-link" class:active={route === 'where'} onclick={() => go('where')}>Where</button>
       <button class="nav-link" class:active={route === 'about'} onclick={() => go('about')}>About</button>
     </nav>
   </header>
@@ -119,6 +123,11 @@
     {:else if route === 'working'}
       <Working
         onOpenPerson={(pid) => nav.openPerson(pid)}
+        onOpenAlbum={(aid) => nav.openAlbum(aid)}
+      />
+    {:else if route === 'where'}
+      <Where
+        onOpenPlace={(pid) => nav.openPlace(pid)}
         onOpenAlbum={(aid) => nav.openAlbum(aid)}
       />
     {:else if loadError}
@@ -296,12 +305,14 @@
   /* Phone: compact header, panels take the full width */
   @media (max-width: 620px) {
     .shell { --masthead-h: 66px; }
-    .mark { height: 44px; }
-    .wm-title { font-size: 19px; letter-spacing: 0.02em; }
-    .wm-tag { display: none; }
-    .lockup { gap: 10px; align-items: center; }
-    .nav-link { font-size: 15px; padding: 6px 9px; }
-    .masthead { padding: 0 12px; }
+    /* Four route labels plus search need the wordmark's phone-width budget.
+       The record mark still carries the home affordance and full aria label. */
+    .mark { height: 40px; }
+    .wordmark { display: none; }
+    .lockup { align-items: center; }
+    .mast-nav { gap: 0; }
+    .nav-link { font-size: 13.5px; padding: 6px 5px; }
+    .masthead { gap: 6px; padding: 0 6px; }
 
     .panel { width: 100vw; }
   }
