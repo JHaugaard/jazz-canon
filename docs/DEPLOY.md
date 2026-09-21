@@ -74,7 +74,7 @@ hand-maintained until mccoy's durable ship manifest exists.
 
 ## Routing and configuration
 
-The app uses hash routes: `#/`, `#/working`, and `#/about`. No `_redirects`
-file is required for these routes. `app/wrangler.toml` is read-and-invoke-only
-in the jazz-canon lane. Cloudflare project settings, DNS, custom-domain state,
-and account-level anomalies go to the-super.
+The app uses hash routes: `#/`, `#/working`, `#/where`, and `#/about`. No
+`_redirects` file is required for these routes. `app/wrangler.toml` is
+read-and-invoke-only in the jazz-canon lane. Cloudflare project settings, DNS,
+custom-domain state, and account-level anomalies go to the-super.
