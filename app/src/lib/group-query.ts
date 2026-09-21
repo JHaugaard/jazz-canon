@@ -5,10 +5,10 @@ import type { GraphData } from './types';
    credits EVERY selected musician (same album, not same track — track-level
    co-presence is a separate, stronger claim the graph export doesn't carry). */
 
-/* Cap on selected musicians. A starting musician plus three: Ron Carter plus
-   a rhythm section, Miles plus the Kind of Blue front line. Interface limit,
-   not a data one — the intersection is cheap at any size. Edit here only. */
-export const MAX_GROUP = 4;
+/* Cap on selected musicians. A starting musician plus four: enough to trace a
+   standard quintet. Interface limit, not a data one — the intersection is
+   cheap at any size. Edit here only. */
+export const MAX_GROUP = 5;
 
 export interface Collaborator {
   id: string;
