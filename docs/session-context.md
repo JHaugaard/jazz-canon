@@ -1,9 +1,54 @@
 # Jazz Canon session context
 
 This tracked file is the handshake surface shared by the jazz-canon Hermes
-profile and Claude Code. Read it at session start. At session end, record the
+profile and its authorized engineering collaborators. Coder (Hermes, @coder)
+is the default implementation agent; Claude Code requires John's explicit,
+task-specific exception. Read it at session start. At session end, record the
 branch, live state, work still in flight, and exact next gate. Do not use the
 gitignored `.claude/session-context.md` as shared truth.
+
+## Current coordination — 2026-09-25
+
+- John reset the site work: use this checkout directly on `main` for the
+  upcoming basic changes through deployment. Checkout is now on `main` at
+  `6a6a45c`; no candidate site code has been imported or deployed.
+- Accepted preparation scope: expand the timeline back to 1945, add a Bebop
+  genre era lane beginning in 1945, support exported Bebop album classification,
+  and revise About to include Bebop and the expanded scope. Album classification
+  and exports remain with mccoy/Jazz Canon, not local JSON edits.
+- Preserved yesterday's clean linked worktree using `git worktree move` at
+  `/home/john/dev/cruft/jazz-canon/jazz-canon-bebop-2026-09-25`, branch
+  `bebop-gallery-main`, HEAD `07595ad`. Candidate implementation is `2386625`.
+  Nothing was deleted or merged. Useful candidate pieces: Bebop tint/accent,
+  style-code mapping, album badge, 1945 start, and About's inclusion of Bebop.
+- Do not import the candidate's handoff claims as current state. John has now
+  explicitly set the canvas to 1945–1985 and accepted an initial 1945–1955
+  Bebop era band, with no year cutoff on Bebop classification. Initial album
+  timeline view should center on 1965 rather than the old 1957 anchor.
+- Current export inspection: 234 albums, years 1950–1976, no `bebop` primary
+  style or secondary tag. All five canonical export checksums pass. No new
+  album IDs or classifications may be fabricated for the site.
+- Current scoped specification: `docs/2026-09-25-site-expansion-spec.md`.
+  Includes production credits below Full album personnel (display accepted;
+  mccoy export contract/coverage still needed), visual/density acceptance,
+  and Follow dates scrolling for Working/Where (framing now accepted by John;
+  not yet implemented). No site code has changed in this reset.
+  Do not couple this narrow work to ship-automation implementation.
+- Future page staged in `docs/2026-09-25-the-board-brief.md`: producer/engineer
+  constellation with opposite-role and optional musician selection slots.
+  Preserve structured role-aware credits in today's export contract work;
+  do not implement the future page or ship placeholder navigation now.
+
+- Engineering default: Coder (Hermes, @coder). Claude Code is an exception
+  path only with John's explicit, task-specific authorization.
+- The approved 2026-08-22 straight-through ship follow-through remains to be
+  implemented. Its authoritative Jazz Canon handoff is
+  `docs/2026-08-22-straight-through-ship-follow-through-handoff.md`; the
+  companion mccoy contract must be available before implementation begins.
+- Protected in-progress work in this checkout: `scripts/enrich-previews.mjs`
+  originated on `preview-fallback-matching` and remains modified after the
+  switch to `main`. It is outside the Bebop work and must not be staged,
+  reverted, or deployed as part of it.
 
 ## Current state — 2026-08-21
 
@@ -67,7 +112,7 @@ gitignored `.claude/session-context.md` as shared truth.
 - John approved the joint jazz-canon/mccoy plan: his instruction to mccoy to
   ship is the only human authorization. There are no intervening approval
   checkpoints through verified site follow-through.
-- Proposed mechanics (implementation pending a Claude Code handoff in both
+- Proposed mechanics (implementation pending an @coder handoff in both
   repos): ship.sh writes an in-progress flag, then only after verified ship
   writes a machine-readable last-ship manifest and checksum refresh; a
   jazz-canon follow-through script validates that handoff, updates
