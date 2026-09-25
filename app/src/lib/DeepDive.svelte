@@ -11,10 +11,12 @@
     album,
     onOpenPerson,
     onOpenPlace,
+    onOpenMixing,
   }: {
     album: AlbumCard;
     onOpenPerson: (personId: string) => void;
     onOpenPlace: (placeId: string) => void;
+    onOpenMixing: (role: 'producer' | 'engineer', personId: string) => void;
   } = $props();
 
   let detail = $state<AlbumDetail | null>(null);
@@ -253,7 +255,7 @@
           <ul class="roster production-credits" aria-label="Production credits">
             {#each credits as credit}
               <li>
-                <span class="credit-name" class:ep-inf={credit.e === 'inf'}>{credit.name}</span>
+                <button class="person credit-name" class:ep-inf={credit.e === 'inf'} onclick={() => onOpenMixing(credit.role, credit.personId)}>{credit.name}</button>
                 <span class="inst">{credit.role === 'producer' ? 'Producer' : 'Engineer'}</span>
                 <EpistemicBadge e={credit.e} />
                 {#if credit.sessionOnly}<span class="scope">(session credit)</span>{/if}

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import type { Snippet } from 'svelte';
 
   let {
@@ -6,6 +7,7 @@
     title,
     guide = '',
     ariaLabel,
+    modal = false,
     showBack = false,
     onBack,
     onClose,
@@ -15,6 +17,7 @@
     title: string;
     guide?: string;
     ariaLabel: string;
+    modal?: boolean;
     showBack?: boolean;
     onBack: () => void;
     onClose: () => void;
@@ -27,6 +30,38 @@
   let winSize = $state<{ w: number; h: number } | null>(null);
   let winEl = $state<HTMLElement | null>(null);
   let winDrag: { dx: number; dy: number } | null = null;
+
+  onMount(() => {
+    if (!modal || !winEl) return;
+    const opener = document.activeElement as HTMLElement | null;
+    winEl.querySelector<HTMLButtonElement>('.win-actions button')?.focus();
+    const trap = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab' || !winEl) return;
+      const controls = [...winEl.querySelectorAll<HTMLElement>('button, input, [tabindex="0"]')]
+        .filter((el) => el.getClientRects().length > 0 && !el.hasAttribute('disabled'));
+      if (!controls.length) return;
+      const first = controls[0], last = controls[controls.length - 1];
+      if (!winEl.contains(document.activeElement)) {
+        event.preventDefault(); first.focus();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault(); last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault(); first.focus();
+      }
+    };
+    document.addEventListener('keydown', trap, true);
+    return () => {
+      document.removeEventListener('keydown', trap, true);
+      queueMicrotask(() => {
+        if (opener?.isConnected && opener !== document.body) { opener.focus(); return; }
+        const panelBack = document.querySelector<HTMLElement>('.panel .nav-btn');
+        const search = document.querySelector<HTMLElement>('.search input');
+        const toggle = document.querySelector<HTMLElement>('.search-toggle');
+        const fallback = [panelBack, search, toggle].find((el) => el && el.getClientRects().length > 0);
+        fallback?.focus();
+      });
+    };
+  });
 
   function winDown(e: PointerEvent) {
     if (!winEl || (e.target as HTMLElement).closest('button')) return;
@@ -78,6 +113,8 @@
   style:width={winSize ? `${winSize.w}px` : undefined}
   style:height={winSize ? `${winSize.h}px` : undefined}
   bind:this={winEl}
+  role={modal ? 'dialog' : undefined}
+  aria-modal={modal ? 'true' : undefined}
   aria-label={ariaLabel}
 >
   <div

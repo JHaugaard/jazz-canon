@@ -79,6 +79,7 @@ export type NavEntry =
      group — albums crediting every one of them. Editing the group replaces
      the entry in place; it is not a history step. */
   | { kind: 'person'; ids: string[] }
+  | { kind: 'mixing'; selection: import('./mixing-query').MixingSelection; anchor: { role: 'producer' | 'engineer'; id: string } }
   | { kind: 'place'; id: string };
 
 /* A hand-kept, site-side "what's new" entry. NOT canon data — `added` is the

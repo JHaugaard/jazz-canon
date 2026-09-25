@@ -1,4 +1,5 @@
 import type { NavEntry } from './types';
+import type { MixingSelection } from './mixing-query';
 
 /* Navigation stack for the panel layer. The timeline never unmounts;
    panels render the top entry. Pushing walks deeper into the discovery
@@ -34,6 +35,19 @@ class Nav {
       return;
     }
     this.stack[this.stack.length - 1] = { kind: 'person', ids };
+  }
+
+  openMixing(role: 'producer' | 'engineer', id: string) {
+    this.stack.push({ kind: 'mixing', selection: { [role]: id }, anchor: { role, id } });
+  }
+
+  setMixing(selection: MixingSelection) {
+    const t = this.top;
+    if (t?.kind !== 'mixing') return;
+    this.stack[this.stack.length - 1] = {
+      kind: 'mixing', anchor: t.anchor,
+      selection: { ...selection, [t.anchor.role]: t.anchor.id },
+    };
   }
 
   openPlace(id: string) {

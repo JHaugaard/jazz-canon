@@ -4,6 +4,7 @@
   import Timeline from './lib/Timeline.svelte';
   import DeepDive from './lib/DeepDive.svelte';
   import Network from './lib/Network.svelte';
+  import MixingConsole from './lib/MixingConsole.svelte';
   import FloatingWindow from './lib/FloatingWindow.svelte';
   import PlaceWindow from './lib/PlaceWindow.svelte';
   import About from './lib/About.svelte';
@@ -64,6 +65,7 @@
 
   let constName = $state('');
   let placeName = $state('');
+  let mixingName = $state('');
 </script>
 
 <svelte:window onkeydown={onKeydown} onhashchange={() => (route = parseHash())} />
@@ -107,6 +109,8 @@
     <Search
       onOpenPerson={(pid) => { go('home'); nav.openPerson(pid); }}
       onOpenAlbum={(aid) => { go('home'); nav.openAlbum(aid); }}
+      onOpenMixing={(role, pid) => { go('home'); nav.openMixing(role, pid); }}
+      onOpenPlace={(pid) => { go('home'); nav.openPlace(pid); }}
     />
 
     <nav class="mast-nav">
@@ -155,6 +159,7 @@
             album={byId.get(top.id)!}
             onOpenPerson={(pid) => nav.openPerson(pid)}
             onOpenPlace={(pid) => nav.openPlace(pid)}
+            onOpenMixing={(role, pid) => nav.openMixing(role, pid)}
           />
         {/if}
       </div>
@@ -175,6 +180,25 @@
         onRecenter={(pid) => nav.openPerson(pid)}
         onGroupChange={(ids) => nav.setGroup(ids)}
         onmeta={(m) => (constName = m.name)}
+      />
+    </FloatingWindow>
+  {:else if top?.kind === 'mixing'}
+    <FloatingWindow
+      variant="constellation"
+      title={mixingName}
+      guide="Shared album credits, not proof of the same recording session&ensp;·&ensp;click an album to open&ensp;·&ensp;drag to rearrange&ensp;·&ensp;scroll to zoom"
+      ariaLabel="Mixing Console"
+      modal={true}
+      showBack={nav.stack.length > 1}
+      onBack={() => nav.back()}
+      onClose={() => nav.close()}
+    >
+      <MixingConsole
+        selection={top.selection}
+        anchor={top.anchor}
+        onChange={(selection) => nav.setMixing(selection)}
+        onOpenAlbum={(aid) => nav.openAlbum(aid)}
+        onmeta={(name) => (mixingName = name)}
       />
     </FloatingWindow>
   {:else if top?.kind === 'place'}

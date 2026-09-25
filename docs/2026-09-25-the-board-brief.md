@@ -1,4 +1,34 @@
-# The Board — staged feature brief
+# Mixing Console — revised feature brief
+
+## Current agreement — supersedes the original page proposal below
+
+- Work on branch `the-board`. Preparation and scope agreement are complete;
+  implementation is the next step. No separate page, route, or navigation item.
+- Name the production constellation modal **Mixing Console**. Preserve the
+  existing Artist constellation look and feel and its Constellation name.
+- Open from Producer or Engineer names in album personnel, or from a
+  role-labelled header search result. Start with that person's selected role.
+- John confirmed: one Engineer, one Producer, and one optional **Musician**.
+  Add the opposite production role and Musician in either order. Retain the
+  role-specific shared-album intersection semantics described below.
+- Header search placeholder: `Musician, album, studio, producer or engineer . . .`
+- John confirmed place search includes all recorded places, including studios,
+  clubs, and concert venues. Label actual place type and location in results;
+  selection opens the existing Where place modal.
+- Start with case/diacritic-insensitive prefix and substring matching against
+  recorded place names. No fuzzy matching, inferred aliases, or place merging.
+- Preserve musician/album search behavior, keyboard search controls, and modal
+  Back/Close behavior. Returning from an album restores Console selections.
+- Current exports inspected during preparation: 248 albums, 46 distinct
+  producers and 49 engineers. Structured `productionCredits` now exists;
+  the original brief's missing-contract observations below are historical.
+- Acceptance includes role-labelled entry from search and album personnel,
+  both addition orders, independent replacement/removal, duplicate credits,
+  inferred credits, empty intersections, dual-role fixtures, strict place
+  matching and distinct locations, musician-regression checks, and responsive
+  keyboard/zoom/pan behavior. Do not change exports as part of UI preparation.
+
+## Original staging record (historical)
 
 ## Status
 

@@ -9,6 +9,38 @@ gitignored `.claude/session-context.md` as shared truth.
 
 ## Current coordination — 2026-09-25
 
+### Mixing Console — local implementation, NOT RELEASED (coder)
+
+- Branch `the-board` at the 248-album baseline. The revised Mixing Console
+  brief is still uncommitted and authoritative; no separate route or export
+  regeneration. The implementation lives in `app/src/lib/MixingConsole.svelte`,
+  `mixing-query.ts`, the search/navigation/album-personnel seams, and focused
+  query/search tests.
+- Modal entry from role-labelled search and production personnel; one immutable
+  starting role, independently editable opposite role and optional Musician.
+  Album/Back retains selections. Production edges stay role- and epistemic-
+  aware; the graph displays one canonical person identity with separate role
+  links. Place search uses recorded names and opens the existing Where modal.
+- Last local checks: 21 tests pass; `npm run check` 0 errors/warnings; Vite
+  production build passes. Desktop preview exercised Producer-first and
+  Engineer-first search, both addition orders, replacement/removal, empty
+  intersection, album/Back, personnel entry, Birdland place reuse, and existing
+  musician/album search results. Synthetic fixtures cover duplicate/session,
+  inferred/unknown, same-name, dual-role and strict-place cases. Physical
+  touch and narrow viewport are not yet exercised.
+- Focused independent review found search-failure isolation, anchor retention,
+  edge provenance, modal focus, picker reset, resize state and semantics issues;
+  fixes are local, followed by green checks and focused browser recheck. The
+  review's red-test observation predates the corrected test assertion.
+- Release preflight: after John's renewed instruction, `scripts/deploy.sh
+  --dry-run --expect "Mixing Console" --probe-path /` passed the five-file
+  manifest, type checks, build and temporary preview. No deployment has
+  occurred yet. The attended `go` must be John's own terminal input after a
+  visible preview and working-tree review. John stopped the earlier Vite dev
+  server with SIGTERM; port 5173 was confirmed closed.
+  Protected unrelated edits in `scripts/enrich-previews.mjs`
+  and the 08-22 follow-through handoff remain untouched and unstaged.
+
 ### 14-album ship — LIVE VERIFIED (mccoy, same day)
 
 - Batch shipped and deployed straight through on John's word: 248 albums live

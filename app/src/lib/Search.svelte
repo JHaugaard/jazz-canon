@@ -1,17 +1,21 @@
 <script lang="ts">
-  import { loadAlbums, loadGraph } from './data';
+  import { loadAlbums, loadGraph, loadDetails, loadPlaces } from './data';
+  import { mixingIndex } from './mixing-query';
+  import { fold, rank } from './search-match';
 
-  /* Unified search over the two things the canon knows: musicians and
-     albums. Selecting a musician opens their Constellation; selecting an
-     album opens its deep dive. The index is built once, client-side, from
-     the same two JSON files the rest of the app already loads. */
+  /* Unified search across exported musicians, albums, production credits,
+     and places. Each result retains its canonical ID and destination. */
 
   let {
     onOpenPerson,
     onOpenAlbum,
+    onOpenMixing,
+    onOpenPlace,
   }: {
     onOpenPerson: (personId: string) => void;
     onOpenAlbum: (albumId: string) => void;
+    onOpenMixing: (role: 'producer' | 'engineer', personId: string) => void;
+    onOpenPlace: (placeId: string) => void;
   } = $props();
 
   interface PersonHit {
@@ -30,22 +34,31 @@
     year: number;
     norm: string;
   }
-  type Hit = PersonHit | AlbumHit;
+  interface ProductionHit {
+    kind: 'production'; id: string; name: string; role: 'producer' | 'engineer'; norm: string; albums: number;
+  }
+  interface PlaceHit {
+    kind: 'place'; id: string; name: string; placeKind: string; city: string; norm: string;
+  }
+  type Hit = PersonHit | AlbumHit | ProductionHit | PlaceHit;
 
   const MAX_PEOPLE = 7;
   const MAX_ALBUMS = 5;
+  const MAX_PRODUCTION = 6;
+  const MAX_PLACES = 7;
 
-  // diacritic-insensitive fold ("Naná" matches "nana")
-  const fold = (s: string) =>
-    s
-      .normalize('NFD')
-      .replace(/[̀-ͯ]/g, '')
-      .toLowerCase();
 
-  let index = $state<{ people: PersonHit[]; albums: AlbumHit[] } | null>(null);
+  let index = $state<{ people: PersonHit[]; albums: AlbumHit[]; production: ProductionHit[]; places: PlaceHit[] } | null>(null);
+  let supplementalError = $state(false);
+  let indexPromise: Promise<void> | null = null;
 
-  async function buildIndex() {
-    if (index) return;
+  function buildIndex() {
+    if (indexPromise) return indexPromise;
+    indexPromise = loadBase();
+    return indexPromise;
+  }
+
+  async function loadBase() {
     const [graph, albums] = await Promise.all([loadGraph(), loadAlbums()]);
     const albumCount = new Map<string, number>();
     const instruments = new Map<string, Set<string>>();
@@ -64,6 +77,8 @@
         albums: albumCount.get(id) ?? 0,
         instruments: [...(instruments.get(id) ?? [])].slice(0, 2).join(', '),
       })),
+      production: [],
+      places: [],
       albums: albums.map((a) => ({
         kind: 'album',
         id: a.id,
@@ -73,6 +88,21 @@
         norm: fold(`${a.title} ${a.artist}`),
       })),
     };
+    // New files enrich search independently; a failure cannot erase the
+    // musician/album results that were already usable.
+    void loadDetails().then((details) => {
+      const mixing = mixingIndex(details, graph);
+      index = { ...index!, production: (['producer', 'engineer'] as const).flatMap((role) =>
+        [...mixing.membership[role]].map(([id, albumIds]) => ({
+          kind: 'production' as const, id, role,
+          name: mixing.names.get(id) ?? id, norm: fold(mixing.names.get(id) ?? id), albums: albumIds.size,
+        }))) };
+    }).catch(() => { supplementalError = true; });
+    void loadPlaces().then((places) => {
+      index = { ...index!, places: places.places.map((p) => ({
+        kind: 'place', id: p.id, name: p.name, placeKind: p.kind, city: p.city, norm: fold(p.name),
+      })) };
+    }).catch(() => { supplementalError = true; });
   }
 
   let query = $state('');
@@ -82,18 +112,10 @@
   let boxEl = $state<HTMLElement | null>(null);
   let mobileOpen = $state(false);
 
-  /* rank: 0 = whole string starts with the query, 1 = some word starts
-     with it, 2 = substring anywhere. Lower is better. */
-  function rank(norm: string, q: string): number | null {
-    if (norm.startsWith(q)) return 0;
-    const at = norm.indexOf(q);
-    if (at < 0) return null;
-    return norm[at - 1] === ' ' ? 1 : 2;
-  }
 
-  let results = $derived.by((): { people: PersonHit[]; albums: AlbumHit[] } => {
+  let results = $derived.by((): { people: PersonHit[]; albums: AlbumHit[]; production: ProductionHit[]; places: PlaceHit[] } => {
     const q = fold(query.trim());
-    if (!q || !index) return { people: [], albums: [] };
+    if (!q || !index) return { people: [], albums: [], production: [], places: [] };
     const score = <T extends Hit>(hits: T[]): (T & { r: number })[] =>
       hits
         .map((h) => ({ ...h, r: rank(h.norm, q) }))
@@ -104,10 +126,16 @@
     const albums = score(index.albums)
       .sort((a, b) => a.r - b.r || a.year - b.year || a.title.localeCompare(b.title))
       .slice(0, MAX_ALBUMS);
-    return { people, albums };
+    const production = score(index.production)
+      .sort((a, b) => a.r - b.r || b.albums - a.albums || a.name.localeCompare(b.name) || a.id.localeCompare(b.id))
+      .slice(0, MAX_PRODUCTION);
+    const places = score(index.places)
+      .sort((a, b) => a.r - b.r || a.name.localeCompare(b.name) || a.city.localeCompare(b.city) || a.id.localeCompare(b.id))
+      .slice(0, MAX_PLACES);
+    return { people, albums, production, places };
   });
 
-  let flat = $derived([...results.people, ...results.albums] as Hit[]);
+  let flat = $derived([...results.people, ...results.albums, ...results.production, ...results.places] as Hit[]);
 
   $effect(() => {
     void flat.length;
@@ -120,7 +148,9 @@
     query = '';
     inputEl?.blur();
     if (hit.kind === 'person') onOpenPerson(hit.id);
-    else onOpenAlbum(hit.id);
+    else if (hit.kind === 'album') onOpenAlbum(hit.id);
+    else if (hit.kind === 'production') onOpenMixing(hit.role, hit.id);
+    else onOpenPlace(hit.id);
   }
 
   function onInput() {
@@ -200,11 +230,11 @@
     </svg>
     <input
       type="search"
-      placeholder="Musician or album…"
+      placeholder="Musician, album, studio, producer or engineer . . ."
       autocomplete="off"
       spellcheck="false"
       role="combobox"
-      aria-label="Search musicians and albums"
+      aria-label="Search musicians, albums, places, producers and engineers"
       aria-expanded={open}
       aria-controls="search-results"
       aria-activedescendant={open && flat.length ? `search-opt-${active}` : undefined}
@@ -219,7 +249,7 @@
   {#if open}
     <div class="results" id="search-results" role="listbox" aria-label="Search results">
       {#if !flat.length}
-        <div class="empty">No matches in the canon.</div>
+        <div class="empty">{supplementalError ? 'Some search data could not load; musician and album results remain available.' : 'No matches in the canon.'}</div>
       {:else}
         {#if results.people.length}
           <div class="group display">Musicians</div>
@@ -255,6 +285,28 @@
             >
               <span class="row-main">{hit.title}</span>
               <span class="row-meta">{hit.artist}&ensp;·&ensp;{hit.year}</span>
+            </button>
+          {/each}
+        {/if}
+        {#if results.production.length}
+          <div class="group display">Production credits</div>
+          {#each results.production as hit, i (`${hit.role}:${hit.id}`)}
+            {@const fi = results.people.length + results.albums.length + i}
+            <button class="row" class:active={active === fi} id={`search-opt-${fi}`} role="option"
+              aria-selected={active === fi} onpointerenter={() => (active = fi)} onclick={() => choose(hit)}>
+              <span class="row-main">{hit.name}</span>
+              <span class="row-meta">{hit.role === 'producer' ? 'Producer' : 'Engineer'} · {hit.albums} album{hit.albums === 1 ? '' : 's'}</span>
+            </button>
+          {/each}
+        {/if}
+        {#if results.places.length}
+          <div class="group display">Places</div>
+          {#each results.places as hit, i (hit.id)}
+            {@const fi = results.people.length + results.albums.length + results.production.length + i}
+            <button class="row" class:active={active === fi} id={`search-opt-${fi}`} role="option"
+              aria-selected={active === fi} onpointerenter={() => (active = fi)} onclick={() => choose(hit)}>
+              <span class="row-main">{hit.name}</span>
+              <span class="row-meta">{hit.placeKind} · {hit.city}</span>
             </button>
           {/each}
         {/if}
