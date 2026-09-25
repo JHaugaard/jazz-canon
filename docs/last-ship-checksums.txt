@@ -1,5 +1,5 @@
 0ecbdf0772479ecc343243adce6c92f92fa23c28377087c03e7fd1fff37c9be7  app/public/data/albums.json
-2ef57d66b794906a808b5c5813369ee2c6ce6e3b8de8997cb42b14a5d4f980e1  app/public/data/details.json
+1b94bb24114ce130121830371f94e393d9b4745cfdc817aa6a4efad676d09cb6  app/public/data/details.json
 914f4abb1d58ed44ccae491a891696ac5d15e711e14e22ab9962dbb3b43ddca3  app/public/data/graph.json
 ce0931f0f4fe30af70f30e070925cd57167a0ab33c2b1c9933cb6a9a300964e3  app/public/data/places.json
 6d5097bc07ef5dde56ab2650f7536451948f7ae08435cd3fec1d79e162043bec  app/public/data/people-activity.json
