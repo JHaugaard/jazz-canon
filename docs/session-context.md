@@ -9,6 +9,37 @@ gitignored `.claude/session-context.md` as shared truth.
 
 ## Current coordination — 2026-09-25
 
+### 14-album ship — LIVE VERIFIED (mccoy, same day)
+
+- Batch shipped and deployed straight through on John's word: 248 albums live
+  (was 234), 0 approved remaining. Deployment https://11143b91.jazz-canon.pages.dev,
+  production HTTP 200; ship.sh flipped all 14 approved→live with edit_log rows.
+- Batch: Soulville, Ballad of the Fallen, Bird on 52nd St, Charlie Parker Story,
+  Lyric Suite for Sextet, Conference of the Birds, The Chase!, Groovin' High,
+  Extrapolation, Standards Vol. 1, Introducing Kenny Burrell, Playing, Offramp,
+  Genius of Modern Music Vol. 1.
+- Independent live verification: /data/albums.json = 248 with all 14 ids;
+  /data/recently-added.json carries the 14 dated 2026-09-25 newest-first
+  (site-lane commit `52fc16d`); /data/places.json = 63; /map/basemap.json
+  serves 11 regions including new london + bregenz; Offramp detail shows
+  productionCredits with epistemic labels and 7/7 Apple previews.
+- Basemap: 7 new recording places, 2 outside every region. mccoy authored the
+  london + bregenz regions with John's explicit authorization (site session
+  jazz-canon-3c idle with messages queued) — commit `17b9c78`. Coverage/land/
+  budget checks all pass (gzip 80 KB vs 250 KB).
+- Checksum manifest refreshed for exactly the five canonical exports, all five
+  sha256 --check OK — commit `b69836d`, which also commits the tracked
+  places.json + people-activity.json updates.
+- Still deliberately uncommitted (site lane's own holdings, untouched by the
+  ship): `scripts/enrich-previews.mjs` (title-first matching + GB storefront
+  fallback — this version ran in today's ship) and the 08-22 handoff doc edits.
+- Follow-ups, none blocking: (1) Offramp engineer credit "Jan Erik Kongshaug
+  and Gragg Lunsford" is one person row naming two people — data-lane
+  cull-note item. (2) The 14 new albums have no embeddings/search_document
+  yet (embed.py needs the postgres-OS-user path; not site-blocking).
+  (3) The 08-22 follow-through script and docs/last-ship.json contract remain
+  unimplemented — today ran on the manual recipe again.
+
 ### Release checkpoint — live verified; ready for mccoy's album work
 
 - Approved expansion is implemented on main: 1945–1985, Bebop lane without
