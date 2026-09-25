@@ -6,8 +6,9 @@ import type { AlbumCard } from './types';
    column); empty years stay slim so gaps in the canon read as gaps.
    Era bands and the year axis both derive from the same x(year) map. */
 
-export const START_YEAR = 1949;
-export const END_YEAR = 1979;
+export const START_YEAR = 1945;
+export const END_YEAR = 1985;
+export const OPEN_YEAR = 1965;
 
 export const CARD_W = 148;
 export const CARD_H = 214; // 148 art + text block
@@ -107,18 +108,53 @@ export interface EraBand {
    this framework. ECM does not appear here and never will: it is a record
    label, not an era, and shows up only as a card-level accent (gates.ts). */
 export const ERA_BANDS: EraBand[] = [
+  { name: 'Bebop', from: 1945, to: 1955, cssVar: 'var(--era-bebop)' },
   { name: 'Cool Jazz', from: 1949, to: 1958, cssVar: 'var(--era-cool)' },
   { name: 'Hard Bop', from: 1955, to: 1965, cssVar: 'var(--era-hardbop)' },
   { name: 'Modal Jazz', from: 1958, to: 1979, cssVar: 'var(--era-modal)' },
   { name: 'Free Jazz', from: 1959, to: 1979, cssVar: 'var(--era-freejazz)' },
   { name: 'Post-Bop', from: 1962, to: 1968, cssVar: 'var(--era-postbop)' },
-  { name: 'Fusion', from: 1968, to: 1979, cssVar: 'var(--era-fusion)' },
+  { name: 'Fusion', from: 1968, to: END_YEAR, cssVar: 'var(--era-fusion)' },
 ];
 
 /** Overlapping lanes: each era's lane rises into the one above it by
  *  ~OVERLAP of a lane's height, so the translucent colors blend where the
  *  eras genuinely coexist. Returns percentages of the bands' vertical space. */
 const OVERLAP = 0.2;
+/** Keep the established floating labels over artwork/background, never over
+ * album titles or artist names. Bounds include a little shadow clearance. */
+export function eraLabelPositions(bandHeight: number, perColumn: number): number[] {
+  const labelHeight = 30;
+  const gap = 4;
+  const metadata = Array.from({ length: perColumn }, (_, row) => ({
+    start: 12 + row * (CARD_H + CARD_GAP) + 146,
+    end: 12 + row * (CARD_H + CARD_GAP) + CARD_H,
+  }));
+  const positions: number[] = [];
+  for (let i = 0; i < ERA_BANDS.length; i++) {
+    const minimum = i ? positions[i - 1] + labelHeight + gap : 0;
+    let top = Math.max(minimum, bandHeight * eraLane(i, ERA_BANDS.length).labelTop / 100 + 6);
+    for (const text of metadata) {
+      if (top < text.end + gap && top + labelHeight > text.start - gap) {
+        const above = text.start - gap - labelHeight;
+        top = above >= minimum ? above : text.end + gap;
+      }
+    }
+    positions.push(top);
+  }
+  // A short viewport may require packing earlier labels upward to leave room
+  // for the final one. Walk backward through the same metadata exclusions.
+  for (let i = positions.length - 1; i >= 0; i--) {
+    const maximum = i === positions.length - 1 ? bandHeight - labelHeight : positions[i + 1] - labelHeight - gap;
+    let top = Math.min(positions[i], maximum);
+    for (const text of [...metadata].reverse()) {
+      if (top < text.end + gap && top + labelHeight > text.start - gap) top = text.start - gap - labelHeight;
+    }
+    positions[i] = top;
+  }
+  return positions;
+}
+
 export function eraLane(index: number, count: number): { top: number; height: number; labelTop: number } {
   const pad = 3; // % breathing room top and bottom
   const usable = 100 - pad * 2;

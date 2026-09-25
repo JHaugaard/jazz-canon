@@ -42,6 +42,16 @@ export interface PersonnelRow {
   scope: 'all-tracks' | 'selected-tracks' | 'unknown';
 }
 
+/** Production roles are credit edges, not instruments or person identities.
+ *  Preserve session scope for future Board queries; older exports omit this. */
+export interface ProductionCredit {
+  personId: string;
+  name: string;
+  role: 'producer' | 'engineer';
+  e: Epistemic;
+  sessionId: string | null;
+}
+
 export interface AlbumDetail {
   description: string | null;
   recordingDates: string | null;
@@ -49,6 +59,7 @@ export interface AlbumDetail {
   studios: string[];
   tracks: Track[];
   personnel: PersonnelRow[];
+  productionCredits?: ProductionCredit[];
 }
 
 export interface GraphEdge {

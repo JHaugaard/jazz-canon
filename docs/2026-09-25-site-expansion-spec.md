@@ -38,7 +38,7 @@ UI stubs belong in this release.
   existing bands across desktop, short-window, and mobile sizes. Dense years
   should gain columns, not smaller cards or shifted album years.
 
-## Production credits — accepted display, export contract pending
+## Production credits — accepted display and agreed export contract
 
 John requests Producer and Engineer information below the musician roster
 inside the expanded **Full album personnel** section. The shared component
@@ -65,14 +65,23 @@ Observed boundary:
   optional session_id, person_id, role, epistemic, notes. Its role enum
   distinguishes producer, engineer, mixing, mastering, and other roles.
   This historical snapshot does NOT establish current populated coverage.
-- mccoy Bot Chat consultation timed out without an answer. Jazz Canon
-  confirms no known ratified public production-credit contract.
+- Initial consultation timed out; the implementation consultation subsequently
+  confirmed the contract below. mccoy's `a212d53` implements it in export.sh.
 
-Required next data-owner agreement (not an invented current API):
-- Add an optional structured credit list to AlbumDetail, with stable person
-  ID, display name, exact role, epistemic label, and session scope where
-  material. Final field names and scope semantics belong to the agreed
-  mccoy export contract.
+Agreed data-owner contract:
+- AlbumDetail has `productionCredits`, an array of
+  `{personId, name, role, e, sessionId}`. Roles are `producer` or `engineer`;
+  `e` is `obs`, `inf`, or `unk`; sessionId is a canonical ID or null for an
+  album-level credit. An empty array is valid; old exports may omit the field.
+- Preserve raw edges for The Board. Display deduplicates person ID + role,
+  conservatively retaining the least-certain label across session credits.
+  Session-only rows are identified as such. Names remain non-link text until
+  role-aware Board navigation exists.
+- Coder independently inspected the generated 248-album incoming export:
+  240 albums with producers, 187 with engineers, 8 with neither, 427 total
+  credit rows. The incoming batch has 14 albums, including five Bebop albums
+  dated 1945–1948 and albums through 1983. Full incoming export is previewed
+  only via browser interception, not copied into production site data.
 - Establish current coverage and original-recording versus reissue semantics;
   deduplicate repeated session credits without losing relevant scope.
 - mccoy owns export generation/checksum refresh and data publication. Coder

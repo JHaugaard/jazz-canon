@@ -5,7 +5,7 @@ import type { AlbumCard } from './types';
 
    Two things live here, and they are deliberately different:
 
-   - Fusion and Free Jazz are GENRES with era shapes. They get era bands on
+   - Bebop, Fusion and Free Jazz are GENRES with era shapes. They get era bands on
      the timeline canvas (see ERA_BANDS in timeline-layout.ts) *and* a card
      accent.
    - ECM is a LABEL, not a genre. It never gets a band. It appears only as a
@@ -18,7 +18,7 @@ import type { AlbumCard } from './types';
    it as a primary style (LABEL_ONLY_STYLES in mccoy-tyner's
    scripts/stage-candidate.py). */
 
-export type GateKey = 'fusion' | 'free-jazz' | 'ecm';
+export type GateKey = 'bebop' | 'fusion' | 'free-jazz' | 'ecm';
 
 export interface Gate {
   key: GateKey;
@@ -28,6 +28,7 @@ export interface Gate {
 }
 
 export const GATES: Gate[] = [
+  { key: 'bebop', label: 'Bebop', cssVar: 'var(--gate-bebop)' },
   { key: 'fusion', label: 'Fusion', cssVar: 'var(--gate-fusion)' },
   { key: 'free-jazz', label: 'Free Jazz', cssVar: 'var(--gate-freejazz)' },
   { key: 'ecm', label: 'ECM', cssVar: 'var(--gate-ecm)' },
@@ -37,6 +38,7 @@ export const GATES: Gate[] = [
    (docs/2026-07-28-style-vocabulary-opened-gates.md). Codes absent here are
    tradition styles and carry no accent. */
 const GATE_OF_STYLE: Record<string, GateKey> = {
+  bebop: 'bebop',
   fusion: 'fusion',
   'jazz-rock': 'fusion',
   'jazz-funk': 'fusion',

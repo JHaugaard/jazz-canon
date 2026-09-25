@@ -19,6 +19,7 @@
   let accent = $derived(primaryGate(album));
   let accentVar = $derived(GATES.find((g) => g.key === accent)?.cssVar ?? null);
   let isEcm = $derived(gates.includes('ecm'));
+  let isBebop = $derived(gates.includes('bebop'));
   let gateTitle = $derived(
     gates.length
       ? ` · via ${gates.map((k) => GATES.find((g) => g.key === k)!.label).join(' + ')}`
@@ -49,6 +50,7 @@
       </div>
     {/if}
     <span class="year-badge">{album.year}</span>
+    {#if isBebop}<span class="bebop-badge">Bebop</span>{/if}
   </div>
   <div class="meta">
     <span class="title">{album.title}</span>
@@ -127,6 +129,20 @@
     color: var(--bg);
     background: rgba(28, 26, 23, 0.82);
     padding: 2px 7px;
+    border-radius: 4px;
+  }
+  .bebop-badge {
+    position: absolute;
+    right: 6px;
+    bottom: 6px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 10px;
+    font-variant: small-caps;
+    letter-spacing: 0.06em;
+    color: var(--bg);
+    background: var(--gate-bebop);
+    padding: 2px 6px;
     border-radius: 4px;
   }
   .meta {

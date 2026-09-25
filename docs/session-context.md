@@ -9,6 +9,31 @@ gitignored `.claude/session-context.md` as shared truth.
 
 ## Current coordination — 2026-09-25
 
+### Release checkpoint — implementation verified; attended deployment pending
+
+- Approved expansion is implemented on main: 1945–1985, Bebop lane without
+  a classification date cutoff, initial 1965 view and semantic resize anchor,
+  Producer/Engineer rows, About copy, and Working/Where Follow dates.
+- mccoy supplied credits-only enrichment; manifest commit `74b4df3` retains
+  the existing 234 albums. The 14 incoming albums were tested through browser
+  interception only, not shipped. The Board remains a staged brief with
+  role-aware credit plumbing, not a placeholder route or navigation link.
+- Verification: 14 unit tests pass; browser expansion, credit-case, Follow dates
+  and input-priority checks pass. Incoming 248-album preview also passes.
+  Final independent read-only review found no material blockers (reviewer did
+  not rerun checks). Fresh deployment dry-run: checks, build, five-file manifest,
+  preview all green. Physical touch hardware remains untested.
+- Review fixes preserve semantic position on restacking, keep labels outside
+  card metadata, and retain native gesture/focus priority. Short windows use
+  one card row rather than clipping a forced second row.
+- Next gate: `scripts/deploy.sh --expect 'Follow dates'` from main. John must
+  review preview and personally type `go`; production is not yet verified.
+  After release, verify live routes, credits and exact deployed assets.
+- Protected preview-enrichment script and pre-existing straight-through-ship
+  handoff edits remain outside this release.
+
+### Preparation record (historical; superseded by checkpoint above)
+
 - John reset the site work: use this checkout directly on `main` for the
   upcoming basic changes through deployment. Checkout is now on `main` at
   `6a6a45c`; no candidate site code has been imported or deployed.

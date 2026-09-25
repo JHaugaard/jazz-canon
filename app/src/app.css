@@ -12,6 +12,7 @@
   --bn-blue-light: #4a7c95;
   --impulse-amber: #c4862a;
 
+  --era-bebop: rgba(28, 26, 23, 0.14);
   --era-cool: rgba(43, 95, 122, 0.18);
   --era-hardbop: rgba(196, 134, 42, 0.18);
   --era-modal: rgba(74, 124, 107, 0.18);
@@ -24,9 +25,10 @@
   --era-fusion: rgba(122, 140, 58, 0.18);
   --era-ink: #5a5249;
 
-  /* Gate accents: the same two hues at full strength for card treatment,
+  /* Gate accents: genre hues at full strength for card treatment,
      plus ECM. ECM is a label tag, not a genre, so its accent is a cool
-     neutral — deliberately the quietest of the three. */
+     neutral — deliberately the quietest of the four. */
+  --gate-bebop: #5a5249;
   --gate-freejazz: #9c5a34;
   --gate-fusion: #7a8c3a;
   --gate-ecm: #93a2ad;

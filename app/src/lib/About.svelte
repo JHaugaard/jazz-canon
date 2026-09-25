@@ -15,8 +15,8 @@
   <article>
     <h1 class="display">About A Jazz Canon</h1>
     <p class="lede">
-      A personal, opinionated map of records made after
-      1949 as jazz moved out of bebop and into fusion.
+      A personal, opinionated map of records made between 1945 and 1985,
+      from bebop through fusion.
       The collection and canon will grow over time.
     </p>
 
@@ -45,9 +45,13 @@
 
     <h2 class="display">The eras</h2>
     <p>
-      Cool Jazz, Hard Bop, Soul Jazz, Modal Jazz, Post-Bop, Free Jazz, and
+      Bebop, Cool Jazz, Hard Bop, Modal Jazz, Post-Bop, Free Jazz, and
       Fusion do not sit in tidy boxes; they overlap in time, which is why the
       timeline shows their bands blending into one another.
+    </p>
+    <p>
+      The bands mark each era’s center of gravity, not a cutoff: a later
+      Bebop record is still Bebop, wherever it falls on the timeline.
     </p>
     <p>
       ECM appears in this canon's metadata as a label tag, not a genre; every

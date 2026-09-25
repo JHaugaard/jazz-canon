@@ -1,6 +1,7 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import type { AlbumCard } from './types';
-  import { computeLayout, eraLane, ERA_BANDS, CARD_H, CARD_GAP, START_YEAR, END_YEAR } from './timeline-layout';
+  import { computeLayout, eraLane, eraLabelPositions, ERA_BANDS, CARD_H, CARD_GAP, START_YEAR, END_YEAR, OPEN_YEAR } from './timeline-layout';
   import AlbumCardTile from './AlbumCardTile.svelte';
 
   let { albums, onopen }: { albums: AlbumCard[]; onopen: (id: string) => void } = $props();
@@ -12,11 +13,12 @@
 
   let areaHeight = $state(600);
 
-  // Cards per vertical stack, adapted to viewport height (min 2, max 4).
+  // A short window gets one complete row rather than a clipped second row.
   let perColumn = $derived(
-    Math.max(2, Math.min(4, Math.floor((areaHeight - CONTENT_TOP - 18) / (CARD_H + CARD_GAP))))
+    Math.max(1, Math.min(4, Math.floor((areaHeight - CONTENT_TOP - 18) / (CARD_H + CARD_GAP))))
   );
   let layout = $derived(computeLayout(albums, perColumn));
+  let labelTops = $derived(eraLabelPositions(areaHeight - CONTENT_TOP - 12, perColumn));
 
   // drag-to-pan (mouse); native scroll covers trackpads/touch
   let scroller: HTMLDivElement;
@@ -47,12 +49,27 @@
     }
   }
 
-  // start the view in the late 1950s, the canon's center of gravity
+  // Preserve the semantic year position when a height change restacks cards
+  // and changes year widths. Keeping raw scrollLeft would jump across years.
+  let previousLayout: ReturnType<typeof computeLayout> | null = null;
   $effect(() => {
-    if (scroller && layout.totalWidth > 0) {
-      const target = layout.xOfYear(1957) - 80;
-      scroller.scrollLeft = Math.max(0, target);
-    }
+    const next = layout;
+    if (!scroller || next.totalWidth <= 0) return;
+    untrack(() => {
+      if (!previousLayout) {
+        const year = next.years.find((block) => block.year === OPEN_YEAR);
+        if (year) scroller.scrollLeft = Math.max(0, year.x0 + year.width / 2 - scroller.clientWidth / 2);
+      } else if (previousLayout !== next && scroller.scrollLeft > 0) {
+        const center = scroller.scrollLeft + scroller.clientWidth / 2;
+        const oldYear = previousLayout.years.find((year) => center >= year.x0 && center < year.x0 + year.width);
+        const newYear = next.years.find((year) => year.year === oldYear?.year);
+        if (oldYear && newYear) {
+          const fraction = (center - oldYear.x0) / oldYear.width;
+          scroller.scrollLeft = Math.max(0, newYear.x0 + fraction * newYear.width - scroller.clientWidth / 2);
+        }
+      }
+      previousLayout = next;
+    });
   });
 
   // a plain vertical mouse wheel pans the timeline horizontally (trackpads
@@ -114,12 +131,11 @@
          scroll position (sticky within each band's horizontal span) -->
     <div class="band-labels" style:top="{CONTENT_TOP}px" style:bottom="12px">
       {#each ERA_BANDS as band, i}
-        {@const lane = eraLane(i, ERA_BANDS.length)}
         <div
           class="band-label-track"
           style:left="{layout.xOfYear(band.from)}px"
           style:width="{layout.xOfYear(band.to + 1) - layout.xOfYear(band.from)}px"
-          style:top="{lane.labelTop}%"
+          style:top="{labelTops[i]}px"
         >
           <span class="band-chip">
             <span class="band-label display">{band.name}</span>
@@ -167,7 +183,6 @@
   .band-label-track {
     position: absolute;
     white-space: nowrap;
-    padding-top: 6px;
   }
   .band-chip {
     /* sticky: stays readable at any horizontal scroll position while its

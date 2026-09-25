@@ -1,5 +1,6 @@
 import type { PeopleActivityFile, PeopleActivityMeta, PersonActivity, PersonSession } from './types';
 import { DEV } from './places-data';
+import { dateRangeWithMinimum } from './follow-dates';
 
 /* Pure derivation over the ratified people-activity.json — no DOM, no fetch,
    so it runs under plain Node for verification. Lane geometry (month offsets,
@@ -64,11 +65,20 @@ export function buildPeopleData(raw: PeopleActivityFile): PeopleData {
   }
   people.sort((a, b) => (a.first === b.first ? compareStr(a.personId, b.personId) : compareStr(a.first, b.first)));
 
+  const actualStart = Number(people[0]?.first.slice(0, 4) ?? raw.meta.spanStart.slice(0, 4));
+  const latestSession = people.reduce(
+    (latest, person) => (person.last > latest ? person.last : latest),
+    '',
+  );
+  const actualEnd = Number((latestSession || raw.meta.spanEnd).slice(0, 4));
+  const [yearStart, yearEnd] = dateRangeWithMinimum(actualStart, actualEnd);
   return {
     people,
     meta: raw.meta,
-    yearStart: Number(raw.meta.spanStart.slice(0, 4)),
-    yearEnd: Number(raw.meta.spanEnd.slice(0, 4)),
+    /* The routes share a stable 1945–1985 editorial window, but session
+       evidence outside it still expands the axis rather than being clipped. */
+    yearStart,
+    yearEnd,
   };
 }
 

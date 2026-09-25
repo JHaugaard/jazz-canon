@@ -2,6 +2,7 @@
   import type { AlbumCard, AlbumDetail } from './types';
   import { loadDetails, loadPlaces, loadBasemap } from './data';
   import EpistemicBadge from './EpistemicBadge.svelte';
+  import { productionRows } from './production-credits';
   import MiniMap from './MiniMap.svelte';
   import type { AlbumPlace } from './places-data';
   import type { Basemap } from './places-geo';
@@ -19,6 +20,7 @@
   let detail = $state<AlbumDetail | null>(null);
   let error = $state<string | null>(null);
   let personnelOpen = $state(false);
+  let credits = $derived(productionRows(detail?.productionCredits));
   let artFailed = $state(false);
   let placeEntries = $state<AlbumPlace[] | null>(null);
   let basemap = $state<Basemap | null>(null);
@@ -247,6 +249,18 @@
             </li>
           {/each}
         </ul>
+        {#if credits.length}
+          <ul class="roster production-credits" aria-label="Production credits">
+            {#each credits as credit}
+              <li>
+                <span class="credit-name" class:ep-inf={credit.e === 'inf'}>{credit.name}</span>
+                <span class="inst">{credit.role === 'producer' ? 'Producer' : 'Engineer'}</span>
+                <EpistemicBadge e={credit.e} />
+                {#if credit.sessionOnly}<span class="scope">(session credit)</span>{/if}
+              </li>
+            {/each}
+          </ul>
+        {/if}
       {/if}
     </section>
   {/if}
@@ -254,6 +268,12 @@
 
 <style>
   .dd { padding: 18px 22px 40px; }
+  .production-credits {
+    border-top: 1px solid var(--line);
+    margin-top: 12px;
+    padding-top: 10px;
+  }
+  .credit-name { color: var(--bn-blue); font-weight: 600; }
 
   header { display: flex; gap: 16px; margin-bottom: 18px; }
   .art {

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { tick } from 'svelte';
   import { albumMap, loadPeopleActivity } from './data';
+  import FollowDates from './FollowDates.svelte';
   import { laneMarks, monthOffset } from './people-data';
   import type { Mark, PeopleData } from './people-data';
   import type { AlbumCard, PersonActivity } from './types';
@@ -32,6 +33,7 @@
   let loadError = $state<string | null>(null);
   let albums = $state<Map<string, AlbumCard>>(new Map());
   let albumsError = $state<string | null>(null);
+  let lanesScroll = $state<HTMLElement | null>(null);
 
   loadPeopleActivity()
     .then((d) => (data = d))
@@ -336,6 +338,12 @@
           {minYears === 1 ? 'year' : 'years'} of the canon
         </p>
 
+        <FollowDates
+          scrollElement={lanesScroll}
+          inspectionActive={tip !== null || highlightId !== null}
+          revision={`${minYears}:${roster.length}`}
+        />
+
         <div class="search-wrap">
           <input
             type="text"
@@ -379,7 +387,11 @@
         </p>
       {/if}
 
-      <div class="lanes-scroll" onscroll={hideTip}>
+      <div
+        class="lanes-scroll"
+        bind:this={lanesScroll}
+        onscroll={hideTip}
+      >
         <div class="field">
           <div class="axis">
             <div class="axis-name"></div>
@@ -405,6 +417,8 @@
               class="lane-row"
               class:hl={p.personId === highlightId}
               id="lane-{p.personId}"
+              data-follow-row={p.personId}
+              data-follow-control
               aria-label="{p.name} — open constellation"
               onclick={(e) => onRowClick(e, p.personId, groups)}
               onmousemove={(e) => onLaneMove(e, p.personId, groups)}
@@ -437,7 +451,7 @@
                   />
                   {#each groups as g}
                     {#each g.marks as mk}
-                      <circle cx={xm(mk.m)} cy={ROW_H / 2} r="3.2" fill="var(--bn-blue)" />
+                      <circle data-follow-mark cx={xm(mk.m)} cy={ROW_H / 2} r="3.2" fill="var(--bn-blue)" />
                     {/each}
                   {/each}
                   <!-- final exit: the last session in this canon, nothing more -->

@@ -1,4 +1,5 @@
 import type { Place } from './types';
+import { dateRangeWithMinimum } from './follow-dates';
 
 /* Pure derivation for the Where route. The export remains the source of truth;
    this module only validates dates, removes exact duplicate events and builds
@@ -142,10 +143,15 @@ export function buildWhereData(places: Place[]): WhereData {
 
   if (firstDate === null || lastDate === null) throw new Error('places.json has no plottable recording dates');
 
+  const [yearStart, yearEnd] = dateRangeWithMinimum(
+    Number(firstDate.slice(0, 4)),
+    Number(lastDate.slice(0, 4)),
+  );
   return {
     rows,
-    yearStart: Number(firstDate.slice(0, 4)),
-    yearEnd: Number(lastDate.slice(0, 4)),
+    /* Keep the common editorial window while preserving real outliers. */
+    yearStart,
+    yearEnd,
     eventCount,
     representedAlbumCount: representedAlbums.size,
     unsupportedDateCount,

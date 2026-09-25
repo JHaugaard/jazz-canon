@@ -1,5 +1,6 @@
 <script lang="ts">
   import { loadAlbums, loadPlaces } from './data';
+  import FollowDates from './FollowDates.svelte';
   import { buildWhereData, recordingMonthOffset } from './where-data';
   import type { DateGroup, WhereData, WhereRow } from './where-data';
   import type { AlbumCard, PlaceKind } from './types';
@@ -31,6 +32,8 @@
   let albums = $state<Map<string, AlbumCard>>(new Map());
   let albumCount = $state(0);
   let loadError = $state<string | null>(null);
+  let lanesScroll = $state<HTMLElement | null>(null);
+  let inspectingMark = $state(false);
 
   Promise.all([loadPlaces(), loadAlbums()])
     .then(([places, albumList]) => {
@@ -104,9 +107,13 @@
         <span>{data.rows.length} places</span>
         <span aria-hidden="true">·</span>
         <span>{data.representedAlbumCount} of {albumCount} albums located</span>
+        <FollowDates scrollElement={lanesScroll} revision={data.eventCount} inspectionActive={inspectingMark} />
       </div>
 
-      <div class="lanes-scroll">
+      <div
+        class="lanes-scroll"
+        bind:this={lanesScroll}
+      >
         <div class="field">
           <div class="axis">
             <div class="axis-name display">Recording place</div>
@@ -128,6 +135,7 @@
               class="place-row"
               class:approximate={row.place.precision === 'city'}
               style:--row-h="{rowHeight(row)}px"
+              data-follow-row={row.place.id}
             >
               <button
                 class="place-name"
@@ -152,6 +160,10 @@
                     class:soft={row.place.precision === 'city'}
                     style:left="{groupX}px"
                     style:top="{groupYPos}px"
+                    data-follow-mark
+                    data-follow-control
+                    onpointerenter={() => (inspectingMark = true)}
+                    onpointerleave={() => (inspectingMark = false)}
                     aria-label={eventLabel(row, group)}
                     title={`${albumName(group.events[0].albumId)} — ${formatDate(group.date)}`}
                     onclick={() => onOpenAlbum(group.events[0].albumId)}
