@@ -9,7 +9,7 @@ gitignored `.claude/session-context.md` as shared truth.
 
 ## Current coordination — 2026-09-25
 
-### Release checkpoint — implementation verified; attended deployment pending
+### Release checkpoint — live verified; ready for mccoy's album work
 
 - Approved expansion is implemented on main: 1945–1985, Bebop lane without
   a classification date cutoff, initial 1965 view and semantic resize anchor,
@@ -26,9 +26,14 @@ gitignored `.claude/session-context.md` as shared truth.
 - Review fixes preserve semantic position on restacking, keep labels outside
   card metadata, and retain native gesture/focus priority. Short windows use
   one card row rather than clipping a forced second row.
-- Next gate: `scripts/deploy.sh --expect 'Follow dates'` from main. John must
-  review preview and personally type `go`; production is not yet verified.
-  After release, verify live routes, credits and exact deployed assets.
+- Release code: `8a521ed` on main. John completed the attended deployment,
+  reported `LIVE VERIFIED`, and confirmed the live site in his browser.
+  Coder independently fetched https://jazzcanon.com/ and verified both release
+  assets match the local build: `index-BFVlHaVW.js`, `index-ZIutQ88g.css`.
+  Live exports contain 234 albums and 407 production-credit rows.
+- Next work belongs to mccoy's album/data lane, under John's next instructions.
+  Site preparation is complete; no authorization to ship the incoming batch
+  is implied by this closeout. The Board remains future work.
 - Protected preview-enrichment script and pre-existing straight-through-ship
   handoff edits remain outside this release.
 
