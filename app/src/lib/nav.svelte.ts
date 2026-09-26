@@ -56,6 +56,12 @@ class Nav {
     this.stack.push({ kind: 'place', id });
   }
 
+  openStyle(code: string) {
+    const t = this.top;
+    if (t && t.kind === 'style' && t.code === code) return;
+    this.stack.push({ kind: 'style', code });
+  }
+
   back() {
     this.stack.pop();
   }

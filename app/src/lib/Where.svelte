@@ -1,5 +1,6 @@
 <script lang="ts">
   import { loadAlbums, loadPlaces } from './data';
+  import { tick } from 'svelte';
   import FollowDates from './FollowDates.svelte';
   import { buildWhereData, recordingMonthOffset } from './where-data';
   import type { DateGroup, WhereData, WhereRow } from './where-data';
@@ -61,6 +62,29 @@
     return centre + (group.laneIndex - (group.laneCount - 1) / 2) * 24;
   }
 
+  /* Open on the busiest room rather than the first one (D27). Rows stay in
+     order of first recording, which date following depends on; only the
+     starting scroll position changes, so the 1940s rooms are one scroll up
+     instead of filling the first screen with an almost empty grid. */
+  const eventsIn = (row: WhereRow) => row.groups.reduce((n, g) => n + g.events.length, 0);
+  let busiest = $derived(
+    data && data.rows.length ? data.rows.reduce((best, row) => (eventsIn(row) > eventsIn(best) ? row : best)) : null,
+  );
+  let openedAtBusiest = false;
+  $effect(() => {
+    const scroller = lanesScroll;
+    const target = busiest;
+    if (!scroller || !target || openedAtBusiest) return;
+    openedAtBusiest = true;
+    tick().then(() => {
+      const rowEl = scroller.querySelector<HTMLElement>(`[data-follow-row="${CSS.escape(target.place.id)}"]`);
+      const axisH = scroller.querySelector<HTMLElement>('.axis')?.offsetHeight ?? 0;
+      if (!rowEl) return;
+      const offset = rowEl.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop;
+      scroller.scrollTop = Math.max(0, offset - axisH);
+    });
+  });
+
   function formatDate(date: string): string {
     if (date.length === 4) return date;
     const [year, month, day] = date.split('-').map(Number);
@@ -89,7 +113,7 @@
       Follow the rooms where this canon was made. Each dot is a dated recording event; one album may appear more than once, or in more than one place.
     </p>
     <p class="intro">
-      Places are ordered by their first represented recording. Scroll the field sideways to move through time, or choose a place to see its full record.
+      Places are ordered by their first represented recording. The field opens at the busiest room{busiest ? `, ${busiest.place.name}` : ''}; scroll up for the earliest rooms, sideways to move through time, or choose a place to see its full record.
     </p>
   </article>
 
@@ -147,7 +171,7 @@
                 <span class="venue">{row.place.name}</span>
                 <span class="place-meta">
                   {row.place.city} · {kindLabel[row.place.kind]}
-                  {#if row.place.precision === 'city'} · city-level{/if}
+                  {#if row.place.precision === 'city'} · exact room unknown{/if}
                 </span>
               </button>
               <div class="lane-cell" style:width="{svgW}px">
@@ -179,7 +203,7 @@
     </section>
 
     <p class="footnote">
-      The field shows known recording locations in the current canon, not a complete history of every session. Hollow marks indicate a location known only to city level. Month-only dates remain month-precise. {data.unsupportedDateCount === 1 ? 'One spanning date is' : `${data.unsupportedDateCount} spanning dates are`} not plotted rather than assigned invented precision.
+      The field shows known recording locations in the current canon, not a complete history of every session. Hollow marks show sessions located only to a city, with the exact room unknown. Month-only dates remain month-precise. {data.unsupportedDateCount === 1 ? 'One spanning date is' : `${data.unsupportedDateCount} spanning dates are`} not plotted rather than assigned invented precision.
     </p>
   {:else}
     <p class="fatal">Loading…</p>
@@ -190,8 +214,9 @@
 <style>
   .where { height: 100%; overflow-y: auto; background: var(--bg); }
   article { max-width: 720px; margin: 0 auto; padding: 40px 28px 8px; }
-  h1 { font-size: 40px; color: var(--bn-blue); letter-spacing: 0.02em; margin-bottom: 10px; }
-  .intro { font-family: var(--font-serif); font-size: 16px; line-height: 1.65; color: var(--ink); margin: 0 0 12px; }
+  h1 { font-size: var(--fs-3xl); color: var(--bn-blue); letter-spacing: 0.02em; margin-bottom: 10px; }
+  /* page intros are neutral text, so body face; Lora is editorial only */
+  .intro { font-size: var(--fs-base); line-height: 1.65; color: var(--ink); margin: 0 0 12px; max-width: 64ch; }
   .fatal { padding: 30px; color: var(--muted); }
 
   .field-wrap {
@@ -205,14 +230,13 @@
     flex-wrap: wrap;
     gap: 4px 8px;
     margin: 0 0 9px;
-    font-size: 13px;
+    font-size: var(--fs-md);
     color: var(--muted);
   }
   .lanes-scroll {
     max-height: 70dvh;
     overflow: auto;
     border: 1px solid var(--line);
-    border-radius: 6px;
     background: var(--bg);
   }
   .field {
@@ -239,7 +263,9 @@
     padding-left: 12px;
     background: var(--bg);
     color: var(--muted);
-    font-size: 11px;
+    font-size: var(--fs-xs);
+    font-variant: normal;
+    text-transform: uppercase;
     letter-spacing: 0.07em;
   }
   .axis-track { position: relative; }
@@ -254,11 +280,11 @@
   .tick-label {
     position: absolute;
     bottom: 8px;
-    font-size: 12px;
+    font-size: var(--fs-sm);
     color: var(--muted);
     white-space: nowrap;
   }
-  .tick-label.minor { font-size: 10.5px; opacity: 0.65; }
+  .tick-label.minor { font-size: var(--fs-2xs); opacity: 0.65; }
 
   .place-row {
     display: grid;
@@ -292,7 +318,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 13px;
+    font-size: var(--fs-md);
     font-weight: 600;
     color: var(--ink);
   }
@@ -301,7 +327,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 10.5px;
+    font-size: var(--fs-2xs);
     color: var(--muted);
   }
   .approximate .place-meta { font-style: italic; }
@@ -366,7 +392,7 @@
     left: var(--gutter);
     top: 50%;
     transform: translateY(-50%);
-    font-size: 11px;
+    font-size: var(--fs-xs);
     font-style: italic;
     color: var(--muted);
   }
@@ -375,7 +401,7 @@
     max-width: 980px;
     margin: 18px auto 48px;
     padding: 0 28px;
-    font-size: 13px;
+    font-size: var(--fs-md);
     color: var(--muted);
     line-height: 1.55;
   }
@@ -383,15 +409,15 @@
 
   @media (max-width: 620px) {
     article { padding: 26px 18px 6px; }
-    h1 { font-size: 30px; }
+    h1 { font-size: var(--fs-2xl); }
     .field-wrap {
       --name-w: 148px;
       padding: 0 14px;
       max-width: calc(var(--name-w) + var(--field-w) + 2 * var(--gutter) + var(--leading-pad) + 28px);
     }
-    .venue { font-size: 11.5px; }
-    .place-meta { font-size: 9.5px; }
-    .axis-name { font-size: 9.5px; padding-left: 8px; }
+    .venue { font-size: var(--fs-xs); }
+    .place-meta { font-size: var(--fs-2xs); }
+    .axis-name { font-size: var(--fs-2xs); padding-left: 8px; }
     .footnote { padding: 0 18px; }
   }
 </style>

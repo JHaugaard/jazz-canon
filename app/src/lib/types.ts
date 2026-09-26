@@ -80,7 +80,9 @@ export type NavEntry =
      the entry in place; it is not a history step. */
   | { kind: 'person'; ids: string[] }
   | { kind: 'mixing'; selection: import('./mixing-query').MixingSelection; anchor: { role: 'producer' | 'engineer'; id: string } }
-  | { kind: 'place'; id: string };
+  | { kind: 'place'; id: string }
+  /* a style (genre) or the ECM label tag, opened from search — D27 */
+  | { kind: 'style'; code: string };
 
 /* A hand-kept, site-side "what's new" entry. NOT canon data — `added` is the
    date the album first appeared on the site (a site-update date), edited by

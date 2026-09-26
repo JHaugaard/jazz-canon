@@ -28,8 +28,12 @@
      xm(), axis ticks and hairlines included, so the year columns still line up. */
   const GUTTER = 5;
   /* Space before the first year lets an earliest-possible mark rest near the
-     name column without hitting the horizontal scroll limit. */
-  const LEADING_PAD = 72;
+     name column without hitting the horizontal scroll limit. Phones get a
+     shorter runway (D27): at 390px the 72px pad plus the name column left
+     room for under three years of dots. Read once at load; a later resize
+     keeps the pad it started with, which is still a working layout. */
+  const PHONE = typeof matchMedia === 'function' && matchMedia('(max-width: 620px)').matches;
+  const LEADING_PAD = PHONE ? 28 : 72;
   const xm = (months: number) => LEADING_PAD + GUTTER + months * PX_PER_MONTH;
 
   let data = $state<PeopleData | null>(null);
@@ -507,10 +511,11 @@
 <style>
   .working { height: 100%; overflow-y: auto; background: var(--bg); }
   article { max-width: 720px; margin: 0 auto; padding: 40px 28px 8px; }
-  h1 { font-size: 40px; color: var(--bn-blue); letter-spacing: 0.02em; margin-bottom: 10px; }
-  .intro { font-family: var(--font-serif); font-size: 16px; line-height: 1.65; color: var(--ink); margin: 0 0 12px; }
+  h1 { font-size: var(--fs-3xl); color: var(--bn-blue); letter-spacing: 0.02em; margin-bottom: 10px; }
+  /* page intros are neutral text, so body face; Lora is editorial only */
+  .intro { font-size: var(--fs-base); line-height: 1.65; color: var(--ink); margin: 0 0 12px; max-width: 64ch; }
   .fatal { padding: 30px; color: var(--muted); }
-  .footnote { max-width: 940px; margin: 18px auto 48px; padding: 0 28px; font-size: 13px; color: var(--muted); line-height: 1.55; }
+  .footnote { max-width: 940px; margin: 18px auto 48px; padding: 0 28px; font-size: var(--fs-md); color: var(--muted); line-height: 1.55; }
 
   /* --name-w is layout, not data, so it lives in CSS and can be narrowed for
      phones; --field-w / --year-w / --row-h come from the data's own span. */
@@ -528,8 +533,8 @@
     gap: 8px 18px;
     margin: 0 0 9px;
   }
-  .count { margin: 0; font-size: 13px; color: var(--muted); }
-  .degraded { margin: 0 0 9px; font-size: 12.5px; color: var(--impulse-amber); }
+  .count { margin: 0; font-size: var(--fs-md); color: var(--muted); }
+  .degraded { margin: 0 0 9px; font-size: var(--fs-sm); color: var(--impulse-amber); }
 
   .stepper { display: flex; gap: 4px; }
   .step-btn { color: var(--muted); cursor: pointer; }
@@ -546,7 +551,7 @@
     height: 2px;
     background: var(--impulse-amber);
     margin-top: 3px;
-    border-radius: 2px;
+    border-radius: var(--radius);
   }
 
   .search-wrap { position: relative; margin-left: auto; }
@@ -554,11 +559,11 @@
     width: 220px;
     max-width: 100%;
     font-family: inherit;
-    font-size: 13px;
+    font-size: var(--fs-md);
     color: var(--ink);
     background: var(--bg);
     border: 1px solid var(--line);
-    border-radius: 6px;
+    border-radius: var(--radius);
     padding: 5px 10px;
   }
   .search-input:focus { outline: none; border-color: var(--bn-blue-light); }
@@ -573,7 +578,7 @@
     list-style: none;
     background: var(--bg);
     border: 1px solid var(--line);
-    border-radius: 6px;
+    border-radius: var(--radius);
     max-height: 260px;
     overflow-y: auto;
   }
@@ -583,9 +588,9 @@
     text-align: left;
     background: none;
     border: 0;
-    border-radius: 4px;
+    border-radius: var(--radius);
     padding: 6px 8px;
-    font-size: 13px;
+    font-size: var(--fs-md);
     color: var(--ink);
     cursor: pointer;
   }
@@ -598,7 +603,7 @@
     max-height: 70dvh;
     overflow: auto;
     border: 1px solid var(--line);
-    border-radius: 6px;
+    border-radius: var(--radius);
     background: var(--bg);
   }
   /* The blank runway beyond the final year lets a late cohort's first dot
@@ -631,11 +636,11 @@
   .tick-label {
     position: absolute;
     bottom: 7px;
-    font-size: 12px;
+    font-size: var(--fs-sm);
     color: var(--muted);
     white-space: nowrap;
   }
-  .tick-label.minor { font-size: 10.5px; opacity: 0.65; }
+  .tick-label.minor { font-size: var(--fs-2xs); opacity: 0.65; }
 
   .lane-row {
     --row-bg: var(--bg);
@@ -677,7 +682,7 @@
        draw an ellipsis on a name that would otherwise fit */
     flex: 0 0 auto;
     max-width: 100%;
-    font-size: 13.5px;
+    font-size: var(--fs-md);
     color: var(--ink);
     white-space: nowrap;
     overflow: hidden;
@@ -688,7 +693,7 @@
   .inst {
     flex: 0 1 auto;
     min-width: 0;
-    font-size: 11px;
+    font-size: var(--fs-xs);
     color: var(--muted);
     white-space: nowrap;
     overflow: hidden;
@@ -728,9 +733,9 @@
     padding: 4px 9px 5px;
     background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(28, 26, 23, 0.12);
-    font-size: 12.5px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-pop);
+    font-size: var(--fs-sm);
     line-height: 1.35;
     color: var(--ink);
   }
@@ -742,13 +747,13 @@
 
   @media (max-width: 620px) {
     article { padding: 26px 18px 6px; }
-    h1 { font-size: 30px; }
+    h1 { font-size: var(--fs-2xl); }
     .field-wrap {
-      --name-w: 124px;
+      --name-w: 112px;
       padding: 0 14px;
       max-width: calc(var(--name-w) + var(--field-w) + 2 * var(--gutter) + var(--leading-pad) + 28px);
     }
-    .who { font-size: 12.5px; }
+    .who { font-size: var(--fs-sm); }
     .inst { display: none; }
   }
 </style>

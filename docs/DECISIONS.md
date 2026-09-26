@@ -692,3 +692,81 @@ revision to GitHub before (or as part of) every deploy.
 (`vps4:git/jazz-canon.git`) so a bare or habitual `git push origin` can no
 longer feed it. It is kept only as an archive (it still holds the old
 `where-recorded` branch); do not push to it.
+
+---
+
+## D27. Look-and-feel pass — v.1 design review applied (2026-09-26)
+
+**Status:** ACCEPTED (John, 2026-09-26: "accept everything on the list" as a
+first pass; tweaks come in round two). Branch `look-and-feel`.
+
+**Source:** the annotated design review
+(`idea-foundry-vault/_inbox/2026-09-26-jazzcanon-design-review.html`), twelve
+findings plus two requests from John (style search, a search box that fits
+its label). Every change below is visual or copy; no data, export, or schema
+changed.
+
+**Decisions**, each reversible in the file named:
+
+1. **Eras move into the axis** (`Timeline.svelte`, `timeline-layout.ts`).
+   The translucent bands behind the cards and their floating labels are gone;
+   the labels sat on cover art. Each era is now a 2px rule in its own hue
+   under the year labels, packed into parallel lanes where eras coexist
+   (`eraLanes`, greedy, inclusive `to`). Era names and year labels are sticky,
+   so the year in view is always readable.
+2. **Covers stay clean** (`AlbumCardTile.svelte`). No year label, no Bebop
+   badge, no gate-edge accent on the art. The genre gate still shows in the
+   tooltip; the era hue moved to the style line under the cover
+   (`STYLE_INK`). ECM keeps its quiet text tag.
+3. **Tiles are sleeves, not cards.** Square 148px cover, hairline edge, text
+   on the paper below; no rounded corners, no drop shadow, no hover lift.
+   Hover and focus draw a blue edge on the cover.
+4. **Libre Franklin replaces Inter** (`index.html`, `app.css`). Inter is the
+   most-cited "AI default" face; Libre Franklin is a Franklin Gothic revival,
+   the grotesque of the period's covers. Oswald and Lora are unchanged. This
+   amends the style guide's locked type (§3).
+5. **One type scale** (`--fs-*` in `app.css`): 10, 11, 12, 13, 15, 17, 21,
+   28, 40px. Every `font-size` in the app uses a step; half-pixel sizes are
+   gone. Oswald small caps only at 13px and up; smaller Oswald or small-caps
+   labels use real capitals.
+6. **Lora is editorial only.** Working and Where intros moved to the body
+   face. The editorial callout lost its tinted box and amber left bar; the
+   italic serif and an amber "Editorial note" label carry the voice.
+7. **Copy.** About drops its "X, not Y" sentences and dash-bracketed asides;
+   the eras paragraph now describes the ribbon. The Working intro says "Tap
+   or hover" and no longer repeats itself. "city-level" on Where and in the
+   place window reads "exact room unknown".
+8. **Constellation.** Musicians are drawn as records after the logo mark: the
+   featured musician a blue disc with grooves and an amber label, the others
+   a single groove and spindle hole. The auto-fit cap rose 1.6 → 2.2 so small
+   graphs fill the window.
+9. **Album panel.** When every track has identical personnel (same people,
+   instruments and epistemic labels; 171 of 248 albums), one "All tracks"
+   line replaces the repeats. A missing track number shows blank, not "–".
+10. **Where opens at the busiest room** (Van Gelder, Englewood Cliffs). Row
+    order is unchanged (first recording) because date following depends on
+    it; only the starting scroll position moved. Tall rows are stacked
+    same-date sessions and stay.
+11. **Phone.** Menu labels 15px with 44px tap targets. Working's name column
+    is 112px and its lead-in 28px (72px on wider screens), so about four
+    years of dots show at 390px instead of under three.
+12. **Tokens.** Corners: `--radius` 3px for controls, `--radius-pill`, and
+    round dots; nothing else. Shadows: `--shadow-pop` (dropdowns, tooltips)
+    and `--shadow-float` (windows, side panel) only.
+13. **Style search** (`styles.ts`, `search-match.ts`, `StyleWindow.svelte`).
+    Search gains a Styles group. The style list comes from the data (primary
+    codes and tags); `STYLE_VOCAB` only adds names and aliases. Matching
+    ignores spaces, hyphens and case ("Be Bop", "be-bop", "avant garde",
+    "hardbop"). A hit opens a window listing every album in that style,
+    oldest first, primary-style albums before tag-only ones. ECM appears as
+    a record label, never a style.
+14. **Search label.** Placeholder "Search the canon"; focusing the empty field
+    shows what search covers and five runnable examples. Field widened to
+    380px.
+
+**Verified:** `npm run check` clean; `npm test` 34/34, with the new tests
+shown to fail against planted defects (inclusive-year lane overlap, no
+compact matching, dropped tags, unsorted lists, lost export names).
+Playwright against the preview build at 1512×900, 1024×768 and 390×844:
+all four routes, search hint, style queries end to end, Hard Bop window
+(110 albums), album panel, two constellations; no page errors.

@@ -1,21 +1,25 @@
 <script lang="ts">
   import { loadAlbums, loadGraph, loadDetails, loadPlaces } from './data';
   import { mixingIndex } from './mixing-query';
-  import { fold, rank } from './search-match';
+  import { fold, rank, styleRank } from './search-match';
+  import { buildStyleIndex } from './styles';
 
-  /* Unified search across exported musicians, albums, production credits,
-     and places. Each result retains its canonical ID and destination. */
+  /* Unified search across exported musicians, albums, styles, production
+     credits, and places. Each result retains its canonical ID and
+     destination. */
 
   let {
     onOpenPerson,
     onOpenAlbum,
     onOpenMixing,
     onOpenPlace,
+    onOpenStyle,
   }: {
     onOpenPerson: (personId: string) => void;
     onOpenAlbum: (albumId: string) => void;
     onOpenMixing: (role: 'producer' | 'engineer', personId: string) => void;
     onOpenPlace: (placeId: string) => void;
+    onOpenStyle: (code: string) => void;
   } = $props();
 
   interface PersonHit {
@@ -40,15 +44,20 @@
   interface PlaceHit {
     kind: 'place'; id: string; name: string; placeKind: string; city: string; norm: string;
   }
-  type Hit = PersonHit | AlbumHit | ProductionHit | PlaceHit;
+  interface StyleHit {
+    kind: 'style'; id: string; name: string; styleKind: 'style' | 'label'; keys: string[]; albums: number;
+  }
+  type Hit = PersonHit | AlbumHit | StyleHit | ProductionHit | PlaceHit;
 
   const MAX_PEOPLE = 7;
   const MAX_ALBUMS = 5;
+  const MAX_STYLES = 5;
   const MAX_PRODUCTION = 6;
   const MAX_PLACES = 7;
 
 
-  let index = $state<{ people: PersonHit[]; albums: AlbumHit[]; production: ProductionHit[]; places: PlaceHit[] } | null>(null);
+  type Results = { people: PersonHit[]; albums: AlbumHit[]; styles: StyleHit[]; production: ProductionHit[]; places: PlaceHit[] };
+  let index = $state<Results | null>(null);
   let supplementalError = $state(false);
   let indexPromise: Promise<void> | null = null;
 
@@ -79,6 +88,14 @@
       })),
       production: [],
       places: [],
+      styles: buildStyleIndex(albums).map((st) => ({
+        kind: 'style',
+        id: st.code,
+        name: st.name,
+        styleKind: st.kind,
+        keys: st.keys,
+        albums: st.primary.length + st.tagged.length,
+      })),
       albums: albums.map((a) => ({
         kind: 'album',
         id: a.id,
@@ -113,10 +130,10 @@
   let mobileOpen = $state(false);
 
 
-  let results = $derived.by((): { people: PersonHit[]; albums: AlbumHit[]; production: ProductionHit[]; places: PlaceHit[] } => {
+  let results = $derived.by((): Results => {
     const q = fold(query.trim());
-    if (!q || !index) return { people: [], albums: [], production: [], places: [] };
-    const score = <T extends Hit>(hits: T[]): (T & { r: number })[] =>
+    if (!q || !index) return { people: [], albums: [], styles: [], production: [], places: [] };
+    const score = <T extends Exclude<Hit, StyleHit>>(hits: T[]): (T & { r: number })[] =>
       hits
         .map((h) => ({ ...h, r: rank(h.norm, q) }))
         .filter((h): h is T & { r: number } => h.r !== null);
@@ -126,16 +143,21 @@
     const albums = score(index.albums)
       .sort((a, b) => a.r - b.r || a.year - b.year || a.title.localeCompare(b.title))
       .slice(0, MAX_ALBUMS);
+    const styles = index.styles
+      .map((h) => ({ ...h, r: styleRank(h.keys, query) }))
+      .filter((h): h is StyleHit & { r: number } => h.r !== null)
+      .sort((a, b) => a.r - b.r || b.albums - a.albums || a.name.localeCompare(b.name))
+      .slice(0, MAX_STYLES);
     const production = score(index.production)
       .sort((a, b) => a.r - b.r || b.albums - a.albums || a.name.localeCompare(b.name) || a.id.localeCompare(b.id))
       .slice(0, MAX_PRODUCTION);
     const places = score(index.places)
       .sort((a, b) => a.r - b.r || a.name.localeCompare(b.name) || a.city.localeCompare(b.city) || a.id.localeCompare(b.id))
       .slice(0, MAX_PLACES);
-    return { people, albums, production, places };
+    return { people, albums, styles, production, places };
   });
 
-  let flat = $derived([...results.people, ...results.albums, ...results.production, ...results.places] as Hit[]);
+  let flat = $derived([...results.people, ...results.albums, ...results.styles, ...results.production, ...results.places] as Hit[]);
 
   $effect(() => {
     void flat.length;
@@ -149,12 +171,21 @@
     inputEl?.blur();
     if (hit.kind === 'person') onOpenPerson(hit.id);
     else if (hit.kind === 'album') onOpenAlbum(hit.id);
+    else if (hit.kind === 'style') onOpenStyle(hit.id);
     else if (hit.kind === 'production') onOpenMixing(hit.role, hit.id);
     else onOpenPlace(hit.id);
   }
 
   function onInput() {
-    open = query.trim().length > 0;
+    open = true;
+  }
+
+  /* Examples on the empty-field hint: clicking one runs it as a search. */
+  const EXAMPLES = ['Coltrane', 'Blue Train', 'Hard Bop', 'Van Gelder', 'Birdland'];
+  function tryExample(q: string) {
+    query = q;
+    open = true;
+    inputEl?.focus();
   }
 
   function onKeydown(e: KeyboardEvent) {
@@ -195,7 +226,7 @@
 
   function onFocus() {
     buildIndex();
-    if (query.trim()) open = true;
+    open = true;
   }
 
   // click/tap outside closes the dropdown (and the phone search bar)
@@ -230,11 +261,11 @@
     </svg>
     <input
       type="search"
-      placeholder="Musician, album, studio, producer or engineer . . ."
+      placeholder="Search the canon"
       autocomplete="off"
       spellcheck="false"
       role="combobox"
-      aria-label="Search musicians, albums, places, producers and engineers"
+      aria-label="Search musicians, albums, styles, places, producers and engineers"
       aria-expanded={open}
       aria-controls="search-results"
       aria-activedescendant={open && flat.length ? `search-opt-${active}` : undefined}
@@ -246,7 +277,15 @@
     />
   </div>
 
-  {#if open}
+  {#if open && !query.trim()}
+    <div class="results hint" id="search-results">
+      <p class="hint-what">Find a musician, album, style, studio or club, producer, or engineer.</p>
+      <p class="hint-try">
+        <span class="hint-k">Try</span>
+        {#each EXAMPLES as ex, i}{#if i > 0}<span class="hint-sep" aria-hidden="true">·</span>{/if}<button class="hint-ex" onclick={() => tryExample(ex)}>{ex}</button>{/each}
+      </p>
+    </div>
+  {:else if open}
     <div class="results" id="search-results" role="listbox" aria-label="Search results">
       {#if !flat.length}
         <div class="empty">{supplementalError ? 'Some search data could not load; musician and album results remain available.' : 'No matches in the canon.'}</div>
@@ -288,10 +327,21 @@
             </button>
           {/each}
         {/if}
+        {#if results.styles.length}
+          <div class="group display">Styles</div>
+          {#each results.styles as hit, i (hit.id)}
+            {@const fi = results.people.length + results.albums.length + i}
+            <button class="row" class:active={active === fi} id={`search-opt-${fi}`} role="option"
+              aria-selected={active === fi} onpointerenter={() => (active = fi)} onclick={() => choose(hit)}>
+              <span class="row-main">{hit.name}</span>
+              <span class="row-meta">{hit.styleKind === 'label' ? 'Record label' : 'Style'} · {hit.albums} album{hit.albums === 1 ? '' : 's'}</span>
+            </button>
+          {/each}
+        {/if}
         {#if results.production.length}
           <div class="group display">Production credits</div>
           {#each results.production as hit, i (`${hit.role}:${hit.id}`)}
-            {@const fi = results.people.length + results.albums.length + i}
+            {@const fi = results.people.length + results.albums.length + results.styles.length + i}
             <button class="row" class:active={active === fi} id={`search-opt-${fi}`} role="option"
               aria-selected={active === fi} onpointerenter={() => (active = fi)} onclick={() => choose(hit)}>
               <span class="row-main">{hit.name}</span>
@@ -302,7 +352,7 @@
         {#if results.places.length}
           <div class="group display">Places</div>
           {#each results.places as hit, i (hit.id)}
-            {@const fi = results.people.length + results.albums.length + results.production.length + i}
+            {@const fi = results.people.length + results.albums.length + results.styles.length + results.production.length + i}
             <button class="row" class:active={active === fi} id={`search-opt-${fi}`} role="option"
               aria-selected={active === fi} onpointerenter={() => (active = fi)} onclick={() => choose(hit)}>
               <span class="row-main">{hit.name}</span>
@@ -316,7 +366,7 @@
 </div>
 
 <style>
-  .search { position: relative; flex: 0 1 340px; min-width: 0; }
+  .search { position: relative; flex: 0 1 380px; min-width: 0; }
 
   .search-toggle { display: none; }
 
@@ -336,11 +386,11 @@
     height: 38px;
     padding: 0 12px 0 34px;
     font-family: var(--font-body);
-    font-size: 13.5px;
+    font-size: var(--fs-base);
     color: var(--ink);
     background: var(--bg);
     border: 1px solid var(--line);
-    border-radius: 8px;
+    border-radius: var(--radius);
     outline: none;
   }
   input::placeholder { color: var(--muted); opacity: 0.8; }
@@ -354,15 +404,15 @@
     right: 0;
     background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: 8px;
-    box-shadow: 0 10px 30px rgba(28, 26, 23, 0.16);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-pop);
     max-height: min(480px, 70vh);
     overflow-y: auto;
     z-index: 40;
     padding: 4px;
   }
   .group {
-    font-size: 12.5px;
+    font-size: var(--fs-md);
     color: var(--bn-blue);
     letter-spacing: 0.06em;
     padding: 7px 10px 3px;
@@ -375,13 +425,30 @@
     text-align: left;
     background: none;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius);
     padding: 6px 10px;
   }
   .row.active { background: rgba(43, 95, 122, 0.09); }
-  .row-main { font-size: 13.5px; font-weight: 600; color: var(--ink); }
-  .row-meta { font-size: 12px; color: var(--muted); }
-  .empty { padding: 12px; font-size: 13px; color: var(--muted); }
+  .row-main { font-size: var(--fs-md); font-weight: 600; color: var(--ink); }
+  .row-meta { font-size: var(--fs-sm); color: var(--muted); }
+  .empty { padding: 12px; font-size: var(--fs-md); color: var(--muted); }
+
+  /* empty-field hint: what search covers, plus runnable examples */
+  .hint { padding: 12px 14px; }
+  .hint p { margin: 0; font-size: var(--fs-md); line-height: 1.5; }
+  .hint-what { color: var(--ink); }
+  .hint-try { margin-top: 6px !important; color: var(--muted); display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 0; }
+  .hint-k { margin-right: 8px; }
+  .hint-sep { margin: 0 6px; opacity: 0.6; }
+  .hint-ex {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-weight: 600;
+    color: var(--bn-blue);
+  }
+  .hint-ex:hover, .hint-ex:focus-visible { text-decoration: underline; }
 
   /* Phone: the field collapses to an icon; tapping it drops a full-width
      search bar under the masthead. */

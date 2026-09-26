@@ -4,6 +4,7 @@
   import EpistemicBadge from './EpistemicBadge.svelte';
   import { productionRows } from './production-credits';
   import MiniMap from './MiniMap.svelte';
+  import { STYLE_INK } from './timeline-layout';
   import type { AlbumPlace } from './places-data';
   import type { Basemap } from './places-geo';
 
@@ -114,6 +115,22 @@
     return () => stop();
   });
 
+  /* When every track lists the same people on the same instruments with the
+     same honesty labels, show the line once above the list instead of under
+     each track (171 of 248 albums at the time of writing). Any difference at
+     all, including an epistemic label, keeps the per-track lines. */
+  type TrackPerson = AlbumDetail['tracks'][number]['personnel'][number];
+  let sharedPersonnel = $derived.by((): TrackPerson[] | null => {
+    const tracks = detail?.tracks ?? [];
+    if (tracks.length < 2 || !tracks.every((t) => t.personnel.length)) return null;
+    const sig = (list: TrackPerson[]) =>
+      JSON.stringify(list.map((p) => [p.personId, p.instrument, p.e]).sort());
+    const first = sig(tracks[0].personnel);
+    return tracks.every((t) => sig(t.personnel) === first) ? tracks[0].personnel : null;
+  });
+
+  let styleInk = $derived(STYLE_INK[album.styleCode] ?? 'var(--muted)');
+
   const scopeNote: Record<string, string | null> = {
     'all-tracks': null,
     'selected-tracks': 'selected tracks',
@@ -136,7 +153,7 @@
       <div class="facts">
         {album.year}{#if album.label}&ensp;·&ensp;{album.label}{/if}{#if album.catalog}&ensp;·&ensp;{album.catalog}{/if}
       </div>
-      <div class="style display">{album.style}</div>
+      <div class="style" style:color={styleInk}>{album.style}</div>
       <div class="cta-row">
         {#if album.appleAlbumId}
           <a
@@ -195,8 +212,23 @@
       {/if}
     </section>
 
+    {#snippet personnelLine(list: TrackPerson[])}
+      {#each list as p, i}
+        {#if i > 0}<span class="sep">·</span>{/if}
+        <button class="person" onclick={() => onOpenPerson(p.personId)}>
+          <span class:ep-inf={p.e === 'inf'}>{p.name}</span></button
+        ><span class="inst">&thinsp;{p.instrument}</span><EpistemicBadge e={p.e} />
+      {/each}
+    {/snippet}
+
     <section>
       <h3 class="sec">Tracks</h3>
+      {#if sharedPersonnel}
+        <div class="all-tracks">
+          <span class="at-k">All tracks</span>
+          <span class="at-people">{@render personnelLine(sharedPersonnel)}</span>
+        </div>
+      {/if}
       <ol class="tracks">
         {#each detail.tracks as t}
           <li>
@@ -212,20 +244,13 @@
               {:else}
                 <span class="tplay tplay-empty" aria-hidden="true"></span>
               {/if}
-              <span class="tn">{t.n ?? '–'}</span>
+              <span class="tn">{t.n ?? ''}</span>
               <span class="ttitle" class:ep-inf={t.e === 'inf'}>{t.title}</span>
               <EpistemicBadge e={t.e} />
               {#if t.duration}<span class="tdur">{t.duration}</span>{/if}
             </div>
-            {#if t.personnel.length}
-              <div class="tpersonnel">
-                {#each t.personnel as p, i}
-                  {#if i > 0}<span class="sep">·</span>{/if}
-                  <button class="person" onclick={() => onOpenPerson(p.personId)}>
-                    <span class:ep-inf={p.e === 'inf'}>{p.name}</span></button
-                  ><span class="inst">&thinsp;{p.instrument}</span><EpistemicBadge e={p.e} />
-                {/each}
-              </div>
+            {#if t.personnel.length && !sharedPersonnel}
+              <div class="tpersonnel">{@render personnelLine(t.personnel)}</div>
             {/if}
           </li>
         {/each}
@@ -283,7 +308,6 @@
     width: 168px;
     height: 168px;
     background: var(--line);
-    border-radius: 4px;
     overflow: hidden;
   }
   .art img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -291,24 +315,24 @@
     width: 100%; height: 100%;
     display: flex; align-items: center; justify-content: center;
     text-align: center; padding: 12px;
-    color: var(--bn-blue); font-size: 16px;
-    background: linear-gradient(160deg, rgba(43,95,122,0.16), rgba(43,95,122,0.05));
+    color: var(--bn-blue); font-size: var(--fs-base);
+    background: rgba(43, 95, 122, 0.1);
   }
   .head-meta { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-  .title { font-size: 26px; line-height: 1.08; color: var(--ink); }
-  .artist { font-size: 15px; font-weight: 600; }
-  .facts { font-size: 13px; color: var(--muted); }
-  .style { font-size: 13.5px; color: var(--bn-blue); }
+  .title { font-size: var(--fs-2xl); line-height: 1.08; color: var(--ink); }
+  .artist { font-size: var(--fs-base); font-weight: 600; }
+  .facts { font-size: var(--fs-md); color: var(--muted); }
+  .style { font-size: var(--fs-md); font-weight: 600; }
   .apple {
     margin-top: 8px;
     align-self: flex-start;
-    font-size: 13px;
+    font-size: var(--fs-md);
     font-weight: 600;
     color: #fff;
     background: var(--bn-blue);
     text-decoration: none;
     padding: 7px 12px;
-    border-radius: 6px;
+    border-radius: var(--radius);
   }
   .apple:hover { background: var(--bn-blue-light); }
   .cta-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
@@ -316,37 +340,37 @@
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    font-size: 13px;
+    font-size: var(--fs-md);
     font-weight: 600;
     color: var(--bn-blue);
     background: var(--surface);
     border: 1px solid var(--bn-blue);
     padding: 6px 12px;
-    border-radius: 6px;
+    border-radius: var(--radius);
   }
   .playall:hover { background: var(--bg); }
   .playall[aria-pressed='true'] { background: var(--bn-blue); color: #fff; }
-  .pa-icon { font-size: 11px; line-height: 1; }
+  .pa-icon { font-size: var(--fs-xs); line-height: 1; }
 
   section { margin-bottom: 18px; }
   .sec {
-    font-size: 15px;
+    font-size: var(--fs-base);
     color: var(--bn-blue);
     border-bottom: 1px solid var(--line);
     padding-bottom: 4px;
     margin-bottom: 8px;
   }
-  .editorial { margin-bottom: 18px; font-size: 14.5px; }
+  .editorial { margin-bottom: 18px; font-size: var(--fs-base); }
 
-  .rec-row { font-size: 13.5px; margin-bottom: 3px; }
+  .rec-row { font-size: var(--fs-md); margin-bottom: 3px; }
   .rec-k {
     display: inline-block;
     width: 76px;
     color: var(--muted);
-    font-size: 13px;
+    font-size: var(--fs-xs);
     font-weight: 600;
-    font-variant: small-caps;
-    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
   }
 
   .tracks { list-style: none; margin: 0; padding: 0; }
@@ -361,7 +385,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 9px;
+    font-size: var(--fs-2xs);
     line-height: 1;
     color: var(--bn-blue);
     background: var(--surface);
@@ -377,13 +401,30 @@
     flex: 0 0 18px;
     font-family: var(--font-display);
     font-weight: 600;
-    font-size: 12.5px;
+    font-size: var(--fs-sm);
     color: var(--muted);
     text-align: right;
   }
-  .ttitle { font-weight: 600; font-size: 14px; }
-  .tdur { margin-left: auto; font-size: 12.5px; color: var(--muted); }
-  .tpersonnel { margin: 3px 0 0 54px; font-size: 12.5px; color: var(--muted); line-height: 1.7; }
+  .ttitle { font-weight: 600; font-size: var(--fs-md); }
+  .tdur { margin-left: auto; font-size: var(--fs-sm); color: var(--muted); }
+  .all-tracks {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    padding: 2px 0 8px;
+    border-bottom: 1px solid var(--line);
+    font-size: var(--fs-sm);
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .at-k {
+    flex: 0 0 auto;
+    font-weight: 600;
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .tpersonnel { margin: 3px 0 0 54px; font-size: var(--fs-sm); color: var(--muted); line-height: 1.7; }
   .sep { margin: 0 4px; opacity: 0.6; }
 
   .person {
@@ -409,19 +450,19 @@
     text-align: left;
   }
   .expander .sec { flex: 1; margin-bottom: 0; }
-  .chev { color: var(--bn-blue); font-size: 13px; }
+  .chev { color: var(--bn-blue); font-size: var(--fs-md); }
   .roster { list-style: none; margin: 10px 0 0; padding: 0; }
-  .roster li { padding: 4px 0; font-size: 13.5px; }
-  .scope { font-size: 12px; color: var(--muted); font-style: italic; }
+  .roster li { padding: 4px 0; font-size: var(--fs-md); }
+  .scope { font-size: var(--fs-sm); color: var(--muted); font-style: italic; }
 
   .loading, .error { color: var(--muted); padding: 12px 0; }
   .error { color: var(--impulse-amber); }
-  .map-err { font-size: 12.5px; color: var(--impulse-amber); margin: 2px 0 0; }
+  .map-err { font-size: var(--fs-sm); color: var(--impulse-amber); margin: 2px 0 0; }
 
   @media (max-width: 620px) {
     .dd { padding: 14px 16px 40px; }
     header { gap: 12px; }
     .art { flex: 0 0 116px; width: 116px; height: 116px; }
-    .title { font-size: 22px; }
+    .title { font-size: var(--fs-xl); }
   }
 </style>

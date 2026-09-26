@@ -7,6 +7,7 @@
   import MixingConsole from './lib/MixingConsole.svelte';
   import FloatingWindow from './lib/FloatingWindow.svelte';
   import PlaceWindow from './lib/PlaceWindow.svelte';
+  import StyleWindow from './lib/StyleWindow.svelte';
   import About from './lib/About.svelte';
   import Working from './lib/Working.svelte';
   import Where from './lib/Where.svelte';
@@ -66,6 +67,7 @@
   let constName = $state('');
   let placeName = $state('');
   let mixingName = $state('');
+  let styleName = $state('');
 </script>
 
 <svelte:window onkeydown={onKeydown} onhashchange={() => (route = parseHash())} />
@@ -111,6 +113,7 @@
       onOpenAlbum={(aid) => { go('home'); nav.openAlbum(aid); }}
       onOpenMixing={(role, pid) => { go('home'); nav.openMixing(role, pid); }}
       onOpenPlace={(pid) => { go('home'); nav.openPlace(pid); }}
+      onOpenStyle={(code) => { go('home'); nav.openStyle(code); }}
     />
 
     <nav class="mast-nav">
@@ -217,12 +220,28 @@
         onmeta={(m) => (placeName = m.name)}
       />
     </FloatingWindow>
+  {:else if top?.kind === 'style'}
+    <FloatingWindow
+      variant="place"
+      title={styleName}
+      guide="Every canon album in this style, oldest first&ensp;·&ensp;click one to open"
+      ariaLabel="Style"
+      showBack={nav.stack.length > 1}
+      onBack={() => nav.back()}
+      onClose={() => nav.close()}
+    >
+      <StyleWindow
+        code={top.code}
+        onOpenAlbum={(aid) => nav.openAlbum(aid)}
+        onmeta={(m) => (styleName = m.name)}
+      />
+    </FloatingWindow>
   {/if}
 </div>
 
 <style>
   .shell {
-    --masthead-h: 116px;
+    --masthead-h: 104px;
     height: 100vh;
     height: 100dvh; /* avoids mobile browser-chrome clipping */
     display: flex;
@@ -253,18 +272,22 @@
     padding: 0;
     cursor: pointer;
   }
-  .mark { height: 80px; display: block; }
+  .mark { height: 72px; display: block; }
   .wordmark { display: flex; flex-direction: column; line-height: 1; padding-bottom: 4px; }
   .wm-title {
-    font-size: 30px;
+    font-size: var(--fs-2xl);
     color: var(--bn-blue);
     letter-spacing: 0.03em;
     line-height: 1;
   }
+  /* real capitals, not synthesized small caps: at this size small caps
+     thin out (see the type-scale note in app.css) */
   .wm-tag {
-    font-size: 12px;
+    font-size: var(--fs-sm);
+    font-variant: normal;
+    text-transform: uppercase;
     color: var(--muted);
-    letter-spacing: 0.2em;
+    letter-spacing: 0.18em;
     line-height: 1;
     margin-top: 5px;
   }
@@ -275,11 +298,11 @@
     border: none;
     font-family: var(--font-display);
     font-variant: small-caps;
-    font-size: 17px;
+    font-size: var(--fs-lg);
     letter-spacing: 0.04em;
     color: var(--muted);
     padding: 6px 12px;
-    border-radius: 6px;
+    border-radius: var(--radius);
   }
   .nav-link:hover { color: var(--bn-blue); background: var(--bg); }
   .nav-link.active { color: var(--bn-blue); }
@@ -289,7 +312,6 @@
     height: 2px;
     background: var(--impulse-amber);
     margin-top: 2px;
-    border-radius: 2px;
   }
 
   main { flex: 1; min-height: 0; }
@@ -303,7 +325,7 @@
     width: min(520px, 94vw);
     background: var(--surface);
     border-left: 1px solid var(--line);
-    box-shadow: -10px 0 30px rgba(28, 26, 23, 0.12);
+    box-shadow: var(--shadow-float);
     display: flex;
     flex-direction: column;
     z-index: 20;
@@ -320,9 +342,9 @@
   @media (max-width: 1024px) {
     .shell { --masthead-h: 92px; }
     .mark { height: 62px; }
-    .wm-title { font-size: 25px; }
-    .wm-tag { font-size: 11px; margin-top: 4px; }
-    .nav-link { font-size: 16px; }
+    .wm-title { font-size: var(--fs-xl); }
+    .wm-tag { font-size: var(--fs-xs); margin-top: 4px; }
+    .nav-link { font-size: var(--fs-base); }
     .masthead { padding: 0 18px; }
   }
 
@@ -335,7 +357,9 @@
     .wordmark { display: none; }
     .lockup { align-items: center; }
     .mast-nav { gap: 0; }
-    .nav-link { font-size: 13.5px; padding: 6px 5px; }
+    /* 44px-tall tap targets; the labels stay at the smallest size Oswald
+       small caps read well at */
+    .nav-link { font-size: var(--fs-base); padding: 12px 6px; }
     .masthead { gap: 6px; padding: 0 6px; }
 
     .panel { width: 100vw; }

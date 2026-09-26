@@ -4,14 +4,14 @@ import type { AlbumCard } from './types';
    x-axis: years with albums are wide enough for their card columns
    (albums stack vertically up to `perColumn`, then spill into a new
    column); empty years stay slim so gaps in the canon read as gaps.
-   Era bands and the year axis both derive from the same x(year) map. */
+   The era ribbon and the year axis both derive from the same x(year) map. */
 
 export const START_YEAR = 1945;
 export const END_YEAR = 1985;
 export const OPEN_YEAR = 1965;
 
 export const CARD_W = 148;
-export const CARD_H = 214; // 148 art + text block
+export const CARD_H = 204; // 148 square cover + 56 text block
 export const CARD_GAP = 14;
 export const EMPTY_YEAR_W = 56;
 export const YEAR_PAD = 26; // breathing room inside a populated year block
@@ -87,86 +87,67 @@ export function computeLayout(albums: AlbumCard[], perColumn: number): TimelineL
   return { totalWidth, cards, years, xOfYear };
 }
 
-/* Era bands (BRIEF §5.1). Overlaps are historically accurate and stay
-   visible: each era gets its own horizontal lane, so coexisting eras
-   read as parallel strips over the same span of years.
+/* Era ribbon (BRIEF §5.1, reworked 2026-09-26 — D27). Each era is a thin
+   rule in its own hue under the year axis, spanning its years, with its name
+   pinned at the left end. Overlaps are historically accurate and stay
+   visible: eras that coexist sit in parallel lanes. The eras used to be
+   translucent bands behind the cards with floating labels; the labels sat on
+   cover art, so the eras moved up into the axis.
 
-   Growth path: the canon will eventually extend toward the present
-   (Free Jazz, Fusion, …). Adding an era = appending one entry here
-   (plus a tint token in app.css) and, if needed, raising END_YEAR.
-   Lane geometry is computed from the array — nothing else to touch. */
+   Growth path: the canon will eventually extend toward the present.
+   Adding an era = appending one entry here (plus an --era-ink-* token in
+   app.css) and, if needed, raising END_YEAR. Lanes are packed from the
+   array — nothing else to touch. */
 export interface EraBand {
   name: string;
   from: number;
   to: number; // inclusive last year
-  cssVar: string;
+  cssVar: string; // solid era hue (line + label)
 }
 
-/* Ordered by start year, so the overlap-blend runs chronologically down the
-   lanes. Free Jazz and Fusion joined in 2026-07 when the genre gates opened
-   (decision B2) — they are genres with genuine era shapes, so they belong in
-   this framework. ECM does not appear here and never will: it is a record
-   label, not an era, and shows up only as a card-level accent (gates.ts). */
+/* Ordered by start year. Free Jazz and Fusion joined in 2026-07 when the
+   genre gates opened (decision B2) — they are genres with genuine era
+   shapes, so they belong in this framework. ECM does not appear here and
+   never will: it is a record label, shown only as a tag on the card. */
 export const ERA_BANDS: EraBand[] = [
-  { name: 'Bebop', from: 1945, to: 1955, cssVar: 'var(--era-bebop)' },
-  { name: 'Cool Jazz', from: 1949, to: 1958, cssVar: 'var(--era-cool)' },
-  { name: 'Hard Bop', from: 1955, to: 1965, cssVar: 'var(--era-hardbop)' },
-  { name: 'Modal Jazz', from: 1958, to: 1979, cssVar: 'var(--era-modal)' },
-  { name: 'Free Jazz', from: 1959, to: 1979, cssVar: 'var(--era-freejazz)' },
-  { name: 'Post-Bop', from: 1962, to: 1968, cssVar: 'var(--era-postbop)' },
-  { name: 'Fusion', from: 1968, to: END_YEAR, cssVar: 'var(--era-fusion)' },
+  { name: 'Bebop', from: 1945, to: 1955, cssVar: 'var(--era-ink-bebop)' },
+  { name: 'Cool Jazz', from: 1949, to: 1958, cssVar: 'var(--era-ink-cool)' },
+  { name: 'Hard Bop', from: 1955, to: 1965, cssVar: 'var(--era-ink-hardbop)' },
+  { name: 'Modal Jazz', from: 1958, to: 1979, cssVar: 'var(--era-ink-modal)' },
+  { name: 'Free Jazz', from: 1959, to: 1979, cssVar: 'var(--era-ink-freejazz)' },
+  { name: 'Post-Bop', from: 1962, to: 1968, cssVar: 'var(--era-ink-postbop)' },
+  { name: 'Fusion', from: 1968, to: END_YEAR, cssVar: 'var(--era-ink-fusion)' },
 ];
 
-/** Overlapping lanes: each era's lane rises into the one above it by
- *  ~OVERLAP of a lane's height, so the translucent colors blend where the
- *  eras genuinely coexist. Returns percentages of the bands' vertical space. */
-const OVERLAP = 0.2;
-/** Keep the established floating labels over artwork/background, never over
- * album titles or artist names. Bounds include a little shadow clearance. */
-export function eraLabelPositions(bandHeight: number, perColumn: number): number[] {
-  const labelHeight = 30;
-  const gap = 4;
-  const metadata = Array.from({ length: perColumn }, (_, row) => ({
-    start: 12 + row * (CARD_H + CARD_GAP) + 146,
-    end: 12 + row * (CARD_H + CARD_GAP) + CARD_H,
-  }));
-  const positions: number[] = [];
-  for (let i = 0; i < ERA_BANDS.length; i++) {
-    const minimum = i ? positions[i - 1] + labelHeight + gap : 0;
-    let top = Math.max(minimum, bandHeight * eraLane(i, ERA_BANDS.length).labelTop / 100 + 6);
-    for (const text of metadata) {
-      if (top < text.end + gap && top + labelHeight > text.start - gap) {
-        const above = text.start - gap - labelHeight;
-        top = above >= minimum ? above : text.end + gap;
-      }
-    }
-    positions.push(top);
-  }
-  // A short viewport may require packing earlier labels upward to leave room
-  // for the final one. Walk backward through the same metadata exclusions.
-  for (let i = positions.length - 1; i >= 0; i--) {
-    const maximum = i === positions.length - 1 ? bandHeight - labelHeight : positions[i + 1] - labelHeight - gap;
-    let top = Math.min(positions[i], maximum);
-    for (const text of [...metadata].reverse()) {
-      if (top < text.end + gap && top + labelHeight > text.start - gap) top = text.start - gap - labelHeight;
-    }
-    positions[i] = top;
-  }
-  return positions;
+/** Greedy lane packing in start-year order: each era takes the first lane
+ *  whose last era ended strictly before this one starts. `to` is inclusive,
+ *  so Bebop (to 1955) and Hard Bop (from 1955) share a year and must not
+ *  share a lane. Returns one lane index per band, in input order. */
+export function eraLanes(bands: EraBand[] = ERA_BANDS): number[] {
+  const laneEnds: number[] = [];
+  return bands.map((band) => {
+    let lane = laneEnds.findIndex((end) => end < band.from);
+    if (lane < 0) lane = laneEnds.length;
+    laneEnds[lane] = band.to;
+    return lane;
+  });
 }
 
-export function eraLane(index: number, count: number): { top: number; height: number; labelTop: number } {
-  const pad = 3; // % breathing room top and bottom
-  const usable = 100 - pad * 2;
-  // extent = laneH + (count-1)*step, where step = laneH*(1-OVERLAP)
-  const laneH = usable / (1 + (count - 1) * (1 - OVERLAP));
-  const step = laneH * (1 - OVERLAP);
-  const top = pad + index * step;
-  return {
-    top,
-    height: laneH,
-    // drop the label into the lane's clean (single-color) middle zone,
-    // below the strip its upper neighbour overlaps
-    labelTop: top + laneH * (index === 0 ? 0.12 : OVERLAP + 0.12),
-  };
-}
+/* Style code → era hue, for the style line under each cover. Offshoots take
+   their parent era's hue (soul jazz → hard bop; jazz-rock → fusion). Codes
+   not listed fall back to --muted in the card, never to a guessed era. */
+export const STYLE_INK: Record<string, string> = {
+  bebop: 'var(--era-ink-bebop)',
+  'cool-jazz': 'var(--era-ink-cool)',
+  'hard-bop': 'var(--era-ink-hardbop)',
+  'soul-jazz': 'var(--era-ink-hardbop)',
+  'modal-jazz': 'var(--era-ink-modal)',
+  'spiritual-jazz': 'var(--era-ink-modal)',
+  'post-bop': 'var(--era-ink-postbop)',
+  'free-jazz': 'var(--era-ink-freejazz)',
+  'avant-garde-jazz': 'var(--era-ink-freejazz)',
+  'free-improvisation': 'var(--era-ink-freejazz)',
+  fusion: 'var(--era-ink-fusion)',
+  'jazz-rock': 'var(--era-ink-fusion)',
+  'jazz-funk': 'var(--era-ink-fusion)',
+};

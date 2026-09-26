@@ -166,7 +166,7 @@
     width: 100%;
     aspect-ratio: 16 / 10;
     border: 1px solid var(--line);
-    border-radius: 6px;
+    border-radius: var(--radius);
     background: var(--bg);
   }
 
@@ -189,7 +189,7 @@
 
   .label {
     font-variant: small-caps;
-    font-size: 13px;
+    font-size: var(--fs-md);
     letter-spacing: 0.04em;
     fill: var(--ink);
     paint-order: stroke;
@@ -199,9 +199,10 @@
   }
 
   .ground-label {
-    font-variant: small-caps;
-    font-size: 11.5px;
-    letter-spacing: 0.04em;
+    font-variant: normal;
+    text-transform: uppercase;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.08em;
     fill: var(--muted);
     paint-order: stroke;
     stroke: var(--surface);
@@ -209,7 +210,7 @@
     stroke-linejoin: round;
   }
 
-  figcaption { margin-top: 5px; font-size: 12.5px; color: var(--muted); line-height: 1.6; }
+  figcaption { margin-top: 5px; font-size: var(--fs-sm); color: var(--muted); line-height: 1.6; }
   .place-link {
     background: none;
     border: none;

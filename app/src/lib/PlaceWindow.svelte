@@ -79,7 +79,7 @@
       <span class="city">{place.city}</span>
       <span class="chip display">{kindLabel[place.kind]}</span>
       {#if place.precision === 'city'}
-        <span class="precision">located to city level</span>
+        <span class="precision">exact room unknown</span>
       {/if}
       <a
         class="gmaps"
@@ -117,23 +117,23 @@
     gap: 10px;
     padding: 8px 0 12px;
     border-bottom: 1px solid var(--line);
-    font-size: 14px;
+    font-size: var(--fs-md);
   }
   .city { color: var(--muted); }
   .chip {
     font-variant: small-caps;
-    font-size: 13px;
+    font-size: var(--fs-md);
     letter-spacing: 0.06em;
     color: var(--bn-blue);
     border: 1px solid var(--line);
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     padding: 1px 10px;
     background: var(--bg);
   }
-  .precision { font-size: 12.5px; color: var(--muted); font-style: italic; }
+  .precision { font-size: var(--fs-sm); color: var(--muted); font-style: italic; }
   .gmaps {
     margin-left: auto;
-    font-size: 12.5px;
+    font-size: var(--fs-sm);
     color: var(--bn-blue);
     text-decoration: none;
   }
@@ -162,13 +162,13 @@
     width: 44px;
     height: 44px;
     object-fit: cover;
-    border-radius: 3px;
+    border-radius: var(--radius);
     background: var(--line);
   }
   .row-meta { min-width: 0; display: flex; flex-direction: column; gap: 1px; flex: 1; }
-  .row-title { font-weight: 600; font-size: 14px; color: var(--ink); }
-  .row-artist { font-size: 12.5px; color: var(--muted); }
-  .row-dates { flex: 0 0 auto; font-size: 12.5px; color: var(--muted); text-align: right; }
+  .row-title { font-weight: 600; font-size: var(--fs-md); color: var(--ink); }
+  .row-artist { font-size: var(--fs-sm); color: var(--muted); }
+  .row-dates { flex: 0 0 auto; font-size: var(--fs-sm); color: var(--muted); text-align: right; }
 
   .loading, .error { color: var(--muted); padding: 12px 0; }
 

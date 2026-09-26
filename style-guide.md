@@ -1,7 +1,10 @@
 # A Jazz Canon — Visual Identity (Benchmark Edition)
 
 **Status:** Locked brand constraint — extracted 2026-07-01 from the reference
-build's visual design spec. This is the fixed visual identity for the app: logo,
+build's visual design spec. **Amended 2026-09-26 (D27):** body face is now
+Libre Franklin (was Inter); era bands became an era ribbon under the year
+axis; album tiles are square sleeves with clean covers. See
+`docs/DECISIONS.md` D27. This is the fixed visual identity for the app: logo,
 color palette, and typeface choices are not open decisions. Everything about
 *layout, component design, and screen composition* is left to you — see
 `BRIEF.md`.
@@ -70,17 +73,25 @@ it also carries the `inf`/`unk` epistemic states (see below).
 **No red.** The palette deliberately contains no red. Reserve it for future
 error states only if a genuine need arises.
 
-### Era band colors
+### Era colors
 
-Low-saturation tints that harmonize with the cover art palette:
+*Amended 2026-09-26 (D27).* Eras are drawn as a ribbon of thin rules under
+the timeline's year axis, one hue per era, and the same hue colors the style
+line under each cover. The hues are the original era tints at full strength,
+darkened until 12px text passes 4.5:1 on `--bg`:
 
 ```
---era-cool:    rgba(43, 95, 122, 0.18)    /* Blue Note blue family */
---era-hardbop: rgba(196, 134, 42, 0.18)   /* Impulse! amber family */
---era-modal:   rgba(74, 124, 107, 0.18)   /* muted sage — modal = contemplative */
---era-postbop:  rgba(122, 82, 140, 0.18)   /* deep violet — post-bop = searching */
---era-ink: #5a5249                          /* era label text */
+--era-ink-bebop:    #5a5249   /* warm grey-brown */
+--era-ink-cool:     #2b5f7a   /* Blue Note blue */
+--era-ink-hardbop:  #946a10   /* Impulse! amber, golden */
+--era-ink-modal:    #3d6b5a   /* muted sage — modal = contemplative */
+--era-ink-freejazz: #7c3522   /* burnt umber (not red) */
+--era-ink-postbop:  #6a4579   /* deep violet — post-bop = searching */
+--era-ink-fusion:   #5f6e2a   /* olive */
+--era-ink:          #5a5249   /* neutral era/label text */
 ```
+
+The translucent band tints (`--era-cool` etc.) were retired with the bands.
 
 ### Epistemic color treatment
 
@@ -107,7 +118,7 @@ Three typefaces, each with a specific role. All available on Google Fonts
 
 ```
 --font-display: 'Oswald', 'Helvetica Neue Condensed', sans-serif;
---font-body: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+--font-body: 'Libre Franklin', 'Franklin Gothic', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 --font-serif: 'Lora', Georgia, 'Times New Roman', serif;
 ```
 
@@ -127,7 +138,7 @@ without the visual weight of a full uppercase block.
 ```html
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;1,400&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600&family=Libre+Franklin:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,400;1,400&display=swap" rel="stylesheet" />
 ```
 
 Three families is the maximum. Oswald is loaded at a single weight (600) — the
@@ -136,6 +147,19 @@ locked display weight, no others needed.
 How you apply these three typefaces across your own screens/components (sizes,
 hierarchy, which elements get which font) is your design decision — the
 families, weight, and case treatment above are the fixed constraint.
+
+**Rules added 2026-09-26 (D27):**
+
+- **Type scale.** Every size is a step of `--fs-*`: 10, 11, 12, 13, 15, 17,
+  21, 28, 40px. No half-pixel sizes.
+- **Small caps floor.** Synthesized small caps thin out below 13px. Under
+  that size, labels use real capitals (`text-transform: uppercase`) with a
+  little letter-spacing.
+- **Lora is editorial only.** Page intros and other neutral text use the body
+  face, so the serif keeps meaning "interpretation".
+- **Corners and shadows.** Square by default; `--radius` (3px) for controls,
+  `--radius-pill` for chips. Shadows only on things that float:
+  `--shadow-pop` and `--shadow-float`.
 
 ---
 

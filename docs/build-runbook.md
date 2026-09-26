@@ -144,7 +144,7 @@ is faithful compliance, which still separates builds).
 | 9 | Star topology | Packet-guided | The graph opens scoped to one musician; re-centering works; not a hairball. |
 | 10 | Editorial vs sourced | Packet-guided | Editorial content (Lora, amber, labeled) never looks like sourced fact. |
 | 11 | No traffic lights, no red | Packet-guided | Epistemic states use the amber treatment; red appears nowhere. |
-| 12 | Brand fidelity | Packet-guided | Palette hex values, Oswald 600 small-caps / Inter / Lora, era band tints match style-guide.md. |
+| 12 | Brand fidelity | Packet-guided | Palette hex values, Oswald 600 small-caps / Libre Franklin / Lora, era ribbon hues match style-guide.md (Inter and band tints until D27). |
 
 ---
 

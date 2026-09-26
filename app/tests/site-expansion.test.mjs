@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { computeLayout, START_YEAR, END_YEAR, OPEN_YEAR, ERA_BANDS, eraLane, eraLabelPositions, CARD_W, CARD_H, CARD_GAP } from '../src/lib/timeline-layout.ts';
+import { computeLayout, START_YEAR, END_YEAR, OPEN_YEAR, ERA_BANDS, eraLanes, STYLE_INK, CARD_W, CARD_H, CARD_GAP } from '../src/lib/timeline-layout.ts';
 import { gatesOf, primaryGate } from '../src/lib/gates.ts';
 import { productionRows } from '../src/lib/production-credits.ts';
 
@@ -51,36 +51,32 @@ test('dense early-year fixtures expand columns without card-coordinate collision
   }
 });
 
-test('seven era lanes remain bounded and overlap without reversing label order', () => {
+test('era ribbon: coexisting eras never share a lane, and lanes stay packed', () => {
   assert.equal(ERA_BANDS.length, 7);
-  let previous;
-  ERA_BANDS.forEach((_, i) => {
-    const lane = eraLane(i, ERA_BANDS.length);
-    assert.ok(lane.height > 0 && lane.top >= 0 && lane.top + lane.height <= 100);
-    if (previous) {
-      assert.ok(lane.top < previous.top + previous.height);
-      assert.ok(lane.labelTop > previous.labelTop);
+  const lanes = eraLanes();
+  assert.equal(lanes.length, ERA_BANDS.length);
+  // `to` is inclusive: two eras in one lane must not share a single year
+  // (Bebop ends 1955 where Hard Bop begins, so they cannot share a lane).
+  for (let i = 0; i < ERA_BANDS.length; i++) {
+    for (let j = i + 1; j < ERA_BANDS.length; j++) {
+      if (lanes[i] !== lanes[j]) continue;
+      const [a, b] = [ERA_BANDS[i], ERA_BANDS[j]];
+      assert.ok(a.to < b.from || b.to < a.from, `${a.name} and ${b.name} overlap in lane ${lanes[i]}`);
     }
-    previous = lane;
-  });
+  }
+  // packed: lane count equals the most eras alive in any single year
+  let peak = 0;
+  for (let y = START_YEAR; y <= END_YEAR; y++) peak = Math.max(peak, ERA_BANDS.filter(b => b.from <= y && y <= b.to).length);
+  assert.equal(Math.max(...lanes) + 1, peak);
+});
+
+test('every primary style in the data has an era hue for its style line', () => {
+  const missing = [...new Set(albums.map(a => a.styleCode))].filter(c => !STYLE_INK[c]);
+  // european-jazz is the one deliberate exception: no era, so it reads muted
+  assert.deepEqual(missing, ['european-jazz']);
 });
 
 const credit = (overrides = {}) => ({ personId: 'fixture-person', name: 'Test Person', role: 'producer', e: 'obs', sessionId: null, ...overrides });
-test('labels avoid metadata and remain bounded on supported short and tall layouts', () => {
-  for (const [height, rows] of [[344,1],[544,2],[710,3],[1040,4]]) {
-    const tops = eraLabelPositions(height, rows);
-    tops.forEach((top, i) => {
-      assert.ok(top >= 0 && top + 30 <= height);
-      if (i) assert.ok(top >= tops[i-1] + 34);
-      for (let row=0;row<rows;row++) {
-        const start=12+row*(CARD_H+CARD_GAP)+146;
-        const end=12+row*(CARD_H+CARD_GAP)+CARD_H;
-        assert.ok(top+30<=start || top>=end);
-      }
-    });
-  }
-});
-
 test('old and empty exports have no production rows', () => {
   assert.deepEqual(productionRows(), []);
   assert.deepEqual(productionRows([]), []);

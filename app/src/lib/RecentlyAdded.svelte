@@ -64,11 +64,11 @@
     margin: 32px 0 8px;
     padding: 14px 16px 14px;
     border: 1px solid var(--line);
-    border-radius: 10px;
+    border-radius: var(--radius);
     background: var(--surface);
   }
-  h2 { font-size: 17px; color: var(--ink); letter-spacing: 0.02em; margin: 0 0 3px; }
-  .hint { font-family: var(--font-serif); font-size: 12px; color: var(--muted); margin: 0 0 8px; }
+  h2 { font-size: var(--fs-lg); color: var(--ink); letter-spacing: 0.02em; margin: 0 0 3px; }
+  .hint { font-family: var(--font-serif); font-size: var(--fs-sm); color: var(--muted); margin: 0 0 8px; }
 
   /* fixed window: shows ~6 additions, then scrolls */
   .scroll {
@@ -78,10 +78,11 @@
     padding-right: 4px;
   }
   .date {
-    font-variant: small-caps;
-    font-size: 11.5px;
-    letter-spacing: 0.08em;
-    color: var(--impulse-amber);
+    font-variant: normal;
+    text-transform: uppercase;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.1em;
+    color: var(--era-ink-hardbop);
     margin: 11px 0 4px;
   }
   .date:first-of-type { margin-top: 0; }
@@ -98,7 +99,7 @@
     border: none;
     text-align: left;
     padding: 5px 8px;
-    border-radius: 6px;
+    border-radius: var(--radius);
     cursor: pointer;
   }
   .row:hover { background: var(--bg); }
@@ -107,14 +108,14 @@
   .who {
     grid-column: 1;
     font-family: var(--font-display);
-    font-variant: small-caps;
-    letter-spacing: 0.03em;
-    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: var(--fs-sm);
     color: var(--muted);
   }
   .what {
     grid-column: 1;
-    font-size: 13.5px;
+    font-size: var(--fs-md);
     color: var(--ink);
     line-height: 1.2;
   }
@@ -123,7 +124,7 @@
     grid-row: 1 / span 2;
     align-self: center;
     font-family: var(--font-display);
-    font-size: 13px;
+    font-size: var(--fs-md);
     color: var(--muted);
     font-variant-numeric: tabular-nums;
   }

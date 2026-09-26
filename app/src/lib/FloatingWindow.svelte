@@ -166,8 +166,8 @@
     height: min(1160px, calc(100vh - var(--masthead-h) - 4vh));
     background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: 10px;
-    box-shadow: 0 18px 50px rgba(28, 26, 23, 0.22);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-float);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -196,12 +196,12 @@
   .win-bar:active { cursor: grabbing; }
   .win-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   .win-title {
-    font-size: 26px;
+    font-size: var(--fs-2xl);
     line-height: 1.05;
     color: var(--ink);
     letter-spacing: 0.02em;
   }
-  .win-guide { font-size: 12.5px; color: var(--muted); }
+  .win-guide { font-size: var(--fs-sm); color: var(--muted); }
   .win-actions { display: flex; gap: 8px; flex: 0 0 auto; padding-top: 2px; }
 
   .resize-grip {

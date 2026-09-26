@@ -22,10 +22,10 @@
 
     <h2 class="display">What this is</h2>
     <p>
-      This is a discovery tool, not an encyclopedia or work of music criticism. It exists to make one kind
-      of question easy to ask: <em>who played on what, with whom, and when.</em>
+      This is a discovery tool. It makes one kind of question easy to ask:
+      <em>who played on what, with whom, and when.</em>
       Travel the timeline, open a record, and follow a musician into the web of
-      sessions that surrounds them.
+      sessions around them.
     </p>
 
     <h2 class="display">Sourced fact vs. editorial voice</h2>
@@ -33,29 +33,30 @@
       The personnel records, as shown in the Constellations, are the heart of the project, and every one carries
       an honesty label. A credit marked <strong>observed</strong> comes from a
       primary source such as liner notes; <strong>inferred</strong> is drawn
-      from session logs and cross-references; <strong>uncertain</strong> is
-      exactly that — a genuine open question, not a mistake.
+      from session logs and cross-references; <strong>uncertain</strong> marks
+      a question the sources leave open.
     </p>
     <aside class="editorial">
       <span class="editorial-label">Editorial note</span>
-      Anything written in this voice — a mood, a bit of context, a judgment
-      call about the canon — is interpretation, and it is always styled like
-      this so it can never be mistaken for a sourced fact.
+      Text set in this italic serif is interpretation: a mood, some context,
+      or a judgment call about the canon. It is always styled this way so it
+      can never be mistaken for a sourced fact.
     </aside>
 
     <h2 class="display">The eras</h2>
     <p>
       Bebop, Cool Jazz, Hard Bop, Modal Jazz, Post-Bop, Free Jazz, and
-      Fusion do not sit in tidy boxes; they overlap in time, which is why the
-      timeline shows their bands blending into one another.
+      Fusion overlap in time. The colored lines under the timeline's years
+      show each era's span, and where eras coexist their lines run side by
+      side.
     </p>
     <p>
-      The bands mark each era’s center of gravity, not a cutoff: a later
-      Bebop record is still Bebop, wherever it falls on the timeline.
+      Each line marks an era’s center of gravity. A Bebop record made after
+      1955 is still Bebop, wherever it falls on the timeline.
     </p>
     <p>
-      ECM appears in this canon's metadata as a label tag, not a genre; every
-      ECM record here earned its place on musical continuity, not imprint.
+      ECM appears as a record-label tag. Each ECM record here was chosen for
+      its music, the same test every other record in the canon passes.
     </p>
 
     <h2 class="display">Credits</h2>
@@ -110,36 +111,36 @@
     padding: 48px 28px 80px;
   }
   h1 {
-    font-size: 40px;
+    font-size: var(--fs-3xl);
     color: var(--bn-blue);
     letter-spacing: 0.02em;
     margin-bottom: 8px;
   }
   h2 {
-    font-size: 22px;
+    font-size: var(--fs-xl);
     color: var(--ink);
     letter-spacing: 0.02em;
     margin: 34px 0 8px;
   }
   .lede {
-    font-size: 19px;
+    font-size: var(--fs-lg);
     line-height: 1.5;
     color: var(--ink);
     margin: 0 0 8px;
   }
-  p { font-size: 15.5px; line-height: 1.65; color: var(--ink); margin: 0 0 12px; }
+  p { font-size: var(--fs-base); line-height: 1.65; color: var(--ink); margin: 0 0 12px; }
   em { font-style: italic; color: var(--muted); }
   strong { font-weight: 700; color: var(--ink); }
-  .editorial { font-family: var(--font-serif); font-size: 15px; margin: 8px 0 4px; }
+  .editorial { font-family: var(--font-serif); font-size: var(--fs-base); margin: 8px 0 4px; }
   .tagline {
     margin-top: 40px;
-    font-size: 20px;
+    font-size: var(--fs-xl);
     color: var(--impulse-amber);
     letter-spacing: 0.14em;
   }
   .dedication {
     font-family: var(--font-serif);
-    font-size: 15px;
+    font-size: var(--fs-base);
     line-height: 1.6;
     color: var(--ink);
     margin: 20px 0 0;
@@ -152,7 +153,7 @@
     flex-wrap: wrap;
     gap: 4px 14px;
     align-items: baseline;
-    font-size: 14px;
+    font-size: var(--fs-md);
     color: var(--muted);
   }
   .contact .by { font-family: var(--font-serif); }
@@ -167,12 +168,12 @@
     border-top: 1px solid var(--line);
   }
   .legal .copyright {
-    font-size: 13px;
+    font-size: var(--fs-md);
     color: var(--muted);
     margin: 0 0 6px;
   }
   .legal .rights {
-    font-size: 12px;
+    font-size: var(--fs-sm);
     line-height: 1.55;
     color: var(--muted);
     opacity: 0.85;
@@ -181,8 +182,8 @@
 
   @media (max-width: 620px) {
     article { padding: 28px 18px 60px; }
-    h1 { font-size: 30px; }
-    h2 { font-size: 20px; }
-    .lede { font-size: 17px; }
+    h1 { font-size: var(--fs-2xl); }
+    h2 { font-size: var(--fs-xl); }
+    .lede { font-size: var(--fs-lg); }
   }
 </style>

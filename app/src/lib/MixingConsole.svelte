@@ -314,44 +314,44 @@
 <style>
   .net { padding: 8px 40px 24px; height: 100%; display: flex; flex-direction: column; }
   .strip { display: flex; align-items: baseline; gap: 14px; margin-bottom: 12px; }
-  .strip strong { font-size: 21px; color: var(--bn-blue); font-weight: 400; }
-  .strip span, .note { font-size: 13px; color: var(--muted); }
-  .reset { margin-left: auto; background: none; border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; color: var(--bn-blue); }
+  .strip strong { font-size: var(--fs-xl); color: var(--bn-blue); font-weight: 400; }
+  .strip span, .note { font-size: var(--fs-md); color: var(--muted); }
+  .reset { margin-left: auto; background: none; border: 1px solid var(--line); border-radius: var(--radius); padding: 4px 10px; color: var(--bn-blue); }
   .slots { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; }
-  .slot { position: relative; display: flex; gap: 5px; align-items: center; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 5px 8px; font-size: 13px; }
+  .slot { position: relative; display: flex; gap: 5px; align-items: center; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 5px 8px; font-size: var(--fs-md); }
   .slot .role { color: var(--muted); font-weight: 600; }
   .slot .chosen { color: var(--bn-blue); font-weight: 600; }
-  .slot .anchor { color: var(--muted); font-size: 11px; }
+  .slot .anchor { color: var(--muted); font-size: var(--fs-xs); }
   .slot button { background: none; border: none; color: var(--bn-blue); padding: 4px; }
-  .slot .add { border: 1px dashed var(--bn-blue-light); border-radius: 6px; }
-  .picker { position: absolute; z-index: 40; top: 100%; left: 0; width: min(310px, 82vw); padding: 5px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 10px 30px rgba(28,26,23,.16); }
-  .picker input { width: 100%; padding: 8px; border: 1px solid var(--bn-blue-light); border-radius: 6px; font: inherit; }
+  .slot .add { border: 1px dashed var(--bn-blue-light); border-radius: var(--radius); }
+  .picker { position: absolute; z-index: 40; top: 100%; left: 0; width: min(310px, 82vw); padding: 5px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-pop); }
+  .picker input { width: 100%; padding: 8px; border: 1px solid var(--bn-blue-light); border-radius: var(--radius); font: inherit; }
   .options { max-height: min(360px, 45vh); overflow-y: auto; }
-  .options button { display: flex; flex-direction: column; text-align: left; width: 100%; padding: 7px; border-radius: 5px; }
+  .options button { display: flex; flex-direction: column; text-align: left; width: 100%; padding: 7px; border-radius: var(--radius); }
   .options button.active { background: var(--bg); }
   .options small { color: var(--muted); }
   .options p { padding: 8px; color: var(--muted); }
   .note { margin: 0 0 8px; }
   .stage { position: relative; flex: 1; min-height: 0; }
-  svg, .none { width: 100%; height: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; }
+  svg, .none { width: 100%; height: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); }
   svg { display: block; touch-action: none; cursor: grab; }
   svg:active { cursor: grabbing; }
   .node { cursor: pointer; }
   .person { cursor: grab; }
   .hit { fill: transparent; pointer-events: all; }
   text { font-family: var(--font-body); text-anchor: middle; pointer-events: none; fill: var(--ink); }
-  .album-label { font-size: 13px; font-weight: 600; }
+  .album-label { font-size: var(--fs-md); font-weight: 600; }
   .person-label { font: 600 18px var(--font-display); }
-  .year { font-size: 11px; fill: var(--muted); }
+  .year { font-size: var(--fs-xs); fill: var(--muted); }
   .none { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 25px; }
-  .none h3 { font-size: 22px; color: var(--bn-blue); }
+  .none h3 { font-size: var(--fs-xl); color: var(--bn-blue); }
   .none p { max-width: 52ch; color: var(--muted); line-height: 1.5; }
   .message { padding: 20px; color: var(--muted); }
   @media (max-width: 620px) {
     .net { padding: 6px 14px 14px; }
     .strip { flex-wrap: wrap; gap: 5px 10px; }
-    .strip strong { font-size: 18px; }
-    .strip span, .note { font-size: 12px; }
-    .slot { font-size: 12px; }
+    .strip strong { font-size: var(--fs-lg); }
+    .strip span, .note { font-size: var(--fs-sm); }
+    .slot { font-size: var(--fs-sm); }
   }
 </style>

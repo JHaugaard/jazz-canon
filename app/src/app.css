@@ -12,17 +12,6 @@
   --bn-blue-light: #4a7c95;
   --impulse-amber: #c4862a;
 
-  --era-bebop: rgba(28, 26, 23, 0.14);
-  --era-cool: rgba(43, 95, 122, 0.18);
-  --era-hardbop: rgba(196, 134, 42, 0.18);
-  --era-modal: rgba(74, 124, 107, 0.18);
-  --era-postbop: rgba(122, 82, 140, 0.18);
-  /* opened genre gates, 2026-07. Hues chosen to sit in the gaps the four
-     original tints leave (blue 200°, amber 38°, sage 158°, violet 281°):
-     burnt umber for free jazz, olive for fusion. Both are period-correct
-     sleeve colors and neither is red — the palette still has no red. */
-  --era-freejazz: rgba(156, 90, 52, 0.18);
-  --era-fusion: rgba(122, 140, 58, 0.18);
   --era-ink: #5a5249;
 
   /* Gate accents: genre hues at full strength for card treatment,
@@ -37,9 +26,47 @@
   --map-land: #f3eee2;
   --map-border: #d4cbba;
 
+  /* Era hues at full strength, dark enough to set 12px text on paper. One
+     hue per era; the style lines under covers and the era ribbon under the
+     year axis both read from here (look-and-feel pass, 2026-09-26). */
+  --era-ink-bebop: #5a5249;
+  --era-ink-cool: #2b5f7a;
+  --era-ink-hardbop: #946a10;
+  --era-ink-modal: #3d6b5a;
+  --era-ink-freejazz: #7c3522;
+  --era-ink-postbop: #6a4579;
+  --era-ink-fusion: #5f6e2a;
+
   --font-display: 'Oswald', 'Helvetica Neue Condensed', sans-serif;
-  --font-body: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  /* Libre Franklin replaced Inter 2026-09-26 (D27): a Franklin Gothic
+     revival, the grotesque of the period's covers. */
+  --font-body: 'Libre Franklin', 'Franklin Gothic', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  /* Lora is the editorial voice ONLY (style-guide §3). Page intros and
+     other sourced or neutral text use --font-body. */
   --font-serif: 'Lora', Georgia, 'Times New Roman', serif;
+
+  /* Type scale. Every font-size in the app is one of these steps; no
+     half-pixel sizes. Oswald small caps only at --fs-md and up — below
+     that the synthesized small caps get thin and hard to read, so smaller
+     Oswald text is set in real capitals (text-transform: uppercase). */
+  --fs-2xs: 10px;
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-md: 13px;
+  --fs-base: 15px;
+  --fs-lg: 17px;
+  --fs-xl: 21px;
+  --fs-2xl: 28px;
+  --fs-3xl: 40px;
+
+  /* Corners: square by default. Records are square-cornered objects; only
+     controls get a slight radius. Pills and dots keep their round shapes. */
+  --radius: 3px;
+  --radius-pill: 999px;
+
+  /* Shadows: only things that float over the page get one. */
+  --shadow-pop: 0 6px 20px rgba(28, 26, 23, 0.16);   /* dropdowns, tooltips */
+  --shadow-float: 0 18px 50px rgba(28, 26, 23, 0.2); /* windows, side panel */
 }
 
 * { box-sizing: border-box; }
@@ -54,7 +81,7 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: var(--fs-base);
   line-height: 1.45;
   overflow: hidden; /* the timeline owns scrolling */
 }
@@ -82,12 +109,12 @@ button {
 .ep-badge {
   display: inline-block;
   font-family: var(--font-body);
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   font-weight: 600;
   font-style: normal;
   line-height: 1;
   padding: 2px 5px;
-  border-radius: 3px;
+  border-radius: var(--radius);
   vertical-align: 1px;
 }
 .ep-badge.inf {
@@ -114,9 +141,9 @@ button {
 .nav-btn {
   background: none;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: var(--radius);
   padding: 5px 10px;
-  font-size: 12.5px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   color: var(--bn-blue);
 }
@@ -124,24 +151,23 @@ button {
 
 .panel-body { flex: 1; overflow-y: auto; min-height: 0; }
 
-/* Editorial voice — serif italic + amber, never confusable with sourced rows */
+/* Editorial voice — serif italic + amber label, never confusable with sourced
+   rows. The typeface carries the distinction on its own; the tinted box and
+   left bar were retired 2026-09-26 (template callout look). */
 .editorial {
   font-family: var(--font-serif);
   font-style: italic;
   color: var(--ink);
-  background: rgba(196, 134, 42, 0.07);
-  border-left: 3px solid var(--impulse-amber);
-  padding: 10px 14px;
-  border-radius: 0 6px 6px 0;
+  padding: 2px 0;
 }
 .editorial-label {
   font-family: var(--font-body);
   font-style: normal;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   font-weight: 700;
-  font-variant: small-caps;
-  letter-spacing: 0.08em;
-  color: var(--impulse-amber);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--era-ink-hardbop);
   display: block;
   margin-bottom: 4px;
 }

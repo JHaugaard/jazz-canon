@@ -1,15 +1,20 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import type { AlbumCard } from './types';
-  import { computeLayout, eraLane, eraLabelPositions, ERA_BANDS, CARD_H, CARD_GAP, START_YEAR, END_YEAR, OPEN_YEAR } from './timeline-layout';
+  import { computeLayout, eraLanes, ERA_BANDS, CARD_H, CARD_GAP, START_YEAR, END_YEAR, OPEN_YEAR } from './timeline-layout';
   import AlbumCardTile from './AlbumCardTile.svelte';
 
   let { albums, onopen }: { albums: AlbumCard[]; onopen: (id: string) => void } = $props();
 
   // Year axis sits at the TOP (the bottom of the window is reserved for
-  // future info surfaces). Bands and cards start below it.
-  const AXIS_H = 36;
-  const CONTENT_TOP = AXIS_H + 8;
+  // future info surfaces). Under the year labels runs the era ribbon: one
+  // thin rule per era, packed into parallel lanes where eras coexist.
+  const YEAR_ROW_H = 28;
+  const LANE_H = 15;
+  const lanes = eraLanes();
+  const laneCount = Math.max(...lanes) + 1;
+  const AXIS_H = YEAR_ROW_H + laneCount * LANE_H + 6;
+  const CONTENT_TOP = AXIS_H + 4;
 
   let areaHeight = $state(600);
 
@@ -18,7 +23,6 @@
     Math.max(1, Math.min(4, Math.floor((areaHeight - CONTENT_TOP - 18) / (CARD_H + CARD_GAP))))
   );
   let layout = $derived(computeLayout(albums, perColumn));
-  let labelTops = $derived(eraLabelPositions(areaHeight - CONTENT_TOP - 12, perColumn));
 
   // drag-to-pan (mouse); native scroll covers trackpads/touch
   let scroller: HTMLDivElement;
@@ -102,7 +106,7 @@
   onpointercancel={() => (dragging = false)}
 >
   <div class="canvas" style:width="{layout.totalWidth}px">
-    <!-- year axis (top) -->
+    <!-- year axis (top): year labels, then the era ribbon -->
     <div class="axis" style:height="{AXIS_H}px">
       {#each layout.years as yb}
         <div class="tick" style:left="{yb.x0}px" style:width="{yb.width}px">
@@ -110,37 +114,17 @@
           <span class="tick-label display" class:empty={yb.count === 0}>{yb.count > 0 ? yb.year : `’${String(yb.year).slice(2)}`}</span>
         </div>
       {/each}
-    </div>
-
-    <!-- era bands: overlapping lanes behind everything -->
-    <div class="bands" style:top="{CONTENT_TOP}px" style:bottom="12px">
-      {#each ERA_BANDS as band, i}
-        {@const lane = eraLane(i, ERA_BANDS.length)}
-        <div
-          class="band"
-          style:left="{layout.xOfYear(band.from)}px"
-          style:width="{layout.xOfYear(band.to + 1) - layout.xOfYear(band.from)}px"
-          style:top="{lane.top}%"
-          style:height="{lane.height}%"
-          style:background={band.cssVar}
-        ></div>
-      {/each}
-    </div>
-
-    <!-- era labels: own layer above the cards so they stay readable at any
-         scroll position (sticky within each band's horizontal span) -->
-    <div class="band-labels" style:top="{CONTENT_TOP}px" style:bottom="12px">
       {#each ERA_BANDS as band, i}
         <div
-          class="band-label-track"
+          class="era"
           style:left="{layout.xOfYear(band.from)}px"
           style:width="{layout.xOfYear(band.to + 1) - layout.xOfYear(band.from)}px"
-          style:top="{labelTops[i]}px"
+          style:top="{YEAR_ROW_H + lanes[i] * LANE_H}px"
+          style:height="{LANE_H}px"
+          style:--era={band.cssVar}
         >
-          <span class="band-chip">
-            <span class="band-label display">{band.name}</span>
-            <span class="band-years">{band.from}–{band.to}</span>
-          </span>
+          <!-- sticky: the name rides along while its era is in view -->
+          <span class="era-label"><span class="era-name">{band.name}</span> <span class="era-years">{band.from}–{band.to}</span></span>
         </div>
       {/each}
     </div>
@@ -170,45 +154,6 @@
     min-width: 100%;
   }
 
-  .bands { position: absolute; left: 0; right: 0; z-index: 0; }
-  .band { position: absolute; border-radius: 8px; }
-
-  .band-labels {
-    position: absolute;
-    left: 0;
-    right: 0;
-    z-index: 3;
-    pointer-events: none;
-  }
-  .band-label-track {
-    position: absolute;
-    white-space: nowrap;
-  }
-  .band-chip {
-    /* sticky: stays readable at any horizontal scroll position while its
-       band is in view. Solid paper + border + shadow so that where it rides
-       over a card it reads as a pinned map label, not a text collision. */
-    position: sticky;
-    left: 12px;
-    display: inline-flex;
-    align-items: baseline;
-    gap: 7px;
-    background: var(--bg);
-    border: 1px solid var(--line);
-    box-shadow: 0 2px 6px rgba(28, 26, 23, 0.1);
-    border-radius: 5px;
-    padding: 2px 9px 3px;
-  }
-  .band-label {
-    font-size: 15px;
-    color: var(--era-ink);
-  }
-  .band-years {
-    font-size: 11px;
-    color: var(--era-ink);
-    opacity: 0.75;
-  }
-
   .axis {
     position: absolute;
     left: 0;
@@ -222,20 +167,50 @@
   .tick-mark {
     position: absolute;
     left: 0;
-    bottom: -4px;
+    top: 0;
     width: 1px;
-    height: 8px;
+    height: 100%;
     background: var(--muted);
-    opacity: 0.5;
+    opacity: 0.18;
   }
+  /* sticky like the era names: with no year printed on the covers, the
+     year in view must always be readable, even when its block started
+     off-screen to the left */
   .tick-label {
-    position: absolute;
+    position: sticky;
     left: 8px;
-    top: 8px;
-    font-size: 13px;
+    display: inline-block;
+    margin-left: 8px;
+    padding-top: 6px;
+    font-size: var(--fs-md);
     color: var(--muted);
   }
-  .tick-label.empty { opacity: 0.55; font-size: 11.5px; top: 10px; }
+  .tick-label.empty { opacity: 0.55; font-size: var(--fs-xs); padding-top: 8px; }
+
+  /* era ribbon: a 2px rule in the era's hue, name pinned over its left end */
+  .era { position: absolute; }
+  .era::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 2px;
+    margin-top: -1px;
+    background: var(--era);
+  }
+  .era-label {
+    position: sticky;
+    left: 8px;
+    display: inline-block;
+    padding: 0 7px 0 6px;
+    background: var(--bg);
+    font-size: var(--fs-sm);
+    line-height: 15px;
+    white-space: nowrap;
+  }
+  .era-name { font-weight: 600; color: var(--era); }
+  .era-years { color: var(--muted); font-size: var(--fs-xs); font-variant-numeric: tabular-nums; }
 
   .cards { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; }
   .slot { position: absolute; }

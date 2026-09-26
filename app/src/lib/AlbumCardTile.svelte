@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { AlbumCard } from './types';
-  import { GATES, gatesOf, primaryGate } from './gates';
+  import { GATES, gatesOf } from './gates';
+  import { STYLE_INK } from './timeline-layout';
 
   let { album, onopen }: { album: AlbumCard; onopen: (id: string) => void } = $props();
 
@@ -11,15 +12,13 @@
   // export is never edited, only the URL the browser is handed.
   let artSrc = $derived(album.artUrl.replace(/^http:\/\//, 'https://'));
 
-  // Records that arrived through an opened genre gate are marked on the card
-  // rather than on the canvas: a top-edge accent for the genre gate, and a
-  // separate, quieter pip for the ECM label tag (a label should never read
-  // with a genre's weight).
+  // Covers stay clean (D27, 2026-09-26): no year label, no genre badge, no
+  // gate accent on the art. The era hue moves to the style line instead,
+  // and the ECM label tag stays beside it. Gates still name themselves in
+  // the tooltip.
   let gates = $derived(gatesOf(album));
-  let accent = $derived(primaryGate(album));
-  let accentVar = $derived(GATES.find((g) => g.key === accent)?.cssVar ?? null);
   let isEcm = $derived(gates.includes('ecm'));
-  let isBebop = $derived(gates.includes('bebop'));
+  let styleInk = $derived(STYLE_INK[album.styleCode] ?? 'var(--muted)');
   let gateTitle = $derived(
     gates.length
       ? ` · via ${gates.map((k) => GATES.find((g) => g.key === k)!.label).join(' + ')}`
@@ -32,9 +31,6 @@
   onclick={() => onopen(album.id)}
   title={`${album.title} — ${album.artist} (${album.year})${gateTitle}`}
 >
-  {#if accentVar}
-    <span class="gate-edge" style:background={accentVar}></span>
-  {/if}
   <div class="art">
     {#if !artFailed}
       <img
@@ -49,52 +45,41 @@
         <span class="display fallback-title">{album.title}</span>
       </div>
     {/if}
-    <span class="year-badge">{album.year}</span>
-    {#if isBebop}<span class="bebop-badge">Bebop</span>{/if}
   </div>
   <div class="meta">
     <span class="title">{album.title}</span>
     <span class="artist">{album.artist}</span>
     <span class="style-line">
-      <span class="style display">{album.style}</span>
+      <span class="style" style:color={styleInk}>{album.style}</span>
       {#if isEcm}<span class="ecm-tag" title="ECM — a label tag, not a genre">ECM</span>{/if}
     </span>
   </div>
 </button>
 
 <style>
+  /* A record in a rack: square cover with a hairline edge, text on the paper
+     below. No card box, no rounded corners, no drop shadow (D27). */
   .card {
     position: absolute;
     width: 148px;
     padding: 0;
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    background: var(--surface);
+    border: none;
+    background: none;
     text-align: left;
-    overflow: hidden;
-    transition: box-shadow 120ms ease, transform 120ms ease, border-color 120ms ease;
-  }
-
-  /* genre-gate accent: a top edge, the card's own frame speaking */
-  .gate-edge {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    z-index: 2;
-  }
-  .card:hover, .card:focus-visible {
-    border-color: var(--bn-blue-light);
-    box-shadow: 0 4px 14px rgba(28, 26, 23, 0.14);
-    transform: translateY(-2px);
-    outline: none;
   }
   .art {
     position: relative;
-    width: 146px;
-    height: 146px;
+    width: 148px;
+    height: 148px;
     background: var(--line);
+  }
+  /* hairline drawn over the image so light covers keep an edge */
+  .art::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 0 0 1px rgba(28, 26, 23, 0.12);
+    pointer-events: none;
   }
   .art img {
     width: 100%;
@@ -102,6 +87,11 @@
     object-fit: cover;
     display: block;
   }
+  .card:hover .art::after, .card:focus-visible .art::after {
+    box-shadow: inset 0 0 0 2px var(--bn-blue);
+  }
+  .card:focus-visible { outline: none; }
+  .card:hover .title, .card:focus-visible .title { color: var(--bn-blue); }
   .art-fallback {
     width: 100%;
     height: 100%;
@@ -109,89 +99,53 @@
     align-items: center;
     justify-content: center;
     padding: 10px;
-    background: linear-gradient(160deg, rgba(43, 95, 122, 0.16), rgba(43, 95, 122, 0.05));
-    border-bottom: 1px solid var(--line);
+    background: rgba(43, 95, 122, 0.1);
   }
   .fallback-title {
-    font-size: 15px;
+    font-size: var(--fs-base);
     color: var(--bn-blue);
     text-align: center;
     line-height: 1.2;
-  }
-  .year-badge {
-    position: absolute;
-    left: 6px;
-    bottom: 6px;
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: 12.5px;
-    letter-spacing: 0.04em;
-    color: var(--bg);
-    background: rgba(28, 26, 23, 0.82);
-    padding: 2px 7px;
-    border-radius: 4px;
-  }
-  .bebop-badge {
-    position: absolute;
-    right: 6px;
-    bottom: 6px;
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: 10px;
-    font-variant: small-caps;
-    letter-spacing: 0.06em;
-    color: var(--bg);
-    background: var(--gate-bebop);
-    padding: 2px 6px;
-    border-radius: 4px;
   }
   .meta {
     display: flex;
     flex-direction: column;
     gap: 1px;
-    padding: 7px 9px 8px;
+    padding: 7px 1px 0;
   }
   .title {
-    font-size: 12.5px;
+    font-size: var(--fs-md);
     font-weight: 600;
+    line-height: 1.3;
     color: var(--ink);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .artist {
-    font-size: 11.5px;
-    color: var(--muted);
+  .artist, .style {
+    font-size: var(--fs-sm);
+    line-height: 1.3;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  .artist { color: var(--muted); }
   .style-line {
     display: flex;
     align-items: baseline;
-    gap: 5px;
+    gap: 6px;
     min-width: 0;
   }
-  .style {
-    font-size: 11px;
-    color: var(--bn-blue);
-    font-variant: small-caps;
-    letter-spacing: 0.04em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  /* the label tag, deliberately smaller and quieter than the style it sits
-     beside — ECM is an imprint, not a genre */
+  .style { font-weight: 600; }
+  /* the label tag, deliberately quieter than the style it sits beside —
+     ECM is an imprint, not a genre */
   .ecm-tag {
     flex: 0 0 auto;
-    font-family: var(--font-body);
-    font-size: 8.5px;
+    font-size: var(--fs-2xs);
     font-weight: 600;
     letter-spacing: 0.08em;
     color: var(--muted);
     border: 1px solid var(--gate-ecm);
-    border-radius: 3px;
     padding: 0 3px;
     line-height: 1.45;
   }

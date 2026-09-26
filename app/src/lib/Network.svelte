@@ -287,9 +287,11 @@
       maxY = Math.max(maxY, n.y + r + 50);
     }
     const bw = maxX - minX, bh = maxY - minY;
-    // shrink big graphs to fit; let sparse graphs grow, but only modestly
-    // (unbounded magnification made small graphs load correct, then jump huge)
-    const k = clamp(Math.min(W / bw, H / bh), 0.4, 1.6);
+    // shrink big graphs to fit; let sparse graphs grow, but within a cap
+    // (unbounded magnification made small graphs load correct, then jump
+    // huge). The cap rose 1.6 → 2.2 in D27 so a one-album constellation
+    // fills its window instead of floating in the middle of it.
+    const k = clamp(Math.min(W / bw, H / bh), 0.4, 2.2);
     zoom = {
       k,
       tx: (W - k * (minX + maxX)) / 2,
@@ -683,13 +685,27 @@
               aria-label={`${n.name}${n.instruments ? ', ' + n.instruments : ''}`}
             >
               <circle class="hit" r={radius(n) + 12} />
+              <!-- every musician is a record, after the logo mark: a blue
+                   disc with grooves and an amber label. The featured
+                   musician gets the full pressing; the others a single
+                   groove and a paper spindle hole. -->
               <circle
+                class="disc"
                 r={radius(n)}
                 fill={n.center ? 'var(--bn-blue)' : 'var(--bn-blue-light)'}
-                fill-opacity={n.center ? 1 : 0.9}
                 stroke={n.center ? 'var(--ink)' : 'var(--surface)'}
-                stroke-width={n.center ? 2.5 : 1.6}
+                stroke-width={n.center ? 1.5 : 1.6}
               />
+              {#if n.center}
+                {#each [0.9, 0.78, 0.66, 0.54] as g}
+                  <circle class="groove" r={radius(n) * g} />
+                {/each}
+                <circle r={radius(n) * 0.34} fill="var(--impulse-amber)" />
+                <circle r={radius(n) * 0.06} fill="var(--bg)" />
+              {:else}
+                <circle class="groove" r={radius(n) * 0.68} />
+                <circle r={Math.max(1.6, radius(n) * 0.12)} fill="var(--bg)" />
+              {/if}
               {#if n.center}
                 <text class="center-label" class:small={isGroup} y={radius(n) + 20}>{n.name}</text>
               {:else}
@@ -721,18 +737,18 @@
     margin-bottom: 12px;
   }
   .const-label {
-    font-size: 21px;
+    font-size: var(--fs-xl);
     color: var(--bn-blue);
     letter-spacing: 0.03em;
   }
-  .stats { font-size: 13px; color: var(--muted); }
+  .stats { font-size: var(--fs-md); color: var(--muted); }
   .reset {
     margin-left: auto;
     background: none;
     border: 1px solid var(--line);
-    border-radius: 6px;
+    border-radius: var(--radius);
     padding: 4px 10px;
-    font-size: 12px;
+    font-size: var(--fs-sm);
     font-weight: 600;
     color: var(--bn-blue);
   }
@@ -751,9 +767,9 @@
     gap: 4px;
     background: var(--bn-blue);
     color: var(--bg);
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     padding: 5px 8px 5px 12px;
-    font-size: 13px;
+    font-size: var(--fs-md);
     font-weight: 600;
     line-height: 1;
   }
@@ -762,7 +778,7 @@
     background: none;
     border: none;
     color: inherit;
-    font-size: 16px;
+    font-size: var(--fs-base);
     line-height: 1;
     width: 24px;
     height: 24px;
@@ -776,9 +792,9 @@
   .add-btn {
     background: none;
     border: 1px dashed var(--bn-blue-light);
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     padding: 6px 12px;
-    font-size: 13px;
+    font-size: var(--fs-md);
     font-weight: 600;
     color: var(--bn-blue);
     line-height: 1;
@@ -790,11 +806,11 @@
     height: 32px;
     padding: 0 12px;
     font-family: var(--font-body);
-    font-size: 13.5px;
+    font-size: var(--fs-md);
     color: var(--ink);
     background: var(--surface);
     border: 1px solid var(--bn-blue-light);
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     outline: none;
   }
   .add-input::-webkit-search-cancel-button { -webkit-appearance: none; }
@@ -806,14 +822,14 @@
     max-width: calc(100vw - 40px);
     background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: 8px;
-    box-shadow: 0 10px 30px rgba(28, 26, 23, 0.16);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-pop);
     max-height: min(400px, 60vh);
     overflow-y: auto;
     z-index: 40;
     padding: 4px;
   }
-  .add-group { font-size: 12.5px; color: var(--bn-blue); letter-spacing: 0.06em; padding: 7px 10px 3px; }
+  .add-group { font-size: var(--fs-md); color: var(--bn-blue); letter-spacing: 0.06em; padding: 7px 10px 3px; }
   .add-row {
     display: flex;
     flex-direction: column;
@@ -822,15 +838,15 @@
     text-align: left;
     background: none;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius);
     padding: 6px 10px;
     cursor: pointer;
   }
   .add-row.active { background: rgba(43, 95, 122, 0.09); }
-  .add-main { font-size: 13.5px; font-weight: 600; color: var(--ink); }
-  .add-meta { font-size: 12px; color: var(--muted); }
-  .add-empty { padding: 12px; font-size: 13px; color: var(--muted); }
-  .cap-note { font-size: 12px; color: var(--muted); }
+  .add-main { font-size: var(--fs-md); font-weight: 600; color: var(--ink); }
+  .add-meta { font-size: var(--fs-sm); color: var(--muted); }
+  .add-empty { padding: 12px; font-size: var(--fs-md); color: var(--muted); }
+  .cap-note { font-size: var(--fs-sm); color: var(--muted); }
 
   .stage { position: relative; flex: 1; min-height: 0; }
   .none {
@@ -843,16 +859,16 @@
     padding: 24px;
     background: var(--bg);
     border: 1px solid var(--line);
-    border-radius: 8px;
+    border-radius: var(--radius);
   }
-  .none-head { font-size: 22px; color: var(--bn-blue); margin: 0 0 8px; }
-  .none-body { max-width: 46ch; color: var(--muted); font-size: 14px; line-height: 1.5; margin: 0; }
+  .none-head { font-size: var(--fs-xl); color: var(--bn-blue); margin: 0 0 8px; }
+  .none-body { max-width: 46ch; color: var(--muted); font-size: var(--fs-md); line-height: 1.5; margin: 0; }
   svg {
     width: 100%;
     height: 100%;
     background: var(--bg);
     border: 1px solid var(--line);
-    border-radius: 8px;
+    border-radius: var(--radius);
     touch-action: none;
     cursor: grab;
     display: block;
@@ -864,7 +880,8 @@
   .album-node, .person-node { cursor: pointer; }
   .person-node.center { cursor: grab; }
   .album-node:hover circle { stroke-width: 3.5; }
-  .person-node:not(.center):hover circle { fill: var(--bn-blue); fill-opacity: 1; }
+  .person-node:not(.center):hover .disc { fill: var(--bn-blue); }
+  .groove { fill: none; stroke: var(--bg); stroke-opacity: 0.45; stroke-width: 1.2; pointer-events: none; }
 
   text {
     font-family: var(--font-body);
@@ -872,25 +889,25 @@
     pointer-events: none;
     fill: var(--ink);
   }
-  .album-label { font-size: 13px; font-weight: 600; }
-  .album-year { font-size: 11px; fill: var(--muted); }
-  .person-label { font-size: 12px; fill: var(--muted); }
+  .album-label { font-size: var(--fs-md); font-weight: 600; }
+  .album-year { font-size: var(--fs-xs); fill: var(--muted); }
+  .person-label { font-size: var(--fs-sm); fill: var(--muted); }
   .center-label {
     font-family: var(--font-display);
     font-weight: 600;
-    font-size: 18px;
+    font-size: var(--fs-lg);
   }
-  .center-label.small { font-size: 16px; }
+  .center-label.small { font-size: var(--fs-base); }
 
   .tip {
     position: absolute;
     transform: translate(-50%, -100%);
     background: var(--ink);
     color: var(--bg);
-    font-size: 12px;
+    font-size: var(--fs-sm);
     line-height: 1.4;
     padding: 7px 10px;
-    border-radius: 6px;
+    border-radius: var(--radius);
     pointer-events: none;
     white-space: nowrap;
     z-index: 5;
@@ -898,17 +915,17 @@
     flex-direction: column;
   }
   .tip-inst { opacity: 0.85; }
-  .tip-shared { opacity: 0.7; font-size: 11px; }
+  .tip-shared { opacity: 0.7; font-size: var(--fs-xs); }
 
   .loading { color: var(--muted); padding: 20px; }
 
   @media (max-width: 620px) {
     .net { padding: 6px 14px 14px; }
     .net-strip { flex-wrap: wrap; gap: 6px 12px; }
-    .const-label { font-size: 18px; }
-    .stats { font-size: 12px; }
+    .const-label { font-size: var(--fs-lg); }
+    .stats { font-size: var(--fs-sm); }
     .reset { margin-left: auto; }
-    .chip { font-size: 12px; padding: 4px 6px 4px 10px; }
+    .chip { font-size: var(--fs-sm); padding: 4px 6px 4px 10px; }
     .add-input { width: 190px; }
   }
 </style>
