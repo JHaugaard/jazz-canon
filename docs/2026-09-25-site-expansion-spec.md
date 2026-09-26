@@ -174,3 +174,26 @@ Follow actual plotted marks, not index-to-year interpolation or lane end caps.
   viewport, short viewport, and reduced motion. Report untested devices honestly.
 - Unit-test target calculations and override state; browser-test both real
   routes. Obtain independent review of interaction behavior before release.
+
+### Release closeout — Follow dates
+
+- Code revision `c30225bdb8faf2f902fda54679359fe9e9dc6f6c` was pushed to
+  both `origin/main` (vps4) and `github/main` before John's attended code-lane
+  deployment. John reported entering the terminal `go` confirmation; it was
+  not automated.
+- Local checks: 25 app tests, Svelte/TypeScript check, production build, exact
+  five-export checksum gate, staged gitleaks scan, and `scripts/deploy.sh
+  --dry-run` passed. The reviewed interaction received fixes for resting-band
+  edges, late-row reachability and the final queued smooth-scroll event.
+- Live verification at https://jazzcanon.com/ on 2026-09-26: public index,
+  JavaScript `index-BDcnIZ5g.js`, and stylesheet `index-CYXUfdG9.css` matched
+  the local release byte-for-byte. Public `#/working` rendered 105 default
+  rows and 1,633 marks; Chet Baker's leading mark settled in the resting band
+  and his constellation opened. Public `#/where` rendered 63 rows and 405
+  marks; CBS 30th Street Studio's leading mark settled in the band and its
+  place view opened. The route titles and active navigation matched each page.
+- Automated browser checks covered desktop, narrow and short viewports,
+  early/middle/late rows, upward travel, manual wheel pause/resume, focused
+  mark priority, search jump and reduced motion. A physical touch device and
+  two-axis trackpad were not checked. Unrelated local edits to the ship
+  handoff and preview-enrichment script were not included in this release.
