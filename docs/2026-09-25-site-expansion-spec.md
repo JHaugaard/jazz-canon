@@ -128,6 +128,9 @@ Follow actual plotted marks, not index-to-year interpolation or lane end caps.
    bottom, the anchor line travels down to the final rows so late cohorts
    remain reachable. If no such row exists, use the nearest visible plottable
    row; if no visible row has marks, leave horizontal position unchanged.
+   Working only: that bottom travel never pans the top row's first dot past
+   the left edge of its resting band (John, 2026-09-26). Where keeps full
+   travel because its final places are decades later than the rows above.
 4. Settle the anchor row's earliest actual plotted mark at the resting point
    near the top left: where the axis's first year sits when the field is
    scrolled fully left (name column + leading pad), within a ±16px band, even
@@ -229,3 +232,9 @@ Follow actual plotted marks, not index-to-year interpolation or lane end caps.
   with trackpad-style drift down and up, deliberate sideways pan then resume,
   long jumps, and hover hold — all passed with the pointer over the field and
   over the names. Physical trackpad and touch remain unchecked.
+- Follow-up the same day: on Working the bottom travel pushed the top rows'
+  first dots up to ~340px past the name column (Wayne Shorter and Stanley
+  Turrentine clipped). Working now caps that travel at the top row's resting
+  band (`keepTopRowInView`); measured through the last screenful at 852×800
+  and 1512×900, the top dot stays 55–80px right of the name column. Where is
+  unchanged by John's choice.

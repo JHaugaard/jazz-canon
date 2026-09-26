@@ -142,6 +142,16 @@ test('resting-band edges do not trigger a full-band jump', () => {
   assert.equal(leadingMarkTarget({ ...view, markCenters: [314] }), null);
 });
 
+test('Working never pushes the top row past the left edge while late rows anchor', () => {
+  const view = { scrollLeft: 400, maxScrollLeft: 2000, restingX: 330, deadZone: 8 };
+  // Anchor at the bottom is a late row (first dot 900); top row's dot is at 400.
+  assert.equal(leadingMarkTarget({ ...view, markCenters: [900], topRowLeading: 400 }), 486);
+  // Without the top-row limit (Where), the late row settles fully.
+  assert.equal(leadingMarkTarget({ ...view, markCenters: [900] }), 954);
+  // Top row already at the band edge: no further pan.
+  assert.equal(leadingMarkTarget({ ...view, markCenters: [900], topRowLeading: 314 }), null);
+});
+
 test('leading date settles from either direction and clamps at field boundaries', () => {
   const view = { scrollLeft: 400, maxScrollLeft: 900, restingX: 330, deadZone: 8 };
   assert.equal(leadingMarkTarget({ ...view, markCenters: [120, 820] }), 206);

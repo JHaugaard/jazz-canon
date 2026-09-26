@@ -30,6 +30,9 @@ export interface LeadingMarkInput {
   restingX: number;
   markCenters: number[];
   deadZone: number;
+  /** Optional: the top visible row's first-dot x. When set, never pan so far
+   * that this dot passes the left edge of the resting band. */
+  topRowLeading?: number;
 }
 
 export function dateRangeWithMinimum(actualStart: number, actualEnd: number): [number, number] {
@@ -116,11 +119,15 @@ export function horizontalTarget(input: HorizontalTargetInput): number | null {
  * column, even if a later mark is already visible. A small band around the
  * resting point keeps adjacent rows with near-identical first dates still. */
 export function leadingMarkTarget(input: LeadingMarkInput): number | null {
-  const { scrollLeft, restingX, markCenters, deadZone } = input;
+  const { scrollLeft, restingX, markCenters, deadZone, topRowLeading } = input;
   if (markCenters.length === 0) return null;
   const leading = Math.min(...markCenters);
   const nearestEdge = clamp(leading, restingX - REST_BAND, restingX + REST_BAND);
-  const target = clamp(scrollLeft + leading - nearestEdge, 0, input.maxScrollLeft);
+  let wanted = scrollLeft + leading - nearestEdge;
+  if (topRowLeading !== undefined) {
+    wanted = Math.min(wanted, scrollLeft + topRowLeading - (restingX - REST_BAND));
+  }
+  const target = clamp(wanted, 0, input.maxScrollLeft);
   return Math.abs(target - scrollLeft) <= deadZone ? null : target;
 }
 

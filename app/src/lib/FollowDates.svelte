@@ -20,10 +20,15 @@
     scrollElement = null,
     inspectionActive = false,
     revision = '',
+    keepTopRowInView = false,
   }: {
     scrollElement?: HTMLElement | null;
     inspectionActive?: boolean;
     revision?: string | number;
+    /* Working: as the anchor travels to the final rows at the bottom, never
+       push the top row's first dot past the left edge. Where leaves this off
+       so its much later final places stay reachable. */
+    keepTopRowInView?: boolean;
   } = $props();
 
   let mode: FollowMode = 'following';
@@ -115,19 +120,21 @@
     const nextAnchor = selectAnchorRow(rows, line, visibleTop, visibleBottom);
     if (!nextAnchor) return;
 
-    const row = rowElements.find((candidate, index) => (candidate.dataset.followRow || String(index)) === nextAnchor);
+    const rowById = (id: string | null) =>
+      rowElements.find((candidate, index) => (candidate.dataset.followRow || String(index)) === id);
+    const row = rowById(nextAnchor);
     if (!row) return;
     const nameWidth = el.querySelector<HTMLElement>(NAME_SELECTOR)?.getBoundingClientRect().width ?? 0;
-    const markCenters = [...row.querySelectorAll<HTMLElement | SVGGraphicsElement>(MARK_SELECTOR)].map((mark) => {
-      const rect = mark.getBoundingClientRect();
-      return rect.left + rect.width / 2;
-    });
+    const markCenters = markCentersOf(row);
+    const topRow = keepTopRowInView ? rowById(selectAnchorRow(rows, visibleTop, visibleTop, visibleBottom)) : undefined;
+    const topCenters = topRow ? markCentersOf(topRow) : [];
     const target = leadingMarkTarget({
       scrollLeft: el.scrollLeft,
       maxScrollLeft: Math.max(0, el.scrollWidth - el.clientWidth),
       restingX: restingX(el, box, nameWidth),
       markCenters,
       deadZone: DEAD_ZONE,
+      topRowLeading: topCenters.length ? Math.min(...topCenters) : undefined,
     });
     // Re-checking the same row every frame corrects small sideways drift from
     // trackpad swipes; the resting band keeps a settled row still. A glide
@@ -140,6 +147,13 @@
     programTarget = target;
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     el.scrollTo({ left: target, behavior: reduced ? 'auto' : 'smooth' });
+  }
+
+  function markCentersOf(row: HTMLElement): number[] {
+    return [...row.querySelectorAll<HTMLElement | SVGGraphicsElement>(MARK_SELECTOR)].map((mark) => {
+      const rect = mark.getBoundingClientRect();
+      return rect.left + rect.width / 2;
+    });
   }
 
   function onScroll() {

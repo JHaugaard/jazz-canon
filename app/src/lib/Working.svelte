@@ -346,6 +346,7 @@
           scrollElement={lanesScroll}
           inspectionActive={tip !== null || highlightId !== null}
           revision={`${minYears}:${roster.length}`}
+          keepTopRowInView
         />
 
         <div class="search-wrap">
