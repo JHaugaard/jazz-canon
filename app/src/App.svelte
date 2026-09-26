@@ -241,9 +241,7 @@
 
 <style>
   .shell {
-    /* 60px: sized so a 13-inch laptop browser (~800px of page height) fits
-       three rows of albums under the timeline axis */
-    --masthead-h: 60px;
+    --masthead-h: 104px;
     height: 100vh;
     height: 100dvh; /* avoids mobile browser-chrome clipping */
     display: flex;
@@ -268,16 +266,16 @@
   .lockup {
     display: flex;
     align-items: flex-end;
-    gap: 11px;
+    gap: 15px;
     background: none;
     border: none;
     padding: 0;
     cursor: pointer;
   }
-  .mark { height: 42px; display: block; }
-  .wordmark { display: flex; flex-direction: column; line-height: 1; padding-bottom: 1px; }
+  .mark { height: 72px; display: block; }
+  .wordmark { display: flex; flex-direction: column; line-height: 1; padding-bottom: 4px; }
   .wm-title {
-    font-size: var(--fs-xl);
+    font-size: var(--fs-2xl);
     color: var(--bn-blue);
     letter-spacing: 0.03em;
     line-height: 1;
@@ -291,7 +289,7 @@
     color: var(--muted);
     letter-spacing: 0.18em;
     line-height: 1;
-    margin-top: 3px;
+    margin-top: 5px;
   }
 
   .mast-nav { display: flex; gap: 6px; align-items: center; }
@@ -342,20 +340,20 @@
   /* ---- Responsive ---------------------------------------------------- */
   /* iPad portrait & small laptops: trim the masthead, keep everything else */
   @media (max-width: 1024px) {
-    .shell { --masthead-h: 56px; }
-    .mark { height: 38px; }
-    .wm-title { font-size: var(--fs-lg); }
-    .wm-tag { font-size: var(--fs-2xs); margin-top: 3px; }
+    .shell { --masthead-h: 92px; }
+    .mark { height: 62px; }
+    .wm-title { font-size: var(--fs-xl); }
+    .wm-tag { font-size: var(--fs-xs); margin-top: 4px; }
     .nav-link { font-size: var(--fs-base); }
     .masthead { padding: 0 18px; }
   }
 
   /* Phone: compact header, panels take the full width */
   @media (max-width: 620px) {
-    .shell { --masthead-h: 56px; }
+    .shell { --masthead-h: 66px; }
     /* Four route labels plus search need the wordmark's phone-width budget.
        The record mark still carries the home affordance and full aria label. */
-    .mark { height: 36px; }
+    .mark { height: 40px; }
     .wordmark { display: none; }
     .lockup { align-items: center; }
     .mast-nav { gap: 0; }

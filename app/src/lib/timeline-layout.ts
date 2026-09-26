@@ -11,8 +11,8 @@ export const END_YEAR = 1985;
 export const OPEN_YEAR = 1965;
 
 export const CARD_W = 148;
-export const CARD_H = 202; // 148 square cover + 54 text block
-export const CARD_GAP = 12;
+export const CARD_H = 204; // 148 square cover + 56 text block
+export const CARD_GAP = 14;
 export const EMPTY_YEAR_W = 56;
 export const YEAR_PAD = 26; // breathing room inside a populated year block
 

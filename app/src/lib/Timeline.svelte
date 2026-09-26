@@ -9,24 +9,18 @@
   // Year axis sits at the TOP (the bottom of the window is reserved for
   // future info surfaces). Under the year labels runs the era ribbon: one
   // thin rule per era, packed into parallel lanes where eras coexist.
-  const YEAR_ROW_H = 24;
-  const LANE_H = 13;
+  const YEAR_ROW_H = 28;
+  const LANE_H = 15;
   const lanes = eraLanes();
   const laneCount = Math.max(...lanes) + 1;
-  const AXIS_H = YEAR_ROW_H + laneCount * LANE_H + 4;
-  const CONTENT_TOP = AXIS_H + 2;
-  const CARDS_PAD_TOP = 10; // axis rule to first row of covers
-  const CARDS_PAD_BOTTOM = 4; // last row to the window edge
+  const AXIS_H = YEAR_ROW_H + laneCount * LANE_H + 6;
+  const CONTENT_TOP = AXIS_H + 4;
 
   let areaHeight = $state(600);
 
   // A short window gets one complete row rather than a clipped second row.
-  // n rows need n cards and n-1 gaps, so the last row is not charged a gap
-  // (the old formula charged one, and lost a row a few pixels early).
   let perColumn = $derived(
-    Math.max(1, Math.min(4, Math.floor(
-      (areaHeight - CONTENT_TOP - CARDS_PAD_TOP - CARDS_PAD_BOTTOM + CARD_GAP) / (CARD_H + CARD_GAP)
-    )))
+    Math.max(1, Math.min(4, Math.floor((areaHeight - CONTENT_TOP - 18) / (CARD_H + CARD_GAP))))
   );
   let layout = $derived(computeLayout(albums, perColumn));
 
@@ -136,7 +130,7 @@
     </div>
 
     <!-- album cards -->
-    <div class="cards" style:top="{CONTENT_TOP + CARDS_PAD_TOP}px">
+    <div class="cards" style:top="{CONTENT_TOP + 12}px">
       {#each layout.cards as pc (pc.album.id)}
         <div class="slot" style:left="{pc.x}px" style:top="{pc.y}px">
           <AlbumCardTile album={pc.album} {onopen} />
@@ -187,11 +181,11 @@
     left: 8px;
     display: inline-block;
     margin-left: 8px;
-    padding-top: 4px;
+    padding-top: 6px;
     font-size: var(--fs-md);
     color: var(--muted);
   }
-  .tick-label.empty { opacity: 0.55; font-size: var(--fs-xs); padding-top: 6px; }
+  .tick-label.empty { opacity: 0.55; font-size: var(--fs-xs); padding-top: 8px; }
 
   /* era ribbon: a 2px rule in the era's hue, name pinned over its left end */
   .era { position: absolute; }
@@ -212,7 +206,7 @@
     padding: 0 7px 0 6px;
     background: var(--bg);
     font-size: var(--fs-sm);
-    line-height: 13px;
+    line-height: 15px;
     white-space: nowrap;
   }
   .era-name { font-weight: 600; color: var(--era); }
