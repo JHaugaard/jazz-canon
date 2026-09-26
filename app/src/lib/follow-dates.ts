@@ -27,6 +27,13 @@ export function nextFollowMode(mode: FollowMode, event: FollowEvent): FollowMode
   return mode === 'active' ? 'paused' : mode;
 }
 
+/** At the bottom of a scroller the final rows cannot reach the usual
+ * one-third reading line. Let the line travel to them as scrolling runs out. */
+export function readingLine(visibleTop: number, visibleBottom: number, remainingScroll: number): number {
+  const normal = visibleTop + (visibleBottom - visibleTop) / 3;
+  return Math.min(visibleBottom - 2, normal + Math.max(0, visibleBottom - normal - remainingScroll));
+}
+
 /** Select the row crossed by the reading line, falling back to the nearest
  * visible row that owns real marks. Empty rows never become pan targets. */
 export function selectAnchorRow(
@@ -70,6 +77,19 @@ export function horizontalTarget(input: HorizontalTargetInput): number | null {
   if (distance <= deadZone) return null;
 
   const target = clamp(scrollLeft + delta, 0, input.maxScrollLeft);
+  return Math.abs(target - scrollLeft) <= deadZone ? null : target;
+}
+
+/** Settle the row's earliest real mark near the name column, not merely
+ * somewhere in view. A small resting zone prevents adjacent rows with nearly
+ * identical dates from repeatedly nudging the viewport. */
+export function leadingMarkTarget(input: HorizontalTargetInput): number | null {
+  const { scrollLeft, usableLeft, usableRight, markCenters, deadZone } = input;
+  if (markCenters.length === 0 || usableRight <= usableLeft) return null;
+  const leading = Math.min(...markCenters);
+  const restingLeft = usableLeft + Math.min(48, (usableRight - usableLeft) * 0.12);
+  const nearestEdge = clamp(leading, restingLeft - 16, restingLeft + 16);
+  const target = clamp(scrollLeft + leading - nearestEdge, 0, input.maxScrollLeft);
   return Math.abs(target - scrollLeft) <= deadZone ? null : target;
 }
 

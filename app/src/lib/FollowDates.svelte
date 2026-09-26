@@ -2,7 +2,9 @@
   import { onMount } from 'svelte';
   import {
     horizontalTarget,
+    leadingMarkTarget,
     nextFollowMode,
+    readingLine,
     selectAnchorRow,
     type FollowMode,
     type RowGeometry,
@@ -89,7 +91,10 @@
     const axisBottom = axis?.getBoundingClientRect().bottom ?? box.top;
     const visibleTop = Math.max(box.top, axisBottom);
     const visibleBottom = box.bottom;
-    const selectionLine = visibleTop + (visibleBottom - visibleTop) / 3;
+    const remainingScroll = Math.max(0, el.scrollHeight - el.clientHeight - el.scrollTop);
+    const selectionLine = el.scrollHeight > el.clientHeight
+      ? readingLine(visibleTop, visibleBottom, remainingScroll)
+      : visibleTop + (visibleBottom - visibleTop) / 3;
     const rowElements = [...el.querySelectorAll<HTMLElement>(ROW_SELECTOR)];
     const rows: RowGeometry[] = rowElements.map((row, index) => {
       const rect = row.getBoundingClientRect();
@@ -111,7 +116,7 @@
       const rect = mark.getBoundingClientRect();
       return rect.left + rect.width / 2;
     });
-    const target = horizontalTarget({
+    const target = leadingMarkTarget({
       scrollLeft: el.scrollLeft,
       maxScrollLeft: Math.max(0, el.scrollWidth - el.clientWidth),
       usableLeft: box.left + nameWidth + EDGE_PADDING,
@@ -121,7 +126,8 @@
     });
     if (target === null) return;
 
-    cancelProgrammatic();
+    // Retarget the browser's current smooth scroll rather than snapping it
+    // to the intermediate position as successive rows cross the reading line.
     programTarget = target;
     programDeadline = performance.now() + 1200;
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -144,6 +150,9 @@
     if (programTarget !== null && Math.abs(el.scrollLeft - programTarget) <= 1) {
       programTarget = null;
       programDeadline = 0;
+      // The browser can queue one last scroll event after a smooth arrival.
+      // A real horizontal gesture still pauses through its direct handler.
+      assistedDeadline = Math.max(assistedDeadline, now + 100);
     }
     lastTop = el.scrollTop;
     lastLeft = el.scrollLeft;

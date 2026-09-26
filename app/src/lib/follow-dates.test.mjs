@@ -3,7 +3,9 @@ import test from 'node:test';
 import {
   dateRangeWithMinimum,
   horizontalTarget,
+  leadingMarkTarget,
   nextFollowMode,
+  readingLine,
   selectAnchorRow,
 } from './follow-dates.ts';
 
@@ -32,6 +34,12 @@ test('anchor follows the row crossing the selection line', () => {
   assert.equal(selectAnchorRow(rows, 90, 0, 120), 'late');
   assert.equal(selectAnchorRow(rows, 90, 0, 70), 'early');
   assert.equal(selectAnchorRow(rows, 60, 51, 75), null);
+});
+
+test('reading line follows final rows only as vertical scrolling runs out', () => {
+  assert.equal(readingLine(30, 630, 600), 230);
+  assert.equal(readingLine(30, 630, 100), 530);
+  assert.equal(readingLine(30, 630, 0), 628);
 });
 
 test('visible real marks prevent horizontal movement', () => {
@@ -89,4 +97,29 @@ test('dead zone and scroll limits prevent oscillation and overshoot', () => {
     markCenters: [900],
     deadZone: 8,
   }), null);
+});
+
+test('first real mark follows the resting zone even with a later mark visible', () => {
+  const view = { scrollLeft: 100, maxScrollLeft: 900, usableLeft: 250, usableRight: 700, deadZone: 8 };
+  assert.equal(leadingMarkTarget({ ...view, markCenters: [500, 410] }), 196);
+  assert.equal(leadingMarkTarget({ ...view, markCenters: [298, 500] }), null);
+  assert.equal(leadingMarkTarget({ ...view, markCenters: [225, 500] }), 43);
+  assert.equal(leadingMarkTarget({ ...view, markCenters: [] }), null);
+});
+
+test('resting-zone edges do not trigger a full-zone jump', () => {
+  const view = { scrollLeft: 100, maxScrollLeft: 900, usableLeft: 250, usableRight: 700, deadZone: 0 };
+  assert.equal(leadingMarkTarget({ ...view, markCenters: [315] }), 101);
+  assert.equal(leadingMarkTarget({ ...view, markCenters: [281] }), 99);
+  assert.equal(leadingMarkTarget({ ...view, markCenters: [314] }), null);
+  assert.equal(leadingMarkTarget({ ...view, markCenters: [282] }), null);
+});
+
+test('leading date settles from either direction and clamps at field boundaries', () => {
+  const view = { scrollLeft: 400, maxScrollLeft: 900, usableLeft: 250, usableRight: 700, deadZone: 8 };
+  assert.equal(leadingMarkTarget({ ...view, markCenters: [120, 820] }), 238);
+  assert.equal(leadingMarkTarget({ ...view, markCenters: [1000] }), 900);
+  assert.equal(leadingMarkTarget({ ...view, scrollLeft: 20, markCenters: [100] }), 0);
+  assert.equal(leadingMarkTarget({ ...view, scrollLeft: 900, markCenters: [800] }), null);
+  assert.equal(leadingMarkTarget({ ...view, usableRight: 250, markCenters: [800] }), null);
 });

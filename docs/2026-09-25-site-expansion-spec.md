@@ -90,7 +90,13 @@ Agreed data-owner contract:
   uncertainty, and missing fields. Real live-credit acceptance remains blocked
   until a verified export carries credits; fixtures only prove UI behavior.
 
-## Working / Where: proposed Follow dates interaction
+## Working / Where: Follow dates interaction
+
+The original visibility-assist proposal below was superseded by John's
+acceptance of leading-mark following. The first plotted event determines a
+musician's or place's cohort, even across a decades-long gap to the next mark;
+the connecting lane line in Working remains the visual clue to that gap.
+Keep the fixed, truthful date axis and move the viewport, not the marks.
 
 ### Goal
 
@@ -105,7 +111,7 @@ career/venue duration, and Where row heights vary. Scroll percentage is not
 calendar position. Long-lived people and venues also contain later events.
 Follow actual plotted marks, not index-to-year interpolation or lane end caps.
 
-### Proposed behavior
+### Accepted behavior
 
 1. Add an accessible **Follow dates** toggle, initially on. Show a paused
    state and explicit resume control after manual horizontal navigation.
@@ -113,18 +119,22 @@ Follow actual plotted marks, not index-to-year interpolation or lane end caps.
 2. Observe vertical movement inside the existing `.lanes-scroll` element,
    not merely the outer page. Scrolling introductory text causes no pan.
 3. Select the plottable row nearest one-third down the usable viewport below
-   the sticky axis. If it has no marks, use the nearest visible plottable row;
+   the sticky axis. As vertical scrolling runs out at the bottom, let the
+   reading line move toward the final visible row so late cohorts remain
+   reachable. If it has no marks, use the nearest visible plottable row;
    if no visible row has marks, leave horizontal position unchanged.
 4. Calculate the horizontally usable date area excluding the sticky name
-   column and comfortable edge padding. If the anchor row already has a real
-   event mark in this area, do not pan.
-5. Otherwise move the smallest horizontal distance that brings the nearest
-   actual mark into the usable area. Apply the same rule scrolling upward;
-   do not force exclusively rightward motion or rewind to each row's first date.
-6. Keep an anchor until the next row crosses the selection line; use edge
-   padding and a dead zone to avoid tiny repeated adjustments. At most one
-   update per animation frame, one current target, no stacked animations.
-   Do not attempt to fit every mark of a decades-long row into one viewport.
+   column. Settle the anchor row's earliest actual plotted mark in a modest
+   screen-space resting zone near its left edge, even if a later mark is already
+   visible. An early mark remains authoritative across long hiatuses.
+5. Follow in both vertical directions. Keep an anchor until the next row crosses
+   the selection line; use a resting zone and dead zone to avoid tiny repeated
+   adjustments. Retarget one smooth horizontal movement rather than snapping
+   or stacking animations. Reduced motion adjusts immediately.
+6. Provide a small leading margin and a viewport-responsive trailing runway in
+   both date fields so even the earliest and latest possible marks can settle
+   away from hard scroll limits; keep ticks, hairlines, hit areas and dots
+   aligned. Do not try to fit every mark of a long row.
 7. Any deliberate horizontal wheel/trackpad, scrollbar drag, horizontal touch
    gesture, or keyboard panning pauses following until explicit resume. Programmatic
    horizontal scroll events must not count as manual navigation or trigger loops.
@@ -154,7 +164,7 @@ Follow actual plotted marks, not index-to-year interpolation or lane end caps.
 
 - Vertical-only navigation through early, middle, late, sparse, dense, and
   long-duration real rows keeps relevant anchor-row marks visible.
-- No pan when a mark is already safely visible; no movement for empty rows.
+- No pan when the first mark is already in the resting zone; no movement for empty rows.
 - Upward scrolling follows sensibly; bottom/top and horizontal limits clamp.
 - Manual horizontal input wins immediately and remains in control until resume.
 - Sticky labels/axis remain visible and do not obscure focused marks.

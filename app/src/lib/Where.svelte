@@ -17,7 +17,8 @@
   const PX_PER_YEAR = PX_PER_MONTH * 12;
   const ROW_H = 42;
   const GUTTER = 8;
-  const xm = (months: number) => GUTTER + months * PX_PER_MONTH;
+  const LEADING_PAD = 72;
+  const xm = (months: number) => LEADING_PAD + GUTTER + months * PX_PER_MONTH;
 
   const kindLabel: Record<PlaceKind, string> = {
     studio: 'Studio',
@@ -48,7 +49,7 @@
     return Array.from({ length: data.yearEnd - data.yearStart + 1 }, (_, index) => data!.yearStart + index);
   });
   let fieldW = $derived(years.length * PX_PER_YEAR);
-  let svgW = $derived(fieldW + GUTTER * 2);
+  let svgW = $derived(fieldW + GUTTER * 2 + LEADING_PAD);
 
   function rowHeight(row: WhereRow): number {
     const depth = Math.max(1, ...row.groups.map((group) => group.laneCount));
@@ -100,6 +101,7 @@
       style:--field-w="{fieldW}px"
       style:--year-w="{PX_PER_YEAR}px"
       style:--gutter="{GUTTER}px"
+      style:--leading-pad="{LEADING_PAD}px"
     >
       <div class="summary">
         <span>{data.eventCount} dated recording events</span>
@@ -194,7 +196,7 @@
 
   .field-wrap {
     --name-w: 250px;
-    max-width: calc(var(--name-w) + var(--field-w) + 2 * var(--gutter) + 56px);
+    max-width: calc(var(--name-w) + var(--field-w) + 2 * var(--gutter) + var(--leading-pad) + 56px);
     margin: 26px auto 0;
     padding: 0 28px;
   }
@@ -213,7 +215,11 @@
     border-radius: 6px;
     background: var(--bg);
   }
-  .field { width: calc(var(--name-w) + var(--field-w) + 2 * var(--gutter)); }
+  .field {
+    /* Make room for the final cohort to settle beside the sticky place name,
+       without moving any dated marks or stretching the month pitch. */
+    width: calc(var(--name-w) + var(--field-w) + 2 * var(--gutter) + var(--leading-pad) + max(0px, 100% - var(--name-w) - 48px));
+  }
   .axis {
     position: sticky;
     top: 0;
@@ -309,7 +315,7 @@
       var(--line) 0 1px,
       transparent 1px var(--year-w)
     );
-    background-position-x: var(--gutter);
+    background-position-x: calc(var(--gutter) + var(--leading-pad));
   }
   .event-dot {
     position: absolute;
@@ -381,7 +387,7 @@
     .field-wrap {
       --name-w: 148px;
       padding: 0 14px;
-      max-width: calc(var(--name-w) + var(--field-w) + 2 * var(--gutter) + 28px);
+      max-width: calc(var(--name-w) + var(--field-w) + 2 * var(--gutter) + var(--leading-pad) + 28px);
     }
     .venue { font-size: 11.5px; }
     .place-meta { font-size: 9.5px; }

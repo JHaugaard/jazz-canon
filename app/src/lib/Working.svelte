@@ -27,7 +27,10 @@
      end. The gutter pads both ends and every x in the field is offset through
      xm(), axis ticks and hairlines included, so the year columns still line up. */
   const GUTTER = 5;
-  const xm = (months: number) => GUTTER + months * PX_PER_MONTH;
+  /* Space before the first year lets an earliest-possible mark rest near the
+     name column without hitting the horizontal scroll limit. */
+  const LEADING_PAD = 72;
+  const xm = (months: number) => LEADING_PAD + GUTTER + months * PX_PER_MONTH;
 
   let data = $state<PeopleData | null>(null);
   let loadError = $state<string | null>(null);
@@ -272,7 +275,7 @@
     return Array.from({ length: d.yearEnd - d.yearStart + 1 }, (_, i) => d.yearStart + i);
   });
   let fieldW = $derived(years.length * PX_PER_YEAR);
-  let svgW = $derived(fieldW + GUTTER * 2);
+  let svgW = $derived(fieldW + GUTTER * 2 + LEADING_PAD);
 
   /* Small counts are spelled out in the footnote's voice; anything larger
      than ninety-nine falls back to digits rather than risk a wrong word. */
@@ -317,6 +320,7 @@
       style:--year-w="{PX_PER_YEAR}px"
       style:--row-h="{ROW_H}px"
       style:--gutter="{GUTTER}px"
+      style:--leading-pad="{LEADING_PAD}px"
     >
       <div class="controls">
         <div class="stepper" role="group" aria-label="Minimum years active">
@@ -511,7 +515,7 @@
      phones; --field-w / --year-w / --row-h come from the data's own span. */
   .field-wrap {
     --name-w: 200px;
-    max-width: calc(var(--name-w) + var(--field-w) + 2 * var(--gutter) + 56px);
+    max-width: calc(var(--name-w) + var(--field-w) + 2 * var(--gutter) + var(--leading-pad) + 56px);
     margin: 26px auto 0;
     padding: 0 28px;
   }
@@ -596,7 +600,12 @@
     border-radius: 6px;
     background: var(--bg);
   }
-  .field { width: calc(var(--name-w) + var(--field-w) + 2 * var(--gutter)); }
+  /* The blank runway beyond the final year lets a late cohort's first dot
+     reach the same resting zone on wide screens. It belongs after the SVG:
+     neither the true date scale nor the axis/mark alignment changes. */
+  .field {
+    width: calc(var(--name-w) + var(--field-w) + 2 * var(--gutter) + var(--leading-pad) + max(0px, 100% - var(--name-w) - 48px));
+  }
 
   .axis {
     position: sticky;
@@ -698,7 +707,7 @@
       transparent 1px var(--year-w)
     );
     /* the gutter shifts the field's x=0, so the hairlines shift with it */
-    background-position-x: var(--gutter);
+    background-position-x: calc(var(--gutter) + var(--leading-pad));
     opacity: 0.55;
     pointer-events: none;
   }
@@ -736,7 +745,7 @@
     .field-wrap {
       --name-w: 124px;
       padding: 0 14px;
-      max-width: calc(var(--name-w) + var(--field-w) + 2 * var(--gutter) + 28px);
+      max-width: calc(var(--name-w) + var(--field-w) + 2 * var(--gutter) + var(--leading-pad) + 28px);
     }
     .who { font-size: 12.5px; }
     .inst { display: none; }
