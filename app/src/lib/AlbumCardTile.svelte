@@ -111,12 +111,12 @@
     display: flex;
     flex-direction: column;
     gap: 1px;
-    padding: 7px 1px 0;
+    padding: 6px 1px 0;
   }
   .title {
     font-size: var(--fs-md);
     font-weight: 600;
-    line-height: 1.3;
+    line-height: 1.25;
     color: var(--ink);
     white-space: nowrap;
     overflow: hidden;
@@ -124,7 +124,7 @@
   }
   .artist, .style {
     font-size: var(--fs-sm);
-    line-height: 1.3;
+    line-height: 1.25;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

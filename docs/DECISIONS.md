@@ -764,6 +764,14 @@ changed.
     shows what search covers and five runnable examples. Field widened to
     380px.
 
+15. **Compact header, three rows on a 13-inch laptop** (John, round two).
+    Masthead 104 → 60px (56px at tablet and phone widths), with the mark at
+    42px and the wordmark at 21px. The timeline axis tightened (year row 24px,
+    era lanes 13px), tiles lost 2px of text leading, and the row gap went
+    14 → 12px. The row-count formula no longer charges the last row a gap.
+    Three rows now fit from 786px of page height, which a 13-inch MacBook
+    browser window provides; it took about 900px before.
+
 **Verified:** `npm run check` clean; `npm test` 34/34, with the new tests
 shown to fail against planted defects (inclusive-year lane overlap, no
 compact matching, dropped tags, unsorted lists, lost export names).
