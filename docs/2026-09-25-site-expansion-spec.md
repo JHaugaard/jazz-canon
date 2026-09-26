@@ -238,3 +238,14 @@ Follow actual plotted marks, not index-to-year interpolation or lane end caps.
   band (`keepTopRowInView`); measured through the last screenful at 852×800
   and 1512×900, the top dot stays 55–80px right of the name column. Where is
   unchanged by John's choice.
+
+### Release closeout — top-row following (2026-09-26)
+
+- Code revision `37b9ae0` (on `github/main`) was deployed by John through
+  `scripts/deploy.sh --expect "scrollend" --probe-path /` with his typed `go`.
+- Live verification: public index, JavaScript `index-zlHFc8Ah.js` and
+  stylesheet `index-DubJJ83r.css` matched the local release byte-for-byte;
+  the live bundle carries the `scrollend` marker. John reported the live
+  behavior on Working and Where as correct.
+- Unrelated local edits to the ship handoff and preview-enrichment script were
+  not part of this release and remain uncommitted.
