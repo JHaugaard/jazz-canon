@@ -671,3 +671,24 @@ Verified: `group-query.ts` under Node against the paper's three sets
 order/duplicate independence, monotone narrowing, and a union mutation that
 fails 5 checks. Playwright at 1512×900 and 390×844: 38 interaction checks,
 no console errors. `npm run check` clean.
+
+---
+
+## D26. Source of truth — GitHub; deploys are local Wrangler uploads (2026-09-26)
+
+**Status:** ACCEPTED (John, 2026-09-26)
+
+**Decision:** `github` (`git@github.com:JHaugaard/jazz-canon.git`) is the
+canonical remote and the record of what shipped. Local `main` tracks
+`github/main`; commit to `main` and push there only.
+
+**How deploys actually work:** Cloudflare Pages is not connected to any git
+remote. `scripts/deploy.sh` builds `app/dist` from the vps8 working tree and
+uploads it with `wrangler pages deploy` after John's typed `go`. The live site
+is whatever was on disk at that moment, so commit and push the release
+revision to GitHub before (or as part of) every deploy.
+
+**vps4:** the former `origin` remote was renamed `vps4-archive`
+(`vps4:git/jazz-canon.git`) so a bare or habitual `git push origin` can no
+longer feed it. It is kept only as an archive (it still holds the old
+`where-recorded` branch); do not push to it.
