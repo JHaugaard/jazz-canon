@@ -1,11 +1,17 @@
 <script lang="ts">
+  /* Date following for Working and Where. Renders nothing: vertical browsing
+     settles the top row's first dot beside the name column; a deliberate
+     horizontal gesture takes over until the reader scrolls vertically again. */
   import { onMount } from 'svelte';
   import {
+    anchorLine,
     horizontalTarget,
     leadingMarkTarget,
     nextFollowMode,
-    readingLine,
     selectAnchorRow,
+    verticalResumes,
+    wheelIsHorizontal,
+    type FollowEvent,
     type FollowMode,
     type RowGeometry,
   } from './follow-dates';
@@ -20,18 +26,22 @@
     revision?: string | number;
   } = $props();
 
-  let mode = $state<FollowMode>('active');
+  let mode: FollowMode = 'following';
   let frame = 0;
   let lastTop = 0;
-  let lastLeft = 0;
-  let anchorId: string | null = null;
+  let lastHorizontalAt = -Infinity;
+  /* Dots slide under a still pointer while the reader scrolls, opening their
+     hover popovers. That is not inspection: while scroll input is recent,
+     keep following. A deliberate hover or focus with no scrolling still
+     holds the view, and so does a search jump (no scroll input). */
+  let lastScrollInputAt = -Infinity;
+  const SCROLL_INPUT_MS = 400;
+  /* Set while our own smooth pan is under way. Only direct input handlers can
+     hand control to the reader, so a long glide that outlasts any timer can
+     never be mistaken for manual navigation. */
   let programTarget: number | null = null;
-  let programDeadline = 0;
-  /* Focus and search can invoke native scrollIntoView. Those scroll events are
-     assisted navigation, not manual panning; direct input handlers still pause
-     immediately during this short suppression window. */
-  let assistedDeadline = 0;
   let touchStart: { x: number; y: number } | null = null;
+  let touchHorizontal = false;
   let pointerHeld = false;
   let nativeTouch = false;
   let gestureTimer: ReturnType<typeof setTimeout> | undefined;
@@ -43,58 +53,55 @@
   const ROW_SELECTOR = '[data-follow-row]';
   const MARK_SELECTOR = '[data-follow-mark]';
 
-  function setMode(event: 'manual' | 'resume' | 'toggle-on' | 'toggle-off') {
+  function setMode(event: FollowEvent) {
+    const previous = mode;
     mode = nextFollowMode(mode, event);
-    if (mode !== 'active') cancelProgrammatic();
-    else {
-      anchorId = null;
-      scheduleFollow(true);
-    }
+    if (event === 'horizontal') lastHorizontalAt = performance.now();
+    if (mode === 'manual') cancelProgrammatic();
+    else if (previous === 'manual') scheduleFollow(true);
   }
 
   function cancelProgrammatic() {
     const el = scrollElement;
-    if (el && programTarget !== null) {
-      el.scrollTo({ left: el.scrollLeft, behavior: 'instant' });
-      lastLeft = el.scrollLeft;
-      // A cancelled animation can still have one queued scroll event.
-      // Direct gesture/wheel/key handlers take precedence over this guard.
-      assistedDeadline = Math.max(assistedDeadline, performance.now() + 100);
-    }
+    if (el && programTarget !== null) el.scrollTo({ left: el.scrollLeft, behavior: 'instant' });
     programTarget = null;
-    programDeadline = 0;
   }
 
-  function pauseForManualInput() {
-    if (mode === 'active') setMode('manual');
+  function inspecting(): boolean {
+    return inspectionActive && performance.now() - lastScrollInputAt > SCROLL_INPUT_MS;
   }
 
   function scheduleFollow(force = false) {
-    if (force) {
-      cancelProgrammatic();
-      anchorId = null;
-    }
-    if (mode !== 'active' || inspectionActive || !scrollElement) return;
+    if (force) cancelProgrammatic();
+    if (mode !== 'following' || inspecting() || !scrollElement) return;
     if (pointerHeld || nativeTouch) return;
     if (frame) return;
     frame = requestAnimationFrame(runFollow);
   }
 
+  /* The resting point is where the axis's first year sits when the field is
+     scrolled fully left: the name column plus the field's leading pad. */
+  function restingX(el: HTMLElement, box: DOMRect, nameWidth: number): number {
+    const style = getComputedStyle(el);
+    const pad = parseFloat(style.getPropertyValue('--leading-pad')) || 0;
+    const gutter = parseFloat(style.getPropertyValue('--gutter')) || 0;
+    return box.left + el.clientLeft + nameWidth + pad + gutter;
+  }
+
   function runFollow() {
     frame = 0;
     const el = scrollElement;
-    if (!el || mode !== 'active' || inspectionActive || pointerHeld || nativeTouch) return;
+    if (!el || mode !== 'following' || inspecting() || pointerHeld || nativeTouch) return;
     if ((document.activeElement as Element | null)?.closest?.('[data-follow-control]')) return;
 
     const box = el.getBoundingClientRect();
     const axis = el.querySelector<HTMLElement>(AXIS_SELECTOR);
-    const axisBottom = axis?.getBoundingClientRect().bottom ?? box.top;
-    const visibleTop = Math.max(box.top, axisBottom);
-    const visibleBottom = box.bottom;
-    const remainingScroll = Math.max(0, el.scrollHeight - el.clientHeight - el.scrollTop);
-    const selectionLine = el.scrollHeight > el.clientHeight
-      ? readingLine(visibleTop, visibleBottom, remainingScroll)
-      : visibleTop + (visibleBottom - visibleTop) / 3;
+    const visibleTop = Math.max(box.top, axis?.getBoundingClientRect().bottom ?? box.top);
+    const visibleBottom = box.top + el.clientTop + el.clientHeight;
+    const remainingScroll = el.scrollHeight - el.clientHeight - el.scrollTop;
+    const line = el.scrollHeight > el.clientHeight
+      ? anchorLine(visibleTop, visibleBottom, Math.max(0, remainingScroll))
+      : visibleTop;
     const rowElements = [...el.querySelectorAll<HTMLElement>(ROW_SELECTOR)];
     const rows: RowGeometry[] = rowElements.map((row, index) => {
       const rect = row.getBoundingClientRect();
@@ -105,9 +112,8 @@
         markCount: row.querySelectorAll(MARK_SELECTOR).length,
       };
     });
-    const nextAnchor = selectAnchorRow(rows, selectionLine, visibleTop, visibleBottom);
-    if (!nextAnchor || nextAnchor === anchorId) return;
-    anchorId = nextAnchor;
+    const nextAnchor = selectAnchorRow(rows, line, visibleTop, visibleBottom);
+    if (!nextAnchor) return;
 
     const row = rowElements.find((candidate, index) => (candidate.dataset.followRow || String(index)) === nextAnchor);
     if (!row) return;
@@ -119,17 +125,19 @@
     const target = leadingMarkTarget({
       scrollLeft: el.scrollLeft,
       maxScrollLeft: Math.max(0, el.scrollWidth - el.clientWidth),
-      usableLeft: box.left + nameWidth + EDGE_PADDING,
-      usableRight: box.right - EDGE_PADDING,
+      restingX: restingX(el, box, nameWidth),
       markCenters,
       deadZone: DEAD_ZONE,
     });
+    // Re-checking the same row every frame corrects small sideways drift from
+    // trackpad swipes; the resting band keeps a settled row still. A glide
+    // already heading to this target is left alone rather than restarted.
     if (target === null) return;
+    if (programTarget !== null && Math.abs(target - programTarget) <= DEAD_ZONE) return;
 
     // Retarget the browser's current smooth scroll rather than snapping it
-    // to the intermediate position as successive rows cross the reading line.
+    // to the intermediate position as successive rows reach the top.
     programTarget = target;
-    programDeadline = performance.now() + 1200;
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     el.scrollTo({ left: target, behavior: reduced ? 'auto' : 'smooth' });
   }
@@ -138,31 +146,26 @@
     const el = scrollElement;
     if (!el) return;
     const topChanged = el.scrollTop !== lastTop;
-    const leftChanged = Math.abs(el.scrollLeft - lastLeft) > 0.5;
-    const now = performance.now();
-    const isProgrammatic =
-      (programTarget !== null &&
-        (now <= programDeadline || Math.abs(el.scrollLeft - programTarget) <= 1)) ||
-      now <= assistedDeadline;
-
-    if (leftChanged && (pointerHeld || nativeTouch || !isProgrammatic)) pauseForManualInput();
-    if (nativeTouch && !pointerHeld) finishGestureSoon();
-    if (programTarget !== null && Math.abs(el.scrollLeft - programTarget) <= 1) {
-      programTarget = null;
-      programDeadline = 0;
-      // The browser can queue one last scroll event after a smooth arrival.
-      // A real horizontal gesture still pauses through its direct handler.
-      assistedDeadline = Math.max(assistedDeadline, now + 100);
-    }
     lastTop = el.scrollTop;
-    lastLeft = el.scrollLeft;
-    if (topChanged) scheduleFollow();
+    if (programTarget !== null && Math.abs(el.scrollLeft - programTarget) <= 1) programTarget = null;
+    if (!topChanged) return;
+    if (mode === 'manual') {
+      if (verticalResumes(performance.now(), lastHorizontalAt, touchHorizontal)) setMode('vertical');
+      return;
+    }
+    scheduleFollow();
+  }
+
+  /* Wheel input can cut short one of our glides; when all motion stops,
+     settle the current top row again. */
+  function onScrollEnd() {
+    programTarget = null;
+    scheduleFollow();
   }
 
   function onWheel(event: WheelEvent) {
-    if (Math.abs(event.deltaX) > 0.5 || (event.shiftKey && Math.abs(event.deltaY) > 0.5)) {
-      pauseForManualInput();
-    }
+    lastScrollInputAt = performance.now();
+    if (wheelIsHorizontal(event.deltaX, event.deltaY, event.shiftKey)) setMode('horizontal');
   }
 
   function onPointerDown(event: PointerEvent) {
@@ -172,37 +175,45 @@
     cancelProgrammatic();
     if (event.pointerType === 'touch') {
       nativeTouch = true;
+      touchHorizontal = false;
       touchStart = { x: event.clientX, y: event.clientY };
       return;
     }
+    // A press on the horizontal scrollbar is a manual pan.
     const box = el.getBoundingClientRect();
     const scrollbarHeight = Math.max(6, el.offsetHeight - el.clientHeight);
     if (el.scrollWidth > el.clientWidth && event.clientY >= box.bottom - scrollbarHeight) {
-      pauseForManualInput();
+      setMode('horizontal');
     }
   }
 
   function onPointerMove(event: PointerEvent) {
+    if (event.pointerType === 'touch' && nativeTouch) lastScrollInputAt = performance.now();
     if (!touchStart || event.pointerType !== 'touch') return;
     const dx = Math.abs(event.clientX - touchStart.x);
     const dy = Math.abs(event.clientY - touchStart.y);
-    if (dx > 8 && dx > dy) {
+    if (dx > 8 && dx > 1.5 * dy) {
       touchStart = null;
-      pauseForManualInput();
+      touchHorizontal = true;
+      setMode('horizontal');
+    } else if (dy > 8) {
+      touchStart = null;
     }
   }
 
   function onKeyDown(event: KeyboardEvent) {
+    if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)) {
+      lastScrollInputAt = performance.now();
+    }
     if (
       event.key === 'ArrowLeft' ||
       event.key === 'ArrowRight' ||
       (event.shiftKey && (event.key === 'PageUp' || event.key === 'PageDown'))
-    ) pauseForManualInput();
+    ) setMode('horizontal');
   }
 
   function onFocusIn(event: FocusEvent) {
     if ((event.target as Element | null)?.closest?.('[data-follow-control]')) {
-      assistedDeadline = performance.now() + 800;
       cancelProgrammatic();
       // Native focus can leave a dot hidden under the sticky name column.
       const mark = (event.target as Element).closest('[data-follow-mark]');
@@ -230,9 +241,11 @@
 
   function finishGesture() {
     clearTimeout(gestureTimer);
+    if (touchHorizontal) lastHorizontalAt = performance.now();
     pointerHeld = false;
     nativeTouch = false;
     touchStart = null;
+    touchHorizontal = false;
     scheduleFollow(true);
   }
 
@@ -244,10 +257,14 @@
   function onPointerEnd(event: PointerEvent) {
     if (!pointerHeld && !nativeTouch) return;
     pointerHeld = false;
-    touchStart = null;
-    // Touch pointercancel means native scroll takeover, not gesture end.
+    // Touch pointercancel means native scroll takeover, not gesture end;
+    // momentum keeps scrolling briefly after the finger lifts.
     if (event.pointerType === 'touch') finishGestureSoon();
     else finishGesture();
+  }
+
+  function onTouchScroll() {
+    if (nativeTouch && !pointerHeld) finishGestureSoon();
   }
 
   onMount(() => {
@@ -258,10 +275,11 @@
     function detach() {
       if (!current) return;
       current.removeEventListener('scroll', onScroll);
+      current.removeEventListener('scroll', onTouchScroll);
+      current.removeEventListener('scrollend', onScrollEnd);
       current.removeEventListener('wheel', onWheel);
       current.removeEventListener('pointerdown', onPointerDown);
       current.removeEventListener('pointermove', onPointerMove);
-
       current.removeEventListener('keydown', onKeyDown, true);
       current.removeEventListener('focusin', onFocusIn);
       current.removeEventListener('focusout', onFocusOut);
@@ -281,12 +299,12 @@
         if (!el) return;
         current = el;
         lastTop = el.scrollTop;
-        lastLeft = el.scrollLeft;
         el.addEventListener('scroll', onScroll, { passive: true });
+        el.addEventListener('scroll', onTouchScroll, { passive: true });
+        el.addEventListener('scrollend', onScrollEnd, { passive: true });
         el.addEventListener('wheel', onWheel, { passive: true });
         el.addEventListener('pointerdown', onPointerDown, { passive: true });
         el.addEventListener('pointermove', onPointerMove, { passive: true });
-
         el.addEventListener('keydown', onKeyDown, true);
         el.addEventListener('focusin', onFocusIn);
         el.addEventListener('focusout', onFocusOut);
@@ -313,49 +331,7 @@
   });
 
   $effect(() => {
-    if (inspectionActive) {
-      assistedDeadline = performance.now() + 1500;
-      cancelProgrammatic();
-    } else scheduleFollow(true);
+    if (!inspectionActive) scheduleFollow(true);
+    else if (inspecting()) cancelProgrammatic();
   });
 </script>
-
-<div class="follow-controls" aria-label="Date following controls">
-  <label>
-    <input
-      type="checkbox"
-      checked={mode !== 'off'}
-      onchange={(event) => setMode(event.currentTarget.checked ? 'toggle-on' : 'toggle-off')}
-    />
-    Follow dates
-  </label>
-  {#if mode === 'paused'}
-    <span class="paused" role="status">Paused after horizontal navigation</span>
-    <button type="button" onclick={() => setMode('resume')}>Resume</button>
-  {/if}
-</div>
-
-<style>
-  .follow-controls {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px 10px;
-    font-size: 12px;
-    color: var(--muted);
-  }
-  label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
-  input { accent-color: var(--bn-blue); }
-  .paused { color: var(--impulse-amber); }
-  button {
-    padding: 2px 7px;
-    border: 1px solid var(--line);
-    border-radius: 5px;
-    background: var(--bg);
-    color: var(--bn-blue);
-    font: inherit;
-    cursor: pointer;
-  }
-  button:hover,
-  button:focus-visible { border-color: var(--bn-blue-light); }
-</style>

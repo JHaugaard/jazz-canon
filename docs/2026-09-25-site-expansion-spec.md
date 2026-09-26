@@ -98,6 +98,12 @@ musician's or place's cohort, even across a decades-long gap to the next mark;
 the connecting lane line in Working remains the visual clue to that gap.
 Keep the fixed, truthful date axis and move the viewport, not the marks.
 
+**Revision 2026-09-26 (John, after using the live release):** following has no
+visible controls, anchors on the top visible row rather than a one-third
+reading line, and resumes by itself on vertical scrolling. Items 1, 3, 4, 7
+and 8 below are revised accordingly; the live release is recorded in the
+closeout and this revision is recorded after it.
+
 ### Goal
 
 Ordinary vertical browsing should reveal relevant dates without requiring
@@ -113,20 +119,20 @@ Follow actual plotted marks, not index-to-year interpolation or lane end caps.
 
 ### Accepted behavior
 
-1. Add an accessible **Follow dates** toggle, initially on. Show a paused
-   state and explicit resume control after manual horizontal navigation.
-   Keep state while the route remains mounted; no cross-session persistence.
+1. Following is always on and has no visible controls (no toggle, paused
+   message or resume button). State lives only while the route is mounted.
 2. Observe vertical movement inside the existing `.lanes-scroll` element,
    not merely the outer page. Scrolling introductory text causes no pan.
-3. Select the plottable row nearest one-third down the usable viewport below
-   the sticky axis. As vertical scrolling runs out at the bottom, let the
-   reading line move toward the final visible row so late cohorts remain
-   reachable. If it has no marks, use the nearest visible plottable row;
-   if no visible row has marks, leave horizontal position unchanged.
-4. Calculate the horizontally usable date area excluding the sticky name
-   column. Settle the anchor row's earliest actual plotted mark in a modest
-   screen-space resting zone near its left edge, even if a later mark is already
-   visible. An early mark remains authoritative across long hiatuses.
+3. Anchor on the top row: the first row with marks that is at least half
+   visible below the sticky axis. As vertical scrolling runs out at the
+   bottom, the anchor line travels down to the final rows so late cohorts
+   remain reachable. If no such row exists, use the nearest visible plottable
+   row; if no visible row has marks, leave horizontal position unchanged.
+4. Settle the anchor row's earliest actual plotted mark at the resting point
+   near the top left: where the axis's first year sits when the field is
+   scrolled fully left (name column + leading pad), within a ±16px band, even
+   if a later mark is already visible. An early mark remains authoritative
+   across long hiatuses.
 5. Follow in both vertical directions. Keep an anchor until the next row crosses
    the selection line; use a resting zone and dead zone to avoid tiny repeated
    adjustments. Retarget one smooth horizontal movement rather than snapping
@@ -135,12 +141,19 @@ Follow actual plotted marks, not index-to-year interpolation or lane end caps.
    both date fields so even the earliest and latest possible marks can settle
    away from hard scroll limits; keep ticks, hairlines, hit areas and dots
    aligned. Do not try to fit every mark of a long row.
-7. Any deliberate horizontal wheel/trackpad, scrollbar drag, horizontal touch
-   gesture, or keyboard panning pauses following until explicit resume. Programmatic
-   horizontal scroll events must not count as manual navigation or trigger loops.
-8. Keyboard focus and explicit search/jump navigation take precedence. Pause
-   while focus is on an interactive mark or a mark popover is open; never move
-   its target away during inspection. Coordinate with Working's existing
+7. A deliberate horizontal gesture takes over: a wheel/trackpad event whose
+   sideways motion dominates (|dx| ≥ 3 and > 1.5 × |dy|, or shift-wheel), a
+   horizontal scrollbar press, a horizontal-dominant touch swipe, or keyboard
+   panning. Sideways drift during a vertical trackpad swipe does not take over,
+   and following corrects it. The next vertical scroll after the horizontal
+   gesture has been quiet for 300ms resumes following. Only direct input
+   handlers hand control to the reader, so a long programmatic glide can never
+   be mistaken for manual navigation.
+8. Keyboard focus and explicit search/jump navigation take precedence. Hold
+   still while focus is on an interactive mark, or while a mark popover is
+   open without recent scroll input; never move its target away during
+   inspection. Popovers opened only because dots slid under a still pointer
+   during scrolling do not stop following. Coordinate with Working's existing
    scroll-to-person and tooltip-close behavior rather than introducing races.
 9. Respect reduced-motion settings: use immediate adjustments rather than
    smooth movement. Manual touch, trackpad, keyboard, and scrollbar behavior
@@ -197,3 +210,22 @@ Follow actual plotted marks, not index-to-year interpolation or lane end caps.
   mark priority, search jump and reduced motion. A physical touch device and
   two-axis trackpad were not checked. Unrelated local edits to the ship
   handoff and preview-enrichment script were not included in this release.
+
+### Revision — top-row following without controls (2026-09-26)
+
+- John's live review: a trackpad swipe's sideways drift paused following at
+  once (any |dx| > 0.5), leaving Percy Heath's 1953 dot off-screen; the
+  one-third reading line also did not match the intended "first visible row,
+  dot near the top left". A long Where glide (~7,000px) outlasted the 1.2s
+  programmatic window and paused itself.
+- Changes: controls removed; top-row anchor; resting point = first-year
+  position at scrollLeft 0; drift-tolerant wheel classification; automatic
+  resume on vertical scrolling; same-row re-checks and `scrollend` settling;
+  scroll input overrides hover-only inspection; programmatic-glide timers
+  removed.
+- Local checks: 27 app tests (each new rule shown red against its defect),
+  Svelte/TypeScript check, production build. Headless browser on the local
+  build: Working and Where at 1512×900, 390×844 and 1280×600 reduced motion
+  with trackpad-style drift down and up, deliberate sideways pan then resume,
+  long jumps, and hover hold — all passed with the pointer over the field and
+  over the names. Physical trackpad and touch remain unchecked.

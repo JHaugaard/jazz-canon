@@ -4,9 +4,12 @@ import {
   dateRangeWithMinimum,
   horizontalTarget,
   leadingMarkTarget,
+  anchorLine,
   nextFollowMode,
-  readingLine,
+  RESUME_QUIET_MS,
   selectAnchorRow,
+  verticalResumes,
+  wheelIsHorizontal,
 } from './follow-dates.ts';
 
 test('date range keeps the editorial minimum and preserves real outliers', () => {
@@ -14,32 +17,55 @@ test('date range keeps the editorial minimum and preserves real outliers', () =>
   assert.deepEqual(dateRangeWithMinimum(1938, 1991), [1938, 1991]);
 });
 
-test('manual navigation pauses only active following and resume is explicit', () => {
-  assert.equal(nextFollowMode('active', 'manual'), 'paused');
-  assert.equal(nextFollowMode('paused', 'manual'), 'paused');
-  assert.equal(nextFollowMode('off', 'manual'), 'off');
-  assert.equal(nextFollowMode('paused', 'resume'), 'active');
-  assert.equal(nextFollowMode('active', 'toggle-off'), 'off');
-  assert.equal(nextFollowMode('off', 'toggle-on'), 'active');
+test('horizontal input takes over and vertical navigation hands control back', () => {
+  assert.equal(nextFollowMode('following', 'horizontal'), 'manual');
+  assert.equal(nextFollowMode('manual', 'horizontal'), 'manual');
+  assert.equal(nextFollowMode('manual', 'vertical'), 'following');
+  assert.equal(nextFollowMode('following', 'vertical'), 'following');
 });
 
-test('anchor follows the row crossing the selection line', () => {
+test('trackpad drift during a vertical swipe is not a horizontal pan', () => {
+  // Real two-axis trackpad swipes aimed straight down carry sideways drift.
+  assert.equal(wheelIsHorizontal(1, 40, false), false);
+  assert.equal(wheelIsHorizontal(3, 30, false), false);
+  assert.equal(wheelIsHorizontal(12, 14, false), false);
+  assert.equal(wheelIsHorizontal(2, 0, false), false);
+  // Deliberate sideways motion, and shift-wheel, still take over.
+  assert.equal(wheelIsHorizontal(20, 3, false), true);
+  assert.equal(wheelIsHorizontal(-9, 4, false), true);
+  assert.equal(wheelIsHorizontal(0, 40, true), true);
+});
+
+test('vertical movement resumes only once the horizontal gesture is over', () => {
+  assert.equal(verticalResumes(1000, 1000 - RESUME_QUIET_MS + 1, false), false);
+  assert.equal(verticalResumes(1000, 1000 - RESUME_QUIET_MS, false), true);
+  assert.equal(verticalResumes(5000, 0, true), false);
+  assert.equal(verticalResumes(5000, -Infinity, false), true);
+});
+
+test('anchor is the first half-visible row with marks at the top', () => {
   const rows = [
-    { id: 'early', top: 20, bottom: 50, markCount: 1 },
-    { id: 'empty', top: 50, bottom: 80, markCount: 0 },
-    { id: 'late', top: 80, bottom: 130, markCount: 2 },
+    { id: 'clipped', top: -30, bottom: 14, markCount: 3 },
+    { id: 'empty', top: 14, bottom: 58, markCount: 0 },
+    { id: 'percy', top: 58, bottom: 102, markCount: 4 },
+    { id: 'art', top: 102, bottom: 146, markCount: 8 },
   ];
-  assert.equal(selectAnchorRow(rows, 35, 0, 120), 'early');
-  assert.equal(selectAnchorRow(rows, 65, 0, 120), 'early');
-  assert.equal(selectAnchorRow(rows, 90, 0, 120), 'late');
-  assert.equal(selectAnchorRow(rows, 90, 0, 70), 'early');
-  assert.equal(selectAnchorRow(rows, 60, 51, 75), null);
+  assert.equal(selectAnchorRow(rows, 0, 0, 400), 'percy');
+  const mostlyVisible = [{ id: 'top', top: -10, bottom: 34, markCount: 1 }, ...rows.slice(2)];
+  assert.equal(selectAnchorRow(mostlyVisible, 0, 0, 400), 'top');
+  assert.equal(selectAnchorRow(rows, 0, 20, 50), null);
 });
 
-test('reading line follows final rows only as vertical scrolling runs out', () => {
-  assert.equal(readingLine(30, 630, 600), 230);
-  assert.equal(readingLine(30, 630, 100), 530);
-  assert.equal(readingLine(30, 630, 0), 628);
+test('anchor line leaves the top only as vertical scrolling runs out', () => {
+  assert.equal(anchorLine(30, 630, 900), 30);
+  assert.equal(anchorLine(30, 630, 600), 30);
+  assert.equal(anchorLine(30, 630, 100), 530);
+  assert.equal(anchorLine(30, 630, 0), 628);
+  const rows = [
+    { id: 'second-last', top: 540, bottom: 584, markCount: 2 },
+    { id: 'last', top: 584, bottom: 628, markCount: 2 },
+  ];
+  assert.equal(selectAnchorRow(rows, anchorLine(30, 630, 0), 30, 630), 'last');
 });
 
 test('visible real marks prevent horizontal movement', () => {
@@ -99,27 +125,27 @@ test('dead zone and scroll limits prevent oscillation and overshoot', () => {
   }), null);
 });
 
-test('first real mark follows the resting zone even with a later mark visible', () => {
-  const view = { scrollLeft: 100, maxScrollLeft: 900, usableLeft: 250, usableRight: 700, deadZone: 8 };
-  assert.equal(leadingMarkTarget({ ...view, markCenters: [500, 410] }), 196);
-  assert.equal(leadingMarkTarget({ ...view, markCenters: [298, 500] }), null);
-  assert.equal(leadingMarkTarget({ ...view, markCenters: [225, 500] }), 43);
+test('first real mark settles at the resting point even with a later mark visible', () => {
+  const view = { scrollLeft: 100, maxScrollLeft: 900, restingX: 330, deadZone: 8 };
+  // Percy Heath: first dot far to the right, pan until it rests at the top left.
+  assert.equal(leadingMarkTarget({ ...view, markCenters: [900, 760] }), 514);
+  assert.equal(leadingMarkTarget({ ...view, markCenters: [336, 500] }), null);
+  assert.equal(leadingMarkTarget({ ...view, markCenters: [250, 500] }), 36);
   assert.equal(leadingMarkTarget({ ...view, markCenters: [] }), null);
 });
 
-test('resting-zone edges do not trigger a full-zone jump', () => {
-  const view = { scrollLeft: 100, maxScrollLeft: 900, usableLeft: 250, usableRight: 700, deadZone: 0 };
-  assert.equal(leadingMarkTarget({ ...view, markCenters: [315] }), 101);
-  assert.equal(leadingMarkTarget({ ...view, markCenters: [281] }), 99);
+test('resting-band edges do not trigger a full-band jump', () => {
+  const view = { scrollLeft: 100, maxScrollLeft: 900, restingX: 330, deadZone: 0 };
+  assert.equal(leadingMarkTarget({ ...view, markCenters: [347] }), 101);
+  assert.equal(leadingMarkTarget({ ...view, markCenters: [313] }), 99);
+  assert.equal(leadingMarkTarget({ ...view, markCenters: [346] }), null);
   assert.equal(leadingMarkTarget({ ...view, markCenters: [314] }), null);
-  assert.equal(leadingMarkTarget({ ...view, markCenters: [282] }), null);
 });
 
 test('leading date settles from either direction and clamps at field boundaries', () => {
-  const view = { scrollLeft: 400, maxScrollLeft: 900, usableLeft: 250, usableRight: 700, deadZone: 8 };
-  assert.equal(leadingMarkTarget({ ...view, markCenters: [120, 820] }), 238);
+  const view = { scrollLeft: 400, maxScrollLeft: 900, restingX: 330, deadZone: 8 };
+  assert.equal(leadingMarkTarget({ ...view, markCenters: [120, 820] }), 206);
   assert.equal(leadingMarkTarget({ ...view, markCenters: [1000] }), 900);
   assert.equal(leadingMarkTarget({ ...view, scrollLeft: 20, markCenters: [100] }), 0);
   assert.equal(leadingMarkTarget({ ...view, scrollLeft: 900, markCenters: [800] }), null);
-  assert.equal(leadingMarkTarget({ ...view, usableRight: 250, markCenters: [800] }), null);
 });

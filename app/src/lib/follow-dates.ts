@@ -1,5 +1,11 @@
-export type FollowMode = 'active' | 'paused' | 'off';
-export type FollowEvent = 'manual' | 'resume' | 'toggle-on' | 'toggle-off';
+/** Following is on unless a deliberate horizontal gesture has taken over;
+ * the next vertical navigation hands control back. There is no toggle. */
+export type FollowMode = 'following' | 'manual';
+export type FollowEvent = 'horizontal' | 'vertical';
+
+/** How long vertical movement must stay clear of horizontal input before it
+ * counts as a return to vertical browsing rather than part of a two-axis pan. */
+export const RESUME_QUIET_MS = 300;
 
 export interface RowGeometry {
   id: string;
@@ -17,28 +23,51 @@ export interface HorizontalTargetInput {
   deadZone: number;
 }
 
+export interface LeadingMarkInput {
+  scrollLeft: number;
+  maxScrollLeft: number;
+  /** Viewport x where a row's first mark should settle. */
+  restingX: number;
+  markCenters: number[];
+  deadZone: number;
+}
+
 export function dateRangeWithMinimum(actualStart: number, actualEnd: number): [number, number] {
   return [Math.min(1945, actualStart), Math.max(1985, actualEnd)];
 }
 
 export function nextFollowMode(mode: FollowMode, event: FollowEvent): FollowMode {
-  if (event === 'toggle-off') return 'off';
-  if (event === 'toggle-on' || event === 'resume') return 'active';
-  return mode === 'active' ? 'paused' : mode;
+  return event === 'horizontal' ? 'manual' : 'following';
 }
 
-/** At the bottom of a scroller the final rows cannot reach the usual
- * one-third reading line. Let the line travel to them as scrolling runs out. */
-export function readingLine(visibleTop: number, visibleBottom: number, remainingScroll: number): number {
-  const normal = visibleTop + (visibleBottom - visibleTop) / 3;
-  return Math.min(visibleBottom - 2, normal + Math.max(0, visibleBottom - normal - remainingScroll));
+/** A wheel event is a deliberate horizontal pan only when sideways motion
+ * dominates. Trackpad swipes meant to go straight down carry a little
+ * sideways drift; that drift must not take control away from following. */
+export function wheelIsHorizontal(deltaX: number, deltaY: number, shiftKey: boolean): boolean {
+  if (shiftKey) return Math.abs(deltaX) > 0.5 || Math.abs(deltaY) > 0.5;
+  const x = Math.abs(deltaX);
+  return x >= 3 && x > 1.5 * Math.abs(deltaY);
 }
 
-/** Select the row crossed by the reading line, falling back to the nearest
- * visible row that owns real marks. Empty rows never become pan targets. */
+/** Vertical movement resumes following once the horizontal gesture is over. */
+export function verticalResumes(now: number, lastHorizontalAt: number, horizontalGestureHeld: boolean): boolean {
+  return !horizontalGestureHeld && now - lastHorizontalAt >= RESUME_QUIET_MS;
+}
+
+/** Normally the anchor is the top visible row. Near the bottom the final
+ * rows can never reach the top, so the line travels down to them as the
+ * remaining vertical scroll runs out. */
+export function anchorLine(visibleTop: number, visibleBottom: number, remainingScroll: number): number {
+  const height = visibleBottom - visibleTop;
+  return Math.min(visibleBottom - 2, visibleTop + Math.max(0, height - remainingScroll));
+}
+
+/** Select the first row with real marks that is at least half visible below
+ * the anchor line, falling back to the nearest visible row that owns marks.
+ * Empty rows never become pan targets. */
 export function selectAnchorRow(
   rows: RowGeometry[],
-  selectionLine: number,
+  line: number,
   visibleTop: number,
   visibleBottom: number,
 ): string | null {
@@ -47,12 +76,15 @@ export function selectAnchorRow(
   );
   if (visible.length === 0) return null;
 
-  const crossed = visible.find((row) => row.top <= selectionLine && row.bottom > selectionLine);
-  if (crossed) return crossed.id;
+  const first = visible.find((row) => {
+    const middle = (row.top + row.bottom) / 2;
+    return middle >= line && middle < visibleBottom;
+  });
+  if (first) return first.id;
 
   return visible.reduce((best, row) => {
-    const rowDistance = distanceToRange(selectionLine, row.top, row.bottom);
-    const bestDistance = distanceToRange(selectionLine, best.top, best.bottom);
+    const rowDistance = distanceToRange(line, row.top, row.bottom);
+    const bestDistance = distanceToRange(line, best.top, best.bottom);
     return rowDistance < bestDistance ? row : best;
   }).id;
 }
@@ -80,18 +112,19 @@ export function horizontalTarget(input: HorizontalTargetInput): number | null {
   return Math.abs(target - scrollLeft) <= deadZone ? null : target;
 }
 
-/** Settle the row's earliest real mark near the name column, not merely
- * somewhere in view. A small resting zone prevents adjacent rows with nearly
- * identical dates from repeatedly nudging the viewport. */
-export function leadingMarkTarget(input: HorizontalTargetInput): number | null {
-  const { scrollLeft, usableLeft, usableRight, markCenters, deadZone } = input;
-  if (markCenters.length === 0 || usableRight <= usableLeft) return null;
+/** Settle the row's earliest real mark at the resting point beside the name
+ * column, even if a later mark is already visible. A small band around the
+ * resting point keeps adjacent rows with near-identical first dates still. */
+export function leadingMarkTarget(input: LeadingMarkInput): number | null {
+  const { scrollLeft, restingX, markCenters, deadZone } = input;
+  if (markCenters.length === 0) return null;
   const leading = Math.min(...markCenters);
-  const restingLeft = usableLeft + Math.min(48, (usableRight - usableLeft) * 0.12);
-  const nearestEdge = clamp(leading, restingLeft - 16, restingLeft + 16);
+  const nearestEdge = clamp(leading, restingX - REST_BAND, restingX + REST_BAND);
   const target = clamp(scrollLeft + leading - nearestEdge, 0, input.maxScrollLeft);
   return Math.abs(target - scrollLeft) <= deadZone ? null : target;
 }
+
+const REST_BAND = 16;
 
 function distanceToRange(value: number, start: number, end: number): number {
   if (value < start) return start - value;
