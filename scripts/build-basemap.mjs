@@ -8,6 +8,8 @@
 // to per-region bboxes (Sutherland–Hodgman for rings, inside-run splitting
 // for lines) → Douglas–Peucker simplification → rounded coords → single
 // JSON at app/public/map/basemap.json. HARD BUDGET: ≤ 250 KB gzipped.
+// Lakes may be overridden per region with date-pinned OSM geometry where
+// NE is too coarse (see LAKE_OVERRIDES).
 // Over budget or a pin outside every region → exit 1, nothing written.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -41,8 +43,68 @@ const REGIONS = [
   { id: 'paris',          bbox: [1.3, 48.1, 3.3, 49.5],       tol: 0.0008, dec: 4 },
   { id: 'london',         bbox: [-1.4, 50.9, 1.2, 52.1],      tol: 0.0008, dec: 4 },
   { id: 'bregenz',        bbox: [8.6, 46.9, 10.6, 48.1],      tol: 0.0006, dec: 4 },
+  { id: 'montreux',       bbox: [5.9, 45.8, 7.9, 47.0],       tol: 0.0006, dec: 4 },
   { id: 'continental-us', bbox: [-125.5, 24.0, -66.5, 49.8],  tol: 0.02,   dec: 2 },
 ];
+
+// Per-region lake overrides from OpenStreetMap, used only where Natural
+// Earth's 10m lake ring is too coarse for a pin's shore. The NE feature
+// named `replaces` is dropped from that region's lakes layer and the OSM
+// relation's outer ring(s) stand in. Inner members (islands) are omitted,
+// matching NE, which draws no lake islands. The Overpass query is pinned
+// to a fixed date so a rebuild reproduces the same geometry.
+//
+// montreux — NE's Lake Geneva ring (39 vertices) cuts straight across the
+// Montreux shore, putting the Casino de Montreux pin ~0.9 km inside the
+// drawn lake. OSM relation 332617 "Le Léman" (Lake Geneva), as of
+// 2026-10-24: 557 outer ways → one 24,185-node ring; the pin sits ~0.23 km
+// inland of it. Data © OpenStreetMap contributors, ODbL.
+const OVERPASS = 'https://overpass-api.de/api/interpreter';
+const LAKE_OVERRIDES = [
+  { region: 'montreux', replaces: 'Lake Geneva', osmRelation: 332617, date: '2026-10-24T00:00:00Z' },
+];
+
+async function fetchOsmRelation(id, date) {
+  const name = `osm-relation-${id}-${date.slice(0, 10)}.json`;
+  const f = path.join(CACHE, name);
+  let data;
+  if (fs.existsSync(f)) data = JSON.parse(fs.readFileSync(f, 'utf8'));
+  else {
+    const query = `[out:json][timeout:120][date:"${date}"];relation(${id});out geom;`;
+    console.log(`downloading OSM relation ${id} @ ${date} from ${OVERPASS}`);
+    const res = await fetch(OVERPASS, {
+      method: 'POST',
+      headers: { 'User-Agent': 'jazz-canon-basemap/1.0 (authoring tool)' },
+      body: new URLSearchParams({ data: query }),
+    });
+    if (!res.ok) throw new Error(`Overpass relation ${id}: HTTP ${res.status}`);
+    const text = await res.text();
+    data = JSON.parse(text);
+    fs.mkdirSync(CACHE, { recursive: true });
+    fs.writeFileSync(f, text);
+  }
+  const rel = data.elements.find((e) => e.type === 'relation' && e.id === id);
+  if (!rel) throw new Error(`OSM relation ${id}: not in Overpass response`);
+  // Stitch outer member ways (arbitrary order and direction) into closed rings.
+  const key = (p) => `${p[0]},${p[1]}`;
+  const pool = rel.members
+    .filter((m) => m.type === 'way' && m.role === 'outer' && m.geometry)
+    .map((m) => m.geometry.map((n) => [n.lon, n.lat]));
+  const out = [];
+  while (pool.length) {
+    let ring = pool.shift();
+    while (key(ring[0]) !== key(ring[ring.length - 1])) {
+      const end = key(ring[ring.length - 1]);
+      const i = pool.findIndex((w) => key(w[0]) === end || key(w[w.length - 1]) === end);
+      if (i < 0) throw new Error(`OSM relation ${id}: outer ways do not close into a ring`);
+      const w = pool.splice(i, 1)[0];
+      ring = ring.concat((key(w[0]) === end ? w : w.slice().reverse()).slice(1));
+    }
+    out.push(ring);
+  }
+  if (!out.length) throw new Error(`OSM relation ${id}: no outer rings`);
+  return out;
+}
 
 async function fetchCached(name) {
   const f = path.join(CACHE, name);
@@ -149,10 +211,11 @@ const roundPts = (pts, dec) => {
   return out;
 };
 
-function* rings(geojson) {
+function* rings(geojson, skipNames = []) {
   for (const feat of geojson.features) {
     const g = feat.geometry;
     if (!g) continue;
+    if (skipNames.includes(feat.properties?.name)) continue;
     if (g.type === 'Polygon') for (const r of g.coordinates) yield r;
     else if (g.type === 'MultiPolygon') for (const poly of g.coordinates) for (const r of poly) yield r;
   }
@@ -168,6 +231,18 @@ function* lines(geojson) {
 
 const src = {};
 for (const [key, name] of Object.entries(SOURCES)) src[key] = await fetchCached(name);
+
+const lakeOverrides = new Map(); // region id → { replaces: [NE names], rings: [...] }
+for (const o of LAKE_OVERRIDES) {
+  if (!src.lakes.features.some((f) => f.properties?.name === o.replaces)) {
+    throw new Error(`lake override for ${o.region}: no NE lake named ${o.replaces}`);
+  }
+  const osmRings = await fetchOsmRelation(o.osmRelation, o.date);
+  const entry = lakeOverrides.get(o.region) ?? { replaces: [], rings: [] };
+  entry.replaces.push(o.replaces);
+  entry.rings.push(...osmRings);
+  lakeOverrides.set(o.region, entry);
+}
 
 // Every place must fall inside at least one region — coverage is extended
 // deliberately, never discovered broken at render time.
@@ -192,7 +267,12 @@ for (const { id, bbox, tol, dec } of REGIONS) {
     ['borders', src.states, true],
     ['borders', src.countries, true],
   ]) {
-    const geoms = isLine ? lines(source) : rings(source);
+    const override = layer === 'lakes' ? lakeOverrides.get(id) : undefined;
+    const geoms = isLine
+      ? lines(source)
+      : override
+        ? [...rings(source, override.replaces), ...override.rings]
+        : rings(source);
     for (const geom of geoms) {
       if (isLine) {
         for (const seg of clipLine(geom, bbox)) {
