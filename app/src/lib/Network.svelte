@@ -11,6 +11,8 @@
   import type { AlbumCard, GraphData } from './types';
   import { loadGraph, albumMap } from './data';
   import { groupQuery, MAX_GROUP, type Collaborator } from './group-query';
+  import { planAlbumLabels, labelBox } from './constellation-labels';
+  import { constellationFade } from './constellation-fade';
 
   /* DOM ownership (DECISIONS.md D4): d3-force computes positions only.
      Svelte owns every SVG element; the tick handler updates state and
@@ -38,6 +40,7 @@
     kind: 'album';
     id: string;
     album: AlbumCard;
+    sharedPlayers: number;
     x: number;
     y: number;
     fx?: number | null;
@@ -102,21 +105,83 @@
   let albumCount = $state(0);
   let peopleCount = $state(0);
   let loading = $state(true);
-  let hovered = $state<PersonNode | null>(null);
+  let hovered = $state<Node | null>(null);
+  let tapped = $state<Node | null>(null);
+  let activeNode = $derived(tapped ?? hovered);
+  let tipNode = $derived.by(() => {
+    const n = tapped ?? hovered;
+    return n?.kind === 'person' && !n.center ? n : null;
+  });
   let hoverPos = $state({ x: 0, y: 0 });
 
   // zoom/pan transform applied to the whole graph group (viewBox units):
   // screen = graph * k + (tx,ty)
   let zoom = $state({ k: 1, tx: 0, ty: 0 });
   let userAdjusted = false;
+  let stageW = $state(0);
+  let stageH = $state(0);
+  // The SVG's own viewBox fit also scales text. Counteract both that and the
+  // interactive zoom, with a 10px-ish floor at crowded Reset views.
+  let viewScale = $derived(stageW > 0 && stageH > 0 ? Math.min(stageW / W, stageH / H) : 1);
+  let actualLabelK = $derived(Math.max(0.001, zoom.k * viewScale));
+  let effectiveLabelK = $derived(Math.max(0.8, actualLabelK));
+  let labelCounterScale = $derived(effectiveLabelK / actualLabelK);
+  let labelPlanK = $derived(actualLabelK / effectiveLabelK);
+
+  // The active node is a transient desktop hover or a pinned touch/pen tap.
+  // Its directly connected albums/people stay lit while the rest recede.
+  let focusAlbumIds = $derived.by(() => {
+    const ids = new Set<string>();
+    if (!activeNode) return ids;
+    if (activeNode.kind === 'album') {
+      ids.add(activeNode.id);
+      return ids;
+    }
+    for (const l of links) {
+      if (l.source.kind === 'person' && l.source.id === activeNode.id && l.target.kind === 'album') ids.add(l.target.id);
+      if (l.target.kind === 'person' && l.target.id === activeNode.id && l.source.kind === 'album') ids.add(l.source.id);
+    }
+    return ids;
+  });
+  let focusPersonIds = $derived.by(() => {
+    const ids = new Set<string>();
+    if (!activeNode) return ids;
+    if (activeNode.kind === 'person') {
+      ids.add(activeNode.id);
+      return ids;
+    }
+    for (const l of links) {
+      if (l.source.kind === 'album' && l.source.id === activeNode.id && l.target.kind === 'person') ids.add(l.target.id);
+      if (l.target.kind === 'album' && l.target.id === activeNode.id && l.source.kind === 'person') ids.add(l.source.id);
+    }
+    return ids;
+  });
+  let albumLabelPlan = $derived.by(() => planAlbumLabels(
+    albumNodesR.map((n) => ({
+      id: n.id,
+      x: n.x,
+      y: n.y,
+      r: radius(n),
+      title: truncate(n.album.title, 26),
+      year: n.album.year,
+      sharedPlayers: n.sharedPlayers,
+      eligible: !activeNode || focusAlbumIds.has(n.id),
+      required: activeNode?.kind === 'album' && activeNode.id === n.id,
+    })),
+    { k: labelPlanK, labelScale: 'screen' },
+  ));
 
   let sim: Simulation<Node, undefined> | null = null;
   let svgEl = $state<SVGSVGElement | null>(null);
   let gEl = $state<SVGGElement | null>(null);
   let stageEl = $state<HTMLDivElement | null>(null);
-  let stageW = $state(0);
-  let stageH = $state(0);
   let fitted = false;
+  let resetZoomK = 1;
+  let fade = $derived(constellationFade({
+    albumCount,
+    collaboratorCount: peopleCount,
+    zoomRatio: zoom.k / resetZoomK,
+  }));
 
   const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
@@ -135,8 +200,10 @@
     const key = ids.join('|');
     loading = true;
     hovered = null;
+    tapped = null;
     userAdjusted = false;
     fitted = false;
+    resetZoomK = 1;
     zoom = { k: 1, tx: 0, ty: 0 };
     let cancelled = false;
 
@@ -198,11 +265,21 @@
       };
     });
 
+    const playersByAlbum = new Map<string, Set<string>>();
+    const selectedIds = new Set(q.ids);
+    for (const e of graph.edges) {
+      if (!sharedAlbumIds.has(e.a) || selectedIds.has(e.p)) continue;
+      let players = playersByAlbum.get(e.a);
+      if (!players) playersByAlbum.set(e.a, (players = new Set()));
+      players.add(e.p);
+    }
+
     const albumR = group ? 150 : 320;
     const albumNodes: AlbumNode[] = q.albumIds.map((aid, i) => {
       const angle = (2 * Math.PI * i) / q.albumIds.length - Math.PI / 2;
       return {
         kind: 'album', id: aid, album: albums.get(aid)!,
+        sharedPlayers: playersByAlbum.get(aid)?.size ?? 0,
         x: cx + albumR * Math.cos(angle), y: cy + albumR * Math.sin(angle),
       };
     });
@@ -264,8 +341,17 @@
           n.y = clamp(n.y, r, H - r);
         }
         snapshot();
-        // auto-fit exactly once, when the layout has calmed down
+        // auto-fit when the layout has calmed down; the end handler below
+        // repeats it against the final settled positions
         if (!fitted && !userAdjusted && sim && sim.alpha() < 0.06) {
+          fitted = true;
+          fitView();
+        }
+      })
+      .on('end', () => {
+        // The early fit can precede the last visible settling by a few frames.
+        // Refit the final positions once, unless John has already taken over.
+        if (!userAdjusted) {
           fitted = true;
           fitView();
         }
@@ -274,24 +360,71 @@
     snapshot();
   }
 
-  /** Frame all nodes to fill the stage with padding. */
+  /** Frame all nodes and their visible, fixed-screen-size labels. */
   function fitView() {
     if (!nodes.length) return;
+    const candidates = albumNodesR.map((n) => ({
+      id: n.id,
+      x: n.x,
+      y: n.y,
+      r: radius(n),
+      title: truncate(n.album.title, 26),
+      year: n.album.year,
+      sharedPlayers: n.sharedPlayers,
+      eligible: true,
+    }));
+    let k = zoom.k;
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    for (const n of nodes) {
-      const r = radius(n);
-      // labels hang below each node, so pad more on the bottom
-      minX = Math.min(minX, n.x - r - 42);
-      maxX = Math.max(maxX, n.x + r + 42);
-      minY = Math.min(minY, n.y - r - 26);
-      maxY = Math.max(maxY, n.y + r + 50);
+
+    // Label eligibility depends on k, and k depends on the label bounds.
+    // Two or three passes settle that without touching the force layout.
+    for (let pass = 0; pass < 3; pass++) {
+      minX = Infinity; minY = Infinity; maxX = -Infinity; maxY = -Infinity;
+      for (const n of nodes) {
+        const r = radius(n);
+        minX = Math.min(minX, n.x - r - 42);
+        maxX = Math.max(maxX, n.x + r + 42);
+        minY = Math.min(minY, n.y - r - 26);
+        maxY = Math.max(maxY, n.y + r + 50);
+      }
+      const actual = Math.max(0.001, k * viewScale);
+      const planK = actual / Math.max(0.8, actual);
+      const plan = planAlbumLabels(candidates, { k: planK, labelScale: 'screen' });
+      for (const label of plan.placed) {
+        minX = Math.min(minX, label.box.left);
+        maxX = Math.max(maxX, label.box.right);
+        minY = Math.min(minY, label.box.top);
+        maxY = Math.max(maxY, label.box.bottom);
+      }
+      // Person captions share the same counter-scale. Include every caption
+      // visible at this candidate Reset zoom, not just the album planner's.
+      for (const n of personNodesR) {
+        if (!n.center && n.shared < 2 && k < 1.5) continue;
+        const box = labelBox({
+          id: `person-${n.id}`,
+          x: n.x,
+          y: n.y,
+          r: radius(n),
+          title: n.name,
+          year: 0,
+          sharedPlayers: n.shared,
+          eligible: true,
+        }, { k: planK, labelScale: 'screen', titleFontPx: n.center ? 16 : 12 });
+        minX = Math.min(minX, box.left);
+        maxX = Math.max(maxX, box.right);
+        minY = Math.min(minY, box.top);
+        maxY = Math.max(maxY, box.bottom);
+      }
+      const next = clamp(Math.min(W / (maxX - minX), H / (maxY - minY)), 0.4, 2.2);
+      if (Math.abs(next - k) < 0.01) {
+        k = next;
+        break;
+      }
+      k = next;
     }
-    const bw = maxX - minX, bh = maxY - minY;
-    // shrink big graphs to fit; let sparse graphs grow, but within a cap
-    // (unbounded magnification made small graphs load correct, then jump
-    // huge). The cap rose 1.6 → 2.2 in D27 so a one-album constellation
-    // fills its window instead of floating in the middle of it.
-    const k = clamp(Math.min(W / bw, H / bh), 0.4, 2.2);
+
+    // Sparse graphs may grow, but not jump beyond the established D27 cap.
+    resetZoomK = k;
     zoom = {
       k,
       tx: (W - k * (minX + maxX)) / 2,
@@ -316,6 +449,8 @@
   // --- node drag / pan / pinch ---
   let dragNode: Node | null = null;
   let dragMoved = false;
+  let dragStart = { x: 0, y: 0 };
+  let downPointerType = 'mouse';
   let panning = false;
   let panStart = { x: 0, y: 0, tx: 0, ty: 0 };
   // all pointers currently down on the graph, for two-finger pinch (iPad)
@@ -329,12 +464,17 @@
   function nodeDown(n: Node, e: PointerEvent) {
     e.stopPropagation(); // don't also start a background pan
     e.preventDefault();
+    downPointerType = e.pointerType;
+    dragStart = { x: e.clientX, y: e.clientY };
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     // n is a render clone; grab the live simulation node by identity
     dragNode = simNodes.find((s) => s.kind === n.kind && s.id === n.id) ?? null;
     dragMoved = false;
   }
   function bgDown(e: PointerEvent) {
+    downPointerType = e.pointerType;
+    tapped = null;
+    hovered = null;
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     panning = true;
     userAdjusted = true;
@@ -371,6 +511,9 @@
     }
 
     if (dragNode && sim) {
+      // A finger rarely lands perfectly still. Do not turn a tap into a pin
+      // until the pointer has travelled beyond a small screen-pixel threshold.
+      if (!dragMoved && Math.hypot(e.clientX - dragStart.x, e.clientY - dragStart.y) < 8) return;
       dragMoved = true;
       userAdjusted = true;
       const { x, y } = graphPoint(e);
@@ -419,11 +562,58 @@
     };
   }
   function resetView() {
+    tapped = null;
+    hovered = null;
     fitView();
   }
   const wasDrag = () => dragMoved;
+  const sameNode = (a: Node, b: Node) => a.kind === b.kind && a.id === b.id;
 
-  function onHover(n: PersonNode) {
+  // Touch has no hover: first tap pins the trace, second tap performs the
+  // existing navigate/open action. Mouse behavior remains one click.
+  function nodeClick(n: Node, e: MouseEvent): boolean {
+    if (wasDrag()) return false;
+    // Keyboard and assistive-tech activation has no pointer sequence; never
+    // burden it with the touch second-tap rule or a stale pointer type.
+    if (e.detail === 0) return true;
+    if (downPointerType === 'touch' || downPointerType === 'pen') {
+      if (tapped && sameNode(tapped, n)) {
+        tapped = null;
+        hovered = null;
+        return true;
+      }
+      onHover(n); // also positions the touch tooltip
+      tapped = n;
+      hovered = null;
+      return false;
+    }
+    tapped = null;
+    return true;
+  }
+
+  function nodeOpacity(n: Node): number {
+    if (!activeNode) return n.kind === 'person' && !n.center && n.shared === 1 ? fade.oneOffDot : 1;
+    if (sameNode(activeNode, n)) return 1;
+    if (n.kind === 'album') return focusAlbumIds.has(n.id) ? 1 : fade.unrelatedFocusNode;
+    return focusPersonIds.has(n.id) ? 1 : fade.unrelatedFocusNode;
+  }
+
+  function edgeOpacity(l: Link): number {
+    const centered = (l.source.kind === 'person' && l.source.center) || (l.target.kind === 'person' && l.target.center);
+    if (!activeNode) {
+      if (centered) return fade.centerEdge;
+      const person = l.source.kind === 'person' ? l.source : l.target.kind === 'person' ? l.target : null;
+      return person && person.shared === 1 ? fade.oneOffEdge : fade.sharedEdge;
+    }
+    return sameNode(activeNode, l.source) || sameNode(activeNode, l.target) ? 0.85 : fade.unrelatedFocusEdge;
+  }
+
+  function personLabelVisible(n: PersonNode): boolean {
+    if (n.center || n.shared >= 2 || zoom.k >= 1.5 || zoom.k / resetZoomK >= 2) return true;
+    return !!activeNode && focusPersonIds.has(n.id);
+  }
+
+  function onHover(n: Node) {
     hovered = n;
     const m = gEl?.getScreenCTM();
     const sr = stageEl?.getBoundingClientRect();
@@ -635,7 +825,7 @@
               x1={l.source.x} y1={l.source.y}
               x2={l.target.x} y2={l.target.y}
               stroke="var(--bn-blue)"
-              stroke-opacity={((l.source as any).center || (l.target as any).center) ? 0.32 : 0.16}
+              stroke-opacity={edgeOpacity(l)}
               stroke-width={edgeWidth(l)}
             />
           {/each}
@@ -645,9 +835,12 @@
             <g
               class="album-node"
               transform="translate({n.x},{n.y})"
+              opacity={nodeOpacity(n)}
               onpointerdown={(e) => nodeDown(n, e)}
-              onclick={() => !wasDrag() && onOpenAlbum(n.id)}
+              onclick={(e) => nodeClick(n, e) && onOpenAlbum(n.id)}
               ondblclick={(e) => unpin(n, e)}
+              onmouseenter={() => onHover(n)}
+              onmouseleave={() => (hovered = null)}
               onkeydown={(e) => e.key === 'Enter' && onOpenAlbum(n.id)}
               role="button"
               tabindex="0"
@@ -663,8 +856,12 @@
                 clip-path="url(#clip-{n.id})"
                 preserveAspectRatio="xMidYMid slice"
               />
-              <text class="album-label" y={radius(n) + 16}>{truncate(n.album.title, 26)}</text>
-              <text class="album-year" y={radius(n) + 30}>{n.album.year}</text>
+              {#if albumLabelPlan.shown.has(n.id)}
+                <g class="album-caption" transform="translate(0 {radius(n)}) scale({labelCounterScale})">
+                  <text class="album-label" y="16">{truncate(n.album.title, 26)}</text>
+                  <text class="album-year" y="30">{n.album.year}</text>
+                </g>
+              {/if}
             </g>
           {/each}
 
@@ -674,8 +871,9 @@
               class="person-node"
               class:center={n.center}
               transform="translate({n.x},{n.y})"
+              opacity={nodeOpacity(n)}
               onpointerdown={(e) => nodeDown(n, e)}
-              onclick={() => !wasDrag() && !n.center && onRecenter(n.id)}
+              onclick={(e) => nodeClick(n, e) && !n.center && onRecenter(n.id)}
               ondblclick={(e) => unpin(n, e)}
               onkeydown={(e) => e.key === 'Enter' && !n.center && onRecenter(n.id)}
               onmouseenter={() => onHover(n)}
@@ -707,20 +905,24 @@
                 <circle r={Math.max(1.6, radius(n) * 0.12)} fill="var(--bg)" />
               {/if}
               {#if n.center}
-                <text class="center-label" class:small={isGroup} y={radius(n) + 20}>{n.name}</text>
-              {:else}
-                <text class="person-label" y={radius(n) + 14}>{n.name}</text>
+                <g class="person-caption" transform="translate(0 {radius(n)}) scale({labelCounterScale})">
+                  <text class="center-label" class:small={isGroup} y="20">{n.name}</text>
+                </g>
+              {:else if personLabelVisible(n)}
+                <g class="person-caption" transform="translate(0 {radius(n)}) scale({labelCounterScale})">
+                  <text class="person-label" y="14">{n.name}</text>
+                </g>
               {/if}
             </g>
           {/each}
         </g>
       </svg>
 
-      {#if hovered && !hovered.center}
+      {#if tipNode}
         <div class="tip" style:left="{hoverPos.x}px" style:top="{hoverPos.y}px">
-          <strong>{hovered.name}</strong>
-          {#if hovered.instruments}<span class="tip-inst">{hovered.instruments}</span>{/if}
-          <span class="tip-shared">{hovered.shared} shared album{hovered.shared === 1 ? '' : 's'} with {isGroup ? `all ${selected.length}` : centerName}</span>
+          <strong>{tipNode.name}</strong>
+          {#if tipNode.instruments}<span class="tip-inst">{tipNode.instruments}</span>{/if}
+          <span class="tip-shared">{tipNode.shared} shared album{tipNode.shared === 1 ? '' : 's'} with {isGroup ? `all ${selected.length}` : centerName}</span>
         </div>
       {/if}
     {/if}
@@ -878,6 +1080,8 @@
   /* invisible enlarged grab target so nodes are easy to click and drag */
   .hit { fill: transparent; pointer-events: all; }
   .album-node, .person-node { cursor: pointer; }
+  .album-node, .person-node, .zoom line { transition: opacity 160ms ease; }
+  .album-caption, .person-caption { pointer-events: none; }
   .person-node.center { cursor: grab; }
   .album-node:hover circle { stroke-width: 3.5; }
   .person-node:not(.center):hover .disc { fill: var(--bn-blue); }
