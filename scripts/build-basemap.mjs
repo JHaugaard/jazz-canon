@@ -44,6 +44,7 @@ const REGIONS = [
   { id: 'london',         bbox: [-1.4, 50.9, 1.2, 52.1],      tol: 0.0008, dec: 4 },
   { id: 'bregenz',        bbox: [8.6, 46.9, 10.6, 48.1],      tol: 0.0006, dec: 4 },
   { id: 'montreux',       bbox: [5.9, 45.8, 7.9, 47.0],       tol: 0.0006, dec: 4 },
+  { id: 'juan-les-pins',  bbox: [6.2, 42.9, 8.0, 44.2],       tol: 0.0006, dec: 4 },
   { id: 'continental-us', bbox: [-125.5, 24.0, -66.5, 49.8],  tol: 0.02,   dec: 2 },
 ];
 
