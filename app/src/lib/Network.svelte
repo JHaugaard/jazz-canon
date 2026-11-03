@@ -13,6 +13,7 @@
   import { groupQuery, MAX_GROUP, type Collaborator } from './group-query';
   import { planAlbumLabels, labelBox } from './constellation-labels';
   import { constellationFade } from './constellation-fade';
+  import { adaptiveTimeWindow, filterConstellationWindow } from './constellation-time';
 
   /* DOM ownership (DECISIONS.md D4): d3-force computes positions only.
      Svelte owns every SVG element; the tick handler updates state and
@@ -50,7 +51,8 @@
     kind: 'person';
     id: string;
     name: string;
-    shared: number; // albums shared with the selected musician(s)
+    shared: number; // visible albums shared with the selected musician(s)
+    overallShared: number; // the same count across the full constellation
     instruments: string;
     center: boolean;
     x: number;
@@ -80,12 +82,22 @@
   let simLinks: Link[] = [];
   let nodes = $state<Node[]>([]);
   let links = $state<Link[]>([]);
-  let albumNodesR = $derived(nodes.filter((n): n is AlbumNode => n.kind === 'album'));
-  let personNodesR = $derived(nodes.filter((n): n is PersonNode => n.kind === 'person'));
+  let albumNodesR = $derived(nodes.filter((n): n is AlbumNode => n.kind === 'album' && visibleAlbumIds.has(n.id)));
+  let personNodesR = $derived(nodes.filter((n): n is PersonNode => n.kind === 'person' && (n.center || visibleShared.has(n.id))));
+  let visibleLinksR = $derived(links.filter((l) => {
+    const album = l.source.kind === 'album' ? l.source : l.target.kind === 'album' ? l.target : null;
+    const person = l.source.kind === 'person' ? l.source : l.target.kind === 'person' ? l.target : null;
+    return !!album && !!person && visibleAlbumIds.has(album.id) && (person.center || visibleShared.has(person.id));
+  }));
 
   const snapshot = () => {
-    nodes = simNodes.map((n) => ({ ...n }));
-    links = simLinks.map((l) => ({ ...l }));
+    nodes = simNodes.map((n) => n.kind === 'person' && !n.center
+      ? { ...n, shared: visibleShared.get(n.id) ?? 0 }
+      : { ...n });
+    links = simLinks.map((l) => {
+      const person = l.source.kind === 'person' && !l.source.center ? l.source : null;
+      return person ? { ...l, weight: visibleShared.get(person.id) ?? 0 } : { ...l };
+    });
   };
   let centerName = $state(''); // selected names, ' · ' joined
   let centerInstruments = $state('');
@@ -99,11 +111,29 @@
   // for the Add-musician suggestions: everyone else on the shared albums,
   // best first, and each person's whole album set for typed lookups
   let collaborators = $state<Collaborator[]>([]);
-  let graphRef: GraphData | null = null;
+  let graphRef = $state<GraphData | null>(null);
   let albumSetOf = new Map<string, Set<string>>();
   let sharedAlbumIds = new Set<string>();
-  let albumCount = $state(0);
-  let peopleCount = $state(0);
+  let fullAlbumIds = $state<string[]>([]);
+  let sharedYears = $state<number[]>([]);
+  let albumYears = $state<Map<string, number>>(new Map());
+  let yearBounds = $state({ min: 1945, max: 1985 });
+  let timeActive = $state(false);
+  let centerYear = $state(1945);
+  let activeWindow = $derived(timeActive ? adaptiveTimeWindow(sharedYears, centerYear, yearBounds) : null);
+  let windowResult = $derived(filterConstellationWindow({
+    graph: graphRef ?? { people: {}, edges: [] },
+    selectedIds: selected.map((p) => p.id),
+    fullAlbumIds,
+    albumYears,
+    window: activeWindow,
+  }));
+  let visibleAlbumIds = $derived(new Set(windowResult.albumIds));
+  let visibleShared = $derived(windowResult.visibleShared);
+  let albumCount = $derived(windowResult.albumIds.length);
+  let peopleCount = $derived(visibleShared.size);
+  let fullAlbumCount = $derived(fullAlbumIds.length);
+  let fullPeopleCount = $derived(collaborators.length);
   let loading = $state(true);
   let hovered = $state<Node | null>(null);
   let tapped = $state<Node | null>(null);
@@ -137,7 +167,7 @@
       ids.add(activeNode.id);
       return ids;
     }
-    for (const l of links) {
+    for (const l of visibleLinksR) {
       if (l.source.kind === 'person' && l.source.id === activeNode.id && l.target.kind === 'album') ids.add(l.target.id);
       if (l.target.kind === 'person' && l.target.id === activeNode.id && l.source.kind === 'album') ids.add(l.source.id);
     }
@@ -150,7 +180,7 @@
       ids.add(activeNode.id);
       return ids;
     }
-    for (const l of links) {
+    for (const l of visibleLinksR) {
       if (l.source.kind === 'album' && l.source.id === activeNode.id && l.target.kind === 'person') ids.add(l.target.id);
       if (l.target.kind === 'album' && l.target.id === activeNode.id && l.source.kind === 'person') ids.add(l.source.id);
     }
@@ -215,6 +245,7 @@
 
     return () => {
       cancelled = true;
+      cancelAnimationFrame(timeFitFrame);
       sim?.stop();
       sim = null;
     };
@@ -237,6 +268,13 @@
 
     const q = groupQuery(graph, ids);
     sharedAlbumIds = new Set(q.albumIds);
+    fullAlbumIds = q.albumIds;
+    sharedYears = q.albumIds.map((id) => albums.get(id)!.year);
+    if (albumYears.size === 0) {
+      albumYears = new Map([...albums.values()].map((a) => [a.id, a.year]));
+      const years = [...albums.values()].map((a) => a.year);
+      yearBounds = { min: Math.min(...years), max: Math.max(...years) };
+    }
     collaborators = q.collaborators;
     selected = q.ids.map((id) => ({ id, name: graph.people[id] ?? '?' }));
     centerName = selected.map((p) => p.name).join(' · ');
@@ -260,6 +298,7 @@
       const y = group ? cy + ringR * Math.sin(angle) : cy;
       return {
         kind: 'person', id, name: graph.people[id] ?? '?', shared: q.albumIds.length,
+        overallShared: q.albumIds.length,
         instruments: (q.instruments.get(id) ?? []).join(', '), center: true,
         x, y, fx: x, fy: y,
       };
@@ -293,6 +332,7 @@
       const spread = group ? 2.4 : 0.6;
       return {
         kind: 'person', id: c.id, name: c.name, shared: c.shared,
+        overallShared: c.shared,
         instruments: c.instruments.join(', '),
         center: false,
         x: anchor.x + (anchor.x - cx) * spread + jitter(),
@@ -315,8 +355,6 @@
     }
 
     simLinks = allLinks;
-    albumCount = albumNodes.length;
-    peopleCount = personNodes.length;
 
     sim = forceSimulation<Node>(allNodes)
       .force('link', forceLink<Node, Link>(allLinks)
@@ -362,7 +400,8 @@
 
   /** Frame all nodes and their visible, fixed-screen-size labels. */
   function fitView() {
-    if (!nodes.length) return;
+    const visibleNodes = [...albumNodesR, ...personNodesR];
+    if (!visibleNodes.length) return;
     const candidates = albumNodesR.map((n) => ({
       id: n.id,
       x: n.x,
@@ -380,7 +419,7 @@
     // Two or three passes settle that without touching the force layout.
     for (let pass = 0; pass < 3; pass++) {
       minX = Infinity; minY = Infinity; maxX = -Infinity; maxY = -Infinity;
-      for (const n of nodes) {
+      for (const n of visibleNodes) {
         const r = radius(n);
         minX = Math.min(minX, n.x - r - 42);
         maxX = Math.max(maxX, n.x + r + 42);
@@ -566,6 +605,35 @@
     hovered = null;
     fitView();
   }
+
+  let timeFitFrame = 0;
+  function scheduleTimeFit() {
+    tapped = null;
+    hovered = null;
+    userAdjusted = false;
+    // Shared counts feed radii, edge widths, labels and tooltips. Update them
+    // synchronously: a background tab may throttle rAF, but the data must
+    // never keep describing the previous window while the camera waits.
+    snapshot();
+    cancelAnimationFrame(timeFitFrame);
+    timeFitFrame = requestAnimationFrame(() => {
+      fitView();
+    });
+  }
+  function toggleTime() {
+    if (!timeActive) {
+      centerYear = sharedYears.length ? Math.min(...sharedYears) : yearBounds.min;
+      timeActive = true;
+    } else {
+      timeActive = false;
+    }
+    scheduleTimeFit();
+  }
+  function onTimeInput(e: Event) {
+    centerYear = Number((e.currentTarget as HTMLInputElement).value);
+    scheduleTimeFit();
+  }
+
   const wasDrag = () => dragMoved;
   const sameNode = (a: Node, b: Node) => a.kind === b.kind && a.id === b.id;
 
@@ -636,6 +704,11 @@
 
   interface Suggestion { id: string; name: string; shared: number; instruments: string }
 
+  let visibleCollaborators = $derived(collaborators
+    .map((c) => ({ ...c, shared: visibleShared.get(c.id) ?? 0 }))
+    .filter((c) => c.shared > 0)
+    .sort((a, b) => b.shared - a.shared || a.name.localeCompare(b.name)));
+
   /* Empty query: the people who'd narrow this group least, best first — "who
      completes the group". Typed query: any musician in the canon, with the
      album count they'd leave (0 is allowed and shown, never hidden: an empty
@@ -644,12 +717,12 @@
     const q = fold(addQuery.trim());
     const chosen = new Set(selected.map((p) => p.id));
     if (!q) {
-      return collaborators
+      return visibleCollaborators
         .slice(0, MAX_SUGGEST)
         .map((c) => ({ id: c.id, name: c.name, shared: c.shared, instruments: c.instruments.slice(0, 2).join(', ') }));
     }
     if (!graphRef) return [];
-    const byId = new Map(collaborators.map((c) => [c.id, c]));
+    const byId = new Map(visibleCollaborators.map((c) => [c.id, c]));
     const hits: (Suggestion & { r: number })[] = [];
     for (const [id, name] of Object.entries(graphRef.people)) {
       if (chosen.has(id)) continue;
@@ -661,7 +734,7 @@
       let shared = c?.shared ?? 0;
       if (!c) {
         const mine = albumSetOf.get(id);
-        if (mine) for (const a of sharedAlbumIds) if (mine.has(a)) shared++;
+        if (mine) for (const a of visibleAlbumIds) if (mine.has(a)) shared++;
       }
       hits.push({ id, name, shared, instruments: c?.instruments.slice(0, 2).join(', ') ?? '', r });
     }
@@ -727,12 +800,21 @@
     <span class="const-label display">Constellation</span>
     <span class="stats">
       {#if centerInstruments}{centerInstruments}&ensp;·&ensp;{/if}
-      {#if isGroup}
+      {#if timeActive && activeWindow}
+        {#if isGroup}
+          {albumCount} of {fullAlbumCount} canon album{fullAlbumCount === 1 ? '' : 's'} featuring all {selected.length} in {activeWindow.start}–{activeWindow.end} · {peopleCount} of {fullPeopleCount} other collaborator{fullPeopleCount === 1 ? '' : 's'}
+        {:else}
+          {albumCount} of {fullAlbumCount} canon album{fullAlbumCount === 1 ? '' : 's'} in {activeWindow.start}–{activeWindow.end} · {peopleCount} of {fullPeopleCount} collaborator{fullPeopleCount === 1 ? '' : 's'}
+        {/if}
+      {:else if isGroup}
         {albumCount} canon album{albumCount === 1 ? '' : 's'} featuring all {selected.length} · {peopleCount} other collaborator{peopleCount === 1 ? '' : 's'}
       {:else}
         {albumCount} canon album{albumCount === 1 ? '' : 's'} · {peopleCount} collaborator{peopleCount === 1 ? '' : 's'}
       {/if}
     </span>
+    <button class="time-toggle" onclick={toggleTime} disabled={loading || (!timeActive && fullAlbumCount === 0)} aria-pressed={timeActive}>
+      {timeActive ? 'Full range' : 'Time lens'}
+    </button>
     <button class="reset" onclick={resetView}>Reset view</button>
   </div>
 
@@ -767,7 +849,13 @@
           />
           <div class="add-results" id="add-results" role="listbox" aria-label="Musicians to add">
             {#if !suggestions.length}
-              <div class="add-empty">No matches in the canon.</div>
+              <div class="add-empty">
+                {#if !addQuery.trim() && timeActive && activeWindow && collaborators.length > 0}
+                  No collaborators in {activeWindow.start}–{activeWindow.end}.
+                {:else}
+                  No matches in the canon.
+                {/if}
+              </div>
             {:else}
               {#if !addQuery.trim()}<div class="add-group display">Also on these albums</div>{/if}
               {#each suggestions as sg, i (sg.id)}
@@ -797,15 +885,45 @@
     {/if}
   </div>
 
+  {#if timeActive && activeWindow}
+    <div class="time-bar">
+      <span class="time-kicker display">Album years</span>
+      <span class="time-bound">{yearBounds.min}</span>
+      <input
+        class="time-slider"
+        type="range"
+        min={yearBounds.min}
+        max={yearBounds.max}
+        step="1"
+        value={centerYear}
+        oninput={onTimeInput}
+        aria-label="Center year of the adaptive constellation window"
+        aria-valuetext={`${centerYear}; visible window ${activeWindow.start} to ${activeWindow.end}`}
+      />
+      <span class="time-bound">{yearBounds.max}</span>
+      <output class="time-output" aria-live="polite">
+        {activeWindow.start}–{activeWindow.end} · {activeWindow.width}-year adaptive window
+      </output>
+    </div>
+  {/if}
+
   <div class="stage" bind:this={stageEl} bind:clientWidth={stageW} bind:clientHeight={stageH}>
     {#if loading}
       <p class="loading">Loading constellation…</p>
-    {:else if isGroup && albumCount === 0}
+    {:else if isGroup && fullAlbumCount === 0}
       <div class="none">
         <p class="none-head display">No shared albums in this canon</p>
         <p class="none-body">
           No album here credits all of {centerProse}. That is a fact about this
           collection, not about the musicians — remove a name to widen the question.
+        </p>
+      </div>
+    {:else if timeActive && activeWindow && albumCount === 0}
+      <div class="none">
+        <p class="none-head display">No canon albums in {activeWindow.start}–{activeWindow.end}</p>
+        <p class="none-body">
+          No album in this constellation falls inside the active album-year window.
+          Move the slider or return to the full range; this is not a claim about the musician's activity elsewhere.
         </p>
       </div>
     {:else}
@@ -820,7 +938,7 @@
       >
         <g class="zoom" bind:this={gEl} transform="translate({zoom.tx} {zoom.ty}) scale({zoom.k})">
           <!-- edges -->
-          {#each links as l}
+          {#each visibleLinksR as l}
             <line
               x1={l.source.x} y1={l.source.y}
               x2={l.target.x} y2={l.target.y}
@@ -922,7 +1040,13 @@
         <div class="tip" style:left="{hoverPos.x}px" style:top="{hoverPos.y}px">
           <strong>{tipNode.name}</strong>
           {#if tipNode.instruments}<span class="tip-inst">{tipNode.instruments}</span>{/if}
-          <span class="tip-shared">{tipNode.shared} shared album{tipNode.shared === 1 ? '' : 's'} with {isGroup ? `all ${selected.length}` : centerName}</span>
+          <span class="tip-shared">
+            {#if timeActive && activeWindow}
+              {tipNode.shared} shared album{tipNode.shared === 1 ? '' : 's'} in {activeWindow.start}–{activeWindow.end} · {tipNode.overallShared} overall
+            {:else}
+              {tipNode.shared} shared album{tipNode.shared === 1 ? '' : 's'} with {isGroup ? `all ${selected.length}` : centerName}
+            {/if}
+          </span>
         </div>
       {/if}
     {/if}
@@ -944,8 +1068,7 @@
     letter-spacing: 0.03em;
   }
   .stats { font-size: var(--fs-md); color: var(--muted); }
-  .reset {
-    margin-left: auto;
+  .reset, .time-toggle {
     background: none;
     border: 1px solid var(--line);
     border-radius: var(--radius);
@@ -954,7 +1077,12 @@
     font-weight: 600;
     color: var(--bn-blue);
   }
-  .reset:hover { border-color: var(--bn-blue-light); background: var(--bg); }
+  .reset { margin-left: auto; }
+  .time-toggle { margin-left: auto; white-space: nowrap; }
+  .time-toggle + .reset { margin-left: 0; }
+  .reset:hover, .time-toggle:hover { border-color: var(--bn-blue-light); background: var(--bg); }
+  .time-toggle[aria-pressed='true'] { border-color: var(--bn-blue-light); background: var(--bg); }
+  .time-toggle:disabled { opacity: 0.45; cursor: default; }
 
   .group-bar {
     display: flex;
@@ -1050,6 +1178,21 @@
   .add-empty { padding: 12px; font-size: var(--fs-md); color: var(--muted); }
   .cap-note { font-size: var(--fs-sm); color: var(--muted); }
 
+  .time-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 10px;
+    padding: 8px 12px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+  }
+  .time-kicker { color: var(--bn-blue); font-size: var(--fs-md); white-space: nowrap; }
+  .time-bound { color: var(--muted); font-size: var(--fs-sm); font-variant-numeric: tabular-nums; }
+  .time-slider { flex: 1; min-width: 100px; accent-color: var(--bn-blue); cursor: pointer; }
+  .time-output { color: var(--ink); font-size: var(--fs-md); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
   .stage { position: relative; flex: 1; min-height: 0; }
   .none {
     height: 100%;
@@ -1129,6 +1272,10 @@
     .const-label { font-size: var(--fs-lg); }
     .stats { font-size: var(--fs-sm); }
     .reset { margin-left: auto; }
+    .time-toggle { margin-left: 0; }
+    .time-bar { flex-wrap: wrap; gap: 6px 8px; }
+    .time-kicker { width: 100%; }
+    .time-output { width: 100%; text-align: center; }
     .chip { font-size: var(--fs-sm); padding: 4px 6px 4px 10px; }
     .add-input { width: 190px; }
   }
