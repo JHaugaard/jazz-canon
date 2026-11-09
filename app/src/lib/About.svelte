@@ -43,6 +43,13 @@
       can never be mistaken for a sourced fact.
     </aside>
 
+    <h2 class="display">How albums are chosen</h2>
+    <p>
+      AI helps with research and review; the curator listens and makes every
+      final decision. Read the <a href="#/methodology">methodology note and a
+      worked candidate ballot</a>, including the evidence behind it.
+    </p>
+
     <h2 class="display">The eras</h2>
     <p>
       Bebop, Cool Jazz, Hard Bop, Modal Jazz, Post-Bop, Free Jazz, and

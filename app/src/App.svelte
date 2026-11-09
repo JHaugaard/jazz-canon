@@ -9,6 +9,8 @@
   import PlaceWindow from './lib/PlaceWindow.svelte';
   import StyleWindow from './lib/StyleWindow.svelte';
   import About from './lib/About.svelte';
+  import Methodology from './lib/Methodology.svelte';
+  import CandidateExample from './lib/CandidateExample.svelte';
   import Working from './lib/Working.svelte';
   import Where from './lib/Where.svelte';
   import Search from './lib/Search.svelte';
@@ -17,12 +19,14 @@
   let albums = $state<AlbumCard[] | null>(null);
   let loadError = $state<string | null>(null);
 
-  type Route = 'home' | 'working' | 'where' | 'about';
+  type Route = 'home' | 'working' | 'where' | 'about' | 'methodology' | 'methodology-example';
 
   function parseHash(): Route {
     const h = window.location.hash;
     if (h.startsWith('#/working')) return 'working';
     if (h.startsWith('#/where')) return 'where';
+    if (h.startsWith('#/methodology/example')) return 'methodology-example';
+    if (h.startsWith('#/methodology')) return 'methodology';
     if (h.startsWith('#/about')) return 'about';
     return 'home';
   }
@@ -33,7 +37,8 @@
      panel or window was open. Home used to be the only one that did. */
   function go(r: Route) {
     nav.close();
-    window.location.hash = r === 'home' ? '#/' : `#/${r}`;
+    const path = r === 'methodology-example' ? 'methodology/example' : r;
+    window.location.hash = r === 'home' ? '#/' : `#/${path}`;
   }
 
   function goHome() {
@@ -46,6 +51,8 @@
     working: 'A Jazz Canon — Working',
     where: 'A Jazz Canon — Where',
     about: 'A Jazz Canon — About',
+    methodology: 'A Jazz Canon — Methodology',
+    'methodology-example': 'A Jazz Canon — Candidate dossier',
   };
   /* the routes are linkable (D3), so a bookmark or a tab strip has to be able
      to tell them apart */
@@ -125,7 +132,11 @@
   </header>
 
   <main>
-    {#if route === 'about'}
+    {#if route === 'methodology'}
+      <Methodology />
+    {:else if route === 'methodology-example'}
+      <CandidateExample />
+    {:else if route === 'about'}
       <About onopen={(id) => nav.openAlbum(id)} />
     {:else if route === 'working'}
       <Working

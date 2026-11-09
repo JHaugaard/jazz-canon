@@ -1,0 +1,53 @@
+<script lang="ts">
+  import type { CandidateDossier } from './methodology-data';
+  import { readableCode } from './methodology-data';
+
+  let { dossier, showCouncil = false, showAlbum = true }: { dossier: CandidateDossier; showCouncil?: boolean; showAlbum?: boolean } = $props();
+  let ballot = $derived(dossier.ballot);
+</script>
+
+<section class="method-ballot" aria-labelledby="method-ballot-heading">
+  <p class="method-kicker">Worked example</p>
+  <h2 id="method-ballot-heading" class="display">AI review ballot</h2>
+  {#if showAlbum}<p class="method-ballot-album">{ballot.album}</p>{/if}
+
+  <dl class="method-ballot-meta">
+    <div><dt>Assessment</dt><dd>{readableCode(ballot.tier)}<span class="method-meta-note">Strong support in the review</span></dd></div>
+    <div><dt>Priority</dt><dd>{readableCode(ballot.priority)}<span class="method-meta-note">Highest priority for this collection</span></dd></div>
+    <div><dt>Confidence</dt><dd>{readableCode(ballot.confidence)}<span class="method-meta-note">Confidence in this recommendation</span></dd></div>
+    <div><dt>Reviewers answered</dt><dd>{ballot._council.references_answered} of {ballot._council.references.length}<span class="method-meta-note">Independent AI reviews returned</span></dd></div>
+  </dl>
+
+  <div class="method-cases">
+    <section class="method-case method-case-for" aria-labelledby="method-case-for">
+      <h3 id="method-case-for" class="display">Case for inclusion</h3>
+      <p>{ballot.case_for}</p>
+    </section>
+    <section class="method-case method-case-against" aria-labelledby="method-case-against">
+      <h3 id="method-case-against" class="display">Case against inclusion</h3>
+      <p>{ballot.case_against}</p>
+    </section>
+  </div>
+
+  <div class="method-recommendation">
+    <h3 class="display">Council recommendation</h3>
+    <p>{ballot.recommendation}</p>
+    <p><strong>Disagreement:</strong> {ballot.disagreement ?? 'No disagreement recorded.'}</p>
+  </div>
+
+  <p class="method-advisory" role="note">
+    <strong>Advice, not a verdict.</strong> This ballot informs the curator. It does not add the album to the collection.
+  </p>
+
+  {#if showCouncil}
+    <details class="method-disclosure">
+      <summary>How this ballot was produced</summary>
+      <dl class="method-detail-list">
+        <div><dt>Review preset</dt><dd>{ballot._council.preset}</dd></div>
+        <div><dt>Independent reviewers</dt><dd>{ballot._council.references.join(', ')}</dd></div>
+        <div><dt>Review aggregator</dt><dd>{ballot._council.aggregator}</dd></div>
+        <div><dt>Scope check</dt><dd>{ballot.scope_check.in_window ? 'Within the collection’s date range' : 'Outside the collection’s date range'}</dd></div>
+      </dl>
+    </details>
+  {/if}
+</section>

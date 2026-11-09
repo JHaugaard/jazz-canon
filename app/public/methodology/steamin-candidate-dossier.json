@@ -1,0 +1,366 @@
+{
+  "id": "miles-davis-steamin-with-the-miles-davis-quintet-1961",
+  "artist": "Miles Davis",
+  "album": "Steamin' with the Miles Davis Quintet",
+  "year": 1961,
+  "label": "Prestige",
+  "apple_album_id": 1440951870,
+  "musicbrainz_release_group_mbid": "f0b72e4b-e2af-32e5-aa4a-5005deb2db17",
+  "cover_art_url": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/68/96/f5/6896f527-ed55-ebda-324c-4e0e8a7abb18/00888072351912.rgb.jpg/100x100bb.jpg",
+  "style_primary": "hard-bop",
+  "style_tags": [],
+  "rationale": "The fourth and last of the four LPs Prestige assembled from the Miles Davis Quintet's two 1956 Van Gelder dates, and the one still missing from this canon — Cookin', Relaxin' and Workin' are all already in. Independent listing traditions rate it at the level of its siblings: Penguin Guide 4 stars, DownBeat 4.5 stars on release (DownBeat's 1961 reviewer: 'a must for anyone seriously interested in jazz'), AllMusic 5 stars, Rolling Stone Jazz Record Guide 4 stars, Encyclopedia of Popular Music 4 stars — all recorded in the Wikipedia album article's ratings table. AllMusic files it as Hard Bop and calls it possibly the best single demonstration of this quintet rebuilding standards ('Surrey with the Fringe on Top', Monk's 'Well, You Needn't', Gillespie's 'Salt Peanuts'). Session gravity is the strongest argument of all: this is the First Great Quintet — Davis, Coltrane, Garland, Chambers, Philly Joe Jones — caught as a working band playing its book, and its absence leaves a literal hole in the middle of the canon's most-documented run. It still plays: blues-drenched, unhurried, and immediately legible to a listener sent in cold.",
+  "priority": "must_have",
+  "epistemic": "obs",
+  "sources": {
+    "S1": {
+      "title": "Wikipedia: Steamin' with the Miles Davis Quintet (track list with per-track session dates and side split, personnel, release July/August 1961, ratings table: AllMusic 5 stars, DownBeat 4.5, Encyclopedia of Popular Music 4, Penguin Guide 4, Rolling Stone Jazz Record Guide 4)",
+      "type": "encyclopedia",
+      "url": "https://en.wikipedia.org/wiki/Steamin%27_with_the_Miles_Davis_Quintet"
+    },
+    "S2": {
+      "title": "AllMusic: Steamin' With the Miles Davis Quintet — album page and Credits tab (styles Hard Bop; personnel Miles Davis trumpet, John Coltrane tenor sax, Red Garland piano, Paul Chambers bass, Philly Joe Jones drums; Bob Weinstock producer/supervisor; Rudy Van Gelder engineer; recording dates May 11 and October 26 1956, Van Gelder Studios, Hackensack NJ; 5-star rating)",
+      "type": "review",
+      "url": "https://www.allmusic.com/album/mw0000191715"
+    },
+    "S3": {
+      "title": "JazzDiscography.com: Miles Davis discography, 1956 sessions (May 11 1956 and October 26 1956 at Van Gelder Studio, Hackensack NJ; matrix-level personnel incl. Coltrane absent on matrix 891 'Something I Dreamed Last Night' and 897 'When I Fall In Love'; Steamin' LP 7200 track assignments)",
+      "type": "sessionography",
+      "url": "https://www.jazzdisco.org/miles-davis/discography/"
+    },
+    "S4": {
+      "title": "Discogs: The Miles Davis Quintet — Steamin' With The Miles Davis Quintet, master 65597 (credits: Rudy Van Gelder recorded by, Bob Weinstock, Red Garland/Paul Chambers/Philly Joe Jones; release July 1961, recording period May-Oct 1956, Prestige 7200)",
+      "type": "discography",
+      "url": "https://www.discogs.com/master/65597"
+    },
+    "S5": {
+      "title": "Apple Music via iTunes Search API: Steamin' With the Miles Davis Quintet (Rudy Van Gelder Remaster), collectionId 1440951870, 7 tracks, artwork",
+      "type": "metadata",
+      "url": "https://itunes.apple.com/search?term=Miles+Davis+Steamin&entity=album&limit=10"
+    },
+    "S6": {
+      "title": "MusicBrainz: release group 'Steamin' With the Miles Davis Quintet' (MBID, Prestige PRLP 7200 US 1961, AllMusic/Discogs cross-references)",
+      "type": "metadata",
+      "url": "https://musicbrainz.org/release-group/f0b72e4b-e2af-32e5-aa4a-5005deb2db17"
+    },
+    "S7": {
+      "title": "Cover Art Archive: front cover image served for the Steamin' release group",
+      "type": "artwork",
+      "url": "https://coverartarchive.org/release-group/f0b72e4b-e2af-32e5-aa4a-5005deb2db17"
+    }
+  },
+  "personnel_record": {
+    "recording_dates": [
+      "1956-05-11",
+      "1956-10-26"
+    ],
+    "multi_session": true,
+    "studio": "Van Gelder Studio, Hackensack, NJ",
+    "recording_sites": [
+      {
+        "session_date": "1956-05-11",
+        "site_raw": "Van Gelder Studio, Hackensack, NJ",
+        "site_slug": "van-gelder-studio-hackensack",
+        "site_new": null,
+        "epistemic": "obs",
+        "source": "S3"
+      },
+      {
+        "session_date": "1956-10-26",
+        "site_raw": "Van Gelder Studio, Hackensack, NJ",
+        "site_slug": "van-gelder-studio-hackensack",
+        "site_new": null,
+        "epistemic": "obs",
+        "source": "S3"
+      }
+    ],
+    "producer": "Bob Weinstock",
+    "engineer": "Rudy Van Gelder",
+    "epistemic_production": "obs",
+    "personnel": [
+      {
+        "name": "Miles Davis",
+        "instrument": "trumpet",
+        "scope": "all-tracks",
+        "tracks": null,
+        "session_dates": [
+          "1956-05-11",
+          "1956-10-26"
+        ],
+        "epistemic": "obs",
+        "sources": [
+          "S1",
+          "S2",
+          "S3"
+        ],
+        "name_variants": [],
+        "notes": ""
+      },
+      {
+        "name": "John Coltrane",
+        "instrument": "tenor saxophone",
+        "scope": "selected-tracks",
+        "tracks": [
+          "Surrey with the Fringe on Top",
+          "Salt Peanuts",
+          "Diane",
+          "Well, You Needn't"
+        ],
+        "session_dates": [
+          "1956-05-11",
+          "1956-10-26"
+        ],
+        "epistemic": "obs",
+        "sources": [
+          "S1",
+          "S3"
+        ],
+        "name_variants": [],
+        "notes": "Sits out 'Something I Dreamed Last Night' and 'When I Fall in Love' — both sources agree: the Wikipedia personnel line reads 'tenor saxophone (except 3 and 6)', and jazzdisco's matrix list shows him absent from matrix 891 and 897."
+      },
+      {
+        "name": "Red Garland",
+        "instrument": "piano",
+        "scope": "all-tracks",
+        "tracks": null,
+        "session_dates": [
+          "1956-05-11",
+          "1956-10-26"
+        ],
+        "epistemic": "obs",
+        "sources": [
+          "S1",
+          "S2",
+          "S3"
+        ],
+        "name_variants": [],
+        "notes": ""
+      },
+      {
+        "name": "Paul Chambers",
+        "instrument": "double bass",
+        "scope": "all-tracks",
+        "tracks": null,
+        "session_dates": [
+          "1956-05-11",
+          "1956-10-26"
+        ],
+        "epistemic": "obs",
+        "sources": [
+          "S1",
+          "S2",
+          "S3"
+        ],
+        "name_variants": [],
+        "notes": ""
+      },
+      {
+        "name": "Philly Joe Jones",
+        "instrument": "drums",
+        "scope": "all-tracks",
+        "tracks": null,
+        "session_dates": [
+          "1956-05-11",
+          "1956-10-26"
+        ],
+        "epistemic": "obs",
+        "sources": [
+          "S1",
+          "S2",
+          "S3"
+        ],
+        "name_variants": [
+          "\"Philly Joe\" Jones"
+        ],
+        "notes": "Discogs credits him as '\"Philly Joe\" Jones'; DB canonical form is Philly Joe Jones."
+      }
+    ],
+    "tracks": [
+      {
+        "title": "Surrey with the Fringe on Top",
+        "track_number": 1,
+        "side": "A",
+        "duration": "9:05",
+        "session_date": "1956-05-11",
+        "composers": [
+          "Richard Rodgers",
+          "Oscar Hammerstein II"
+        ],
+        "personnel": [
+          "Miles Davis",
+          "John Coltrane",
+          "Red Garland",
+          "Paul Chambers",
+          "Philly Joe Jones"
+        ],
+        "bonus_track": false,
+        "alternate_take": false,
+        "epistemic_track": "obs",
+        "sources": [
+          "S1",
+          "S3"
+        ]
+      },
+      {
+        "title": "Salt Peanuts",
+        "track_number": 2,
+        "side": "A",
+        "duration": "6:09",
+        "session_date": "1956-05-11",
+        "composers": [
+          "Dizzy Gillespie",
+          "Kenny Clarke"
+        ],
+        "personnel": [
+          "Miles Davis",
+          "John Coltrane",
+          "Red Garland",
+          "Paul Chambers",
+          "Philly Joe Jones"
+        ],
+        "bonus_track": false,
+        "alternate_take": false,
+        "epistemic_track": "obs",
+        "sources": [
+          "S1",
+          "S3"
+        ]
+      },
+      {
+        "title": "Something I Dreamed Last Night",
+        "track_number": 3,
+        "side": "A",
+        "duration": "6:15",
+        "session_date": "1956-05-11",
+        "composers": [
+          "Sammy Fain",
+          "Jack Yellen",
+          "Herb Magidson"
+        ],
+        "personnel": [
+          "Miles Davis",
+          "Red Garland",
+          "Paul Chambers",
+          "Philly Joe Jones"
+        ],
+        "bonus_track": false,
+        "alternate_take": false,
+        "epistemic_track": "obs",
+        "sources": [
+          "S1",
+          "S3"
+        ]
+      },
+      {
+        "title": "Diane",
+        "track_number": 4,
+        "side": "B",
+        "duration": "7:49",
+        "session_date": "1956-05-11",
+        "composers": [
+          "Lew Pollack",
+          "Ernö Rapée"
+        ],
+        "personnel": [
+          "Miles Davis",
+          "John Coltrane",
+          "Red Garland",
+          "Paul Chambers",
+          "Philly Joe Jones"
+        ],
+        "bonus_track": false,
+        "alternate_take": false,
+        "epistemic_track": "obs",
+        "sources": [
+          "S1",
+          "S3"
+        ]
+      },
+      {
+        "title": "Well, You Needn't",
+        "track_number": 5,
+        "side": "B",
+        "duration": "6:19",
+        "session_date": "1956-10-26",
+        "composers": [
+          "Thelonious Monk"
+        ],
+        "personnel": [
+          "Miles Davis",
+          "John Coltrane",
+          "Red Garland",
+          "Paul Chambers",
+          "Philly Joe Jones"
+        ],
+        "bonus_track": false,
+        "alternate_take": false,
+        "epistemic_track": "obs",
+        "sources": [
+          "S1",
+          "S3"
+        ]
+      },
+      {
+        "title": "When I Fall in Love",
+        "track_number": 6,
+        "side": "B",
+        "duration": "4:23",
+        "session_date": "1956-05-11",
+        "composers": [
+          "Victor Young",
+          "Edward Heyman"
+        ],
+        "personnel": [
+          "Miles Davis",
+          "Red Garland",
+          "Paul Chambers",
+          "Philly Joe Jones"
+        ],
+        "bonus_track": false,
+        "alternate_take": false,
+        "epistemic_track": "obs",
+        "sources": [
+          "S1",
+          "S3"
+        ]
+      }
+    ],
+    "track_assignments_complete": true,
+    "musicbrainz_release_group_mbid": "f0b72e4b-e2af-32e5-aa4a-5005deb2db17",
+    "apple_album_id": "1440951870",
+    "cover_art": [
+      {
+        "role": "front",
+        "source": "itunes",
+        "url": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/68/96/f5/6896f527-ed55-ebda-324c-4e0e8a7abb18/00888072351912.rgb.jpg/100x100bb.jpg",
+        "is_original_cover": null,
+        "epistemic": "inf",
+        "notes": "Artwork served for the Concord/RVG remaster (collectionId 1440951870); the image matches the familiar Prestige cover, but I have not verified it against a photograph of the original PRLP 7200 sleeve."
+      }
+    ],
+    "notes": "Two sessions: May 11, 1956 produced 'Surrey with the Fringe on Top', 'Salt Peanuts', 'Something I Dreamed Last Night', 'Diane' and 'When I Fall in Love'; October 26, 1956 produced 'Well, You Needn't'. Those same two dates also yielded the takes released as Cookin', Relaxin' and Workin'. Release year 1961 follows the DB's convention for this set (Cookin' 1957, Relaxin' 1958, Workin' 1960 are all filed by release year, not by the 1956 recording dates). Duration source: Wikipedia track table (40:00 total, matching AllMusic's 39:55). Album-level personnel only for the rhythm section; no per-track credit differentiation was found beyond Coltrane's two sit-outs. Credits also list reissue personnel (Nick Phillips reissue supervisor, Joe Tarantino/Phil DeLancie remastering) — excluded as non-original."
+  },
+  "ballot": {
+    "album": "Miles Davis — Steamin' with the Miles Davis Quintet (1961)",
+    "scope_check": {
+      "in_window": true,
+      "boundary_note": null
+    },
+    "tier": "consensus_core",
+    "priority": "must_have",
+    "case_for": "This is a load-bearing document of the First Great Quintet: Davis, Coltrane, Garland, Chambers, and Philly Joe Jones transforming standards and bebop repertoire into a working-band language, documented at session and track level by S3. AllMusic awards five stars (S2), while S1 reports strong ratings from Penguin, DownBeat, Rolling Stone, and the Encyclopedia of Popular Music, although those assessments are mediated through Wikipedia rather than directly consulted. The contrast between the ballad intimacy of \"When I Fall in Love,\" the drive of \"Salt Peanuts,\" and the ensemble interpretation of \"Well, You Needn't\" gives the album substantial discovery value independent of its historical status. Its standing alongside Cookin', Relaxin', and Workin' supports completing a foundational recording cycle on musical merit, not merely collecting the fourth title.",
+    "case_against": "With three albums from the same two 1956 sessions already represented, Steamin' offers less incremental stylistic and historical discovery than a distinct recording project; this is shared-session redundancy, not duplication of their performances. Its delayed assembly and 1961 release make it a retrospective document rather than a new statement of Davis's contemporary direction, and completing the four-LP sequence is not itself a canonical criterion. The dossier establishes personnel and reception more firmly than album-specific influence: most ratings are reported secondhand through S1, and no cited source directly documents later musicians treating this particular LP as formative.",
+    "disagreement": null,
+    "recommendation": "The council proposes that John give Steamin' must-have priority as a consensus-core candidate on its own musical and documentary merits, rather than on sequence completion alone.",
+    "confidence": "high",
+    "_council": {
+      "references": [
+        "nous:minimax/minimax-m3",
+        "nous:google/gemini-3.8-flash"
+      ],
+      "references_answered": 2,
+      "aggregator": "nous:openai/gpt-6.1-sol",
+      "preset": "canon-council"
+    }
+  }
+}

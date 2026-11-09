@@ -20,6 +20,7 @@ scripts/.ne-cache/
 app/public/data/albums.json
 app/public/data/details.json
 app/public/data/graph.json
+app/public/data/methodology-stats.json
 
 # session-end status handoff (.docs/status.md) — ephemeral, like .claude/session-context.md
 .docs/
