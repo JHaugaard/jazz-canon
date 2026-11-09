@@ -9,6 +9,8 @@
   import PlaceWindow from './lib/PlaceWindow.svelte';
   import StyleWindow from './lib/StyleWindow.svelte';
   import About from './lib/About.svelte';
+  import Methodology from './lib/Methodology.svelte';
+  import CandidateExample from './lib/CandidateExample.svelte';
   import Working from './lib/Working.svelte';
   import Where from './lib/Where.svelte';
   import Search from './lib/Search.svelte';
@@ -17,23 +19,34 @@
   let albums = $state<AlbumCard[] | null>(null);
   let loadError = $state<string | null>(null);
 
-  type Route = 'home' | 'working' | 'where' | 'about';
+  type Route = 'home' | 'working' | 'where' | 'about' | 'methodology' | 'methodology-example';
 
-  function parseHash(): Route {
+  function parseHash(): Route | null {
     const h = window.location.hash;
     if (h.startsWith('#/working')) return 'working';
     if (h.startsWith('#/where')) return 'where';
+    if (h.startsWith('#/methodology/example')) return 'methodology-example';
+    if (h.startsWith('#/methodology')) return 'methodology';
     if (h.startsWith('#/about')) return 'about';
-    return 'home';
+    if (h === '' || h === '#' || h === '#/') return 'home';
+    return null;
   }
 
-  let route = $state<Route>(parseHash());
+  let route = $state<Route>(parseHash() ?? 'home');
+
+  function syncRoute() {
+    const next = parseHash();
+    // In-page anchors such as #source-S1 are not application routes. Keep the
+    // current page and let the browser perform its ordinary anchor scroll.
+    if (next) route = next;
+  }
 
   /* One rule for every top-level destination: changing route closes whatever
      panel or window was open. Home used to be the only one that did. */
   function go(r: Route) {
     nav.close();
-    window.location.hash = r === 'home' ? '#/' : `#/${r}`;
+    const path = r === 'methodology-example' ? 'methodology/example' : r;
+    window.location.hash = r === 'home' ? '#/' : `#/${path}`;
   }
 
   function goHome() {
@@ -46,6 +59,8 @@
     working: 'A Jazz Canon — Working',
     where: 'A Jazz Canon — Where',
     about: 'A Jazz Canon — About',
+    methodology: 'A Jazz Canon — Methodology',
+    'methodology-example': 'A Jazz Canon — Candidate dossier',
   };
   /* the routes are linkable (D3), so a bookmark or a tab strip has to be able
      to tell them apart */
@@ -70,7 +85,7 @@
   let styleName = $state('');
 </script>
 
-<svelte:window onkeydown={onKeydown} onhashchange={() => (route = parseHash())} />
+<svelte:window onkeydown={onKeydown} onhashchange={syncRoute} />
 
 <div class="shell">
   <header class="masthead">
@@ -120,12 +135,16 @@
       <button class="nav-link" class:active={route === 'home'} onclick={goHome}>Home</button>
       <button class="nav-link" class:active={route === 'working'} onclick={() => go('working')}>Working</button>
       <button class="nav-link" class:active={route === 'where'} onclick={() => go('where')}>Where</button>
-      <button class="nav-link" class:active={route === 'about'} onclick={() => go('about')}>About</button>
+      <button class="nav-link" class:active={route === 'about' || route === 'methodology' || route === 'methodology-example'} onclick={() => go('about')}>About</button>
     </nav>
   </header>
 
   <main>
-    {#if route === 'about'}
+    {#if route === 'methodology'}
+      <Methodology />
+    {:else if route === 'methodology-example'}
+      <CandidateExample />
+    {:else if route === 'about'}
       <About onopen={(id) => nav.openAlbum(id)} />
     {:else if route === 'working'}
       <Working
