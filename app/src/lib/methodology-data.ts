@@ -164,6 +164,15 @@ export function readableCode(code: string): string {
   return labels[code] ?? code.replaceAll('_', ' ').replaceAll('-', ' ');
 }
 
+export function hasHumanReadableSourceLink(url: string): boolean {
+  const jsonEndpoints = [
+    'https://itunes.apple.com/search',
+    'https://itunes.apple.com/lookup',
+    'https://coverartarchive.org/'
+  ];
+  return !jsonEndpoints.some((prefix) => url.startsWith(prefix));
+}
+
 export function trackLineup(track: ReportTrack, allPersonnel: ReportPerson[], fullLabel = 'Full ensemble'): string {
   const present = new Set(track.personnel);
   const missing = allPersonnel.map((person) => person.name).filter((name) => !present.has(name));

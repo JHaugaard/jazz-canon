@@ -2,12 +2,11 @@
   import type { CandidateReport } from './methodology-data';
   import { readableCode } from './methodology-data';
 
-  let { report, showCouncil = false, showAlbum = true }: { report: CandidateReport; showCouncil?: boolean; showAlbum?: boolean } = $props();
+  let { report, showAlbum = true }: { report: CandidateReport; showAlbum?: boolean } = $props();
   let ballot = $derived(report.ballot);
 </script>
 
 <section class="method-ballot" aria-labelledby="method-ballot-heading">
-  <p class="method-kicker">Worked example</p>
   <h2 id="method-ballot-heading" class="display">AI review ballot</h2>
   {#if showAlbum}<p class="method-ballot-album">{ballot.album}</p>{/if}
 
@@ -38,16 +37,4 @@
   <p class="method-advisory" role="note">
     <strong>This AI review ballot advises the curator; it is not the curator's verdict.</strong>
   </p>
-
-  {#if showCouncil}
-    <details class="method-disclosure">
-      <summary>How this ballot was produced</summary>
-      <dl class="method-detail-list">
-        <div><dt>Review preset</dt><dd>{ballot._council.preset}</dd></div>
-        <div><dt>Independent reviewers</dt><dd>{ballot._council.references.join(', ')}</dd></div>
-        <div><dt>Review aggregator</dt><dd>{ballot._council.aggregator}</dd></div>
-        <div><dt>Scope check</dt><dd>{ballot.scope_check.in_window ? 'Within the collection’s date range' : 'Outside the collection’s date range'}</dd></div>
-      </dl>
-    </details>
-  {/if}
 </section>

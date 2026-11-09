@@ -1,6 +1,6 @@
 <script lang="ts">
   import BallotPanel from './BallotPanel.svelte';
-  import { formatShortDate, loadCandidateReport, readableCode, trackLineup } from './methodology-data';
+  import { formatShortDate, hasHumanReadableSourceLink, loadCandidateReport, readableCode, trackLineup } from './methodology-data';
   import type { CandidateReport } from './methodology-data';
   import './methodology.css';
 
@@ -18,13 +18,12 @@
 
     {#if report}
       <header class="method-example-header">
-        <p class="method-kicker">A candidate report</p>
         <h1 class="display">{report.album}</h1>
         <p class="method-lede">{report.artist} · {report.year} · {report.label} · {readableCode(report.style_primary)}</p>
         <p>This example shows what the research assistant and AI reviewers deliver to the curator. The ballot is advice; the curator's listening and decision come afterward.</p>
       </header>
 
-      <BallotPanel {report} showCouncil={true} showAlbum={false} />
+      <BallotPanel {report} showAlbum={false} />
       <p class="method-note">Source tokens such as S1 and S3 refer to the numbered source list below.</p>
 
       <section aria-labelledby="method-nomination">
@@ -122,7 +121,9 @@
             <article id="source-{token}" class="method-source">
               <h3 class="display"><span class="method-source-token">{token}</span> {source.type}</h3>
               <p>{source.title}</p>
-              <a href={source.url} target="_blank" rel="noreferrer">Open source ↗</a>
+              {#if hasHumanReadableSourceLink(source.url)}
+                <a href={source.url} target="_blank" rel="noreferrer">Open source ↗</a>
+              {/if}
             </article>
           {/each}
         </div>

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { formatLongDate, formatShortDate, readableCode, trackLineup } from './methodology-data.ts';
+import { formatLongDate, formatShortDate, hasHumanReadableSourceLink, readableCode, trackLineup } from './methodology-data.ts';
 
 test('methodology dates are formatted without timezone conversion', () => {
   assert.equal(formatLongDate('2026-11-09'), 'November 9, 2026');
@@ -26,6 +26,14 @@ test('track lineup names absences without mutating the source arrays', () => {
   assert.equal(trackLineup(oneOut, people), 'B absent');
   assert.equal(trackLineup(twoOut, people), 'Absent: A, C');
   assert.deepEqual(full.personnel, ['C', 'B', 'A']);
+});
+
+test('JSON API endpoints do not produce reader-facing source links', () => {
+  assert.equal(hasHumanReadableSourceLink('https://en.wikipedia.org/wiki/Example'), true);
+  assert.equal(hasHumanReadableSourceLink('https://musicbrainz.org/release-group/example'), true);
+  assert.equal(hasHumanReadableSourceLink('https://itunes.apple.com/search?term=example&entity=album'), false);
+  assert.equal(hasHumanReadableSourceLink('https://itunes.apple.com/lookup?id=123&entity=album'), false);
+  assert.equal(hasHumanReadableSourceLink('https://coverartarchive.org/release-group/example'), false);
 });
 
 test('candidate report retains the sessions, personnel, tracks, sources, and ballot used by the page', () => {
