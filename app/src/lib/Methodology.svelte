@@ -1,20 +1,20 @@
 <script lang="ts">
   import BallotPanel from './BallotPanel.svelte';
-  import { formatLongDate, loadCandidateDossier, loadMethodologyStats } from './methodology-data';
-  import type { CandidateDossier, MethodologyStats } from './methodology-data';
+  import { formatLongDate, loadCandidateReport, loadMethodologyStats } from './methodology-data';
+  import type { CandidateReport, MethodologyStats } from './methodology-data';
   import './methodology.css';
 
   let stats = $state<MethodologyStats | null>(null);
   let statsUnavailable = $state(false);
-  let dossier = $state<CandidateDossier | null>(null);
-  let dossierUnavailable = $state(false);
+  let report = $state<CandidateReport | null>(null);
+  let reportUnavailable = $state(false);
 
   loadMethodologyStats()
     .then((value) => (stats = value))
     .catch(() => (statsUnavailable = true));
-  loadCandidateDossier()
-    .then((value) => (dossier = value))
-    .catch(() => (dossierUnavailable = true));
+  loadCandidateReport()
+    .then((value) => (report = value))
+    .catch(() => (reportUnavailable = true));
 </script>
 
 <div class="method-page">
@@ -54,22 +54,22 @@
     <section aria-labelledby="method-process">
       <h2 id="method-process" class="display">The candidate process</h2>
       <ol>
-        <li><strong>Select and check.</strong> Choose up to two candidates for the daily run. Before research begins, confirm that each album falls within the date range, fits the project's style vocabulary, and is not already in the database. Only then does research begin.</li>
+        <li><strong>Select and check.</strong> Choose up to two candidates for the daily run. Before research begins, confirm that each album falls within the date range, fits the project's style categories, and is not already in the database. Only then does research begin.</li>
         <li><strong>Gather evidence.</strong> Prepare a research file from published discographies, reference works, album credits, and other cited sources. The target is at least three independent sources per candidate. An AI model's own memory is not accepted as evidence.</li>
         <li><strong>Review independently.</strong> Two AI reviewers assess the research file against the five factors above. Each prepares a case for and against inclusion. Another AI model combines their work into a ballot. If either reviewer does not answer, the process stops and no ballot is produced.</li>
-        <li><strong>Stage for review.</strong> The album is marked as a candidate and placed in my review queue with its research file and ballot.</li>
+        <li><strong>Stage for my review.</strong> The album is marked as a candidate and placed in my review queue with its research file and ballot.</li>
         <li><strong>Report and wait.</strong> I receive the candidate names, ballots, and links to the research files. The automated process then stops until I make a decision.</li>
       </ol>
     </section>
 
-    {#if dossier}
-      <BallotPanel {dossier} />
+    {#if report}
+      <BallotPanel {report} />
       <p class="method-example-links">
-        <a href="#/methodology/example">Read the complete candidate dossier</a>
+        <a href="#/methodology/example">Read the complete candidate report</a>
         <span aria-hidden="true"> · </span>
-        <a href="/methodology/steamin-candidate-dossier.json" download>Download the raw JSON</a>
+        <a href="/methodology/steamin-candidate-report.json" download>Download the raw JSON</a>
       </p>
-    {:else if dossierUnavailable}
+    {:else if reportUnavailable}
       <p class="method-unavailable">The worked ballot is currently unavailable.</p>
     {:else}
       <p class="method-loading">Loading the worked ballot…</p>

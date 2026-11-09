@@ -7,7 +7,7 @@ export interface MethodologyStats {
   checkedOn: string;
 }
 
-export interface DossierSource {
+export interface ReportSource {
   title: string;
   type: string;
   url: string;
@@ -22,7 +22,7 @@ export interface RecordingSite {
   source: string | null;
 }
 
-export interface DossierPerson {
+export interface ReportPerson {
   name: string;
   instrument: string;
   scope: 'all-tracks' | 'selected-tracks' | 'unknown';
@@ -34,7 +34,7 @@ export interface DossierPerson {
   notes: string;
 }
 
-export interface DossierTrack {
+export interface ReportTrack {
   title: string;
   track_number: number;
   side: string | null;
@@ -77,7 +77,7 @@ export interface CandidateBallot {
   _council: CouncilMetadata;
 }
 
-export interface CandidateDossier {
+export interface CandidateReport {
   id: string;
   artist: string;
   album: string;
@@ -91,7 +91,7 @@ export interface CandidateDossier {
   rationale: string;
   priority: string;
   epistemic: Epistemic;
-  sources: Record<string, DossierSource>;
+  sources: Record<string, ReportSource>;
   personnel_record: {
     recording_dates: string[];
     multi_session: boolean;
@@ -100,8 +100,8 @@ export interface CandidateDossier {
     producer: string | null;
     engineer: string | null;
     epistemic_production: Epistemic;
-    personnel: DossierPerson[];
-    tracks: DossierTrack[];
+    personnel: ReportPerson[];
+    tracks: ReportTrack[];
     track_assignments_complete: boolean;
     musicbrainz_release_group_mbid: string | null;
     apple_album_id: number | string | null;
@@ -118,14 +118,14 @@ async function fetchJson<T>(path: string): Promise<T> {
 }
 
 let statsPromise: Promise<MethodologyStats> | null = null;
-let dossierPromise: Promise<CandidateDossier> | null = null;
+let reportPromise: Promise<CandidateReport> | null = null;
 
 export function loadMethodologyStats(): Promise<MethodologyStats> {
   return (statsPromise ??= fetchJson<MethodologyStats>('/data/methodology-stats.json'));
 }
 
-export function loadCandidateDossier(): Promise<CandidateDossier> {
-  return (dossierPromise ??= fetchJson<CandidateDossier>('/methodology/steamin-candidate-dossier.json'));
+export function loadCandidateReport(): Promise<CandidateReport> {
+  return (reportPromise ??= fetchJson<CandidateReport>('/methodology/steamin-candidate-report.json'));
 }
 
 const MONTHS = [
@@ -164,7 +164,16 @@ export function readableCode(code: string): string {
   return labels[code] ?? code.replaceAll('_', ' ').replaceAll('-', ' ');
 }
 
-export function trackLineup(track: DossierTrack, allPersonnel: DossierPerson[], fullLabel = 'Full ensemble'): string {
+export function hasHumanReadableSourceLink(url: string): boolean {
+  const jsonEndpoints = [
+    'https://itunes.apple.com/search',
+    'https://itunes.apple.com/lookup',
+    'https://coverartarchive.org/'
+  ];
+  return !jsonEndpoints.some((prefix) => url.startsWith(prefix));
+}
+
+export function trackLineup(track: ReportTrack, allPersonnel: ReportPerson[], fullLabel = 'Full ensemble'): string {
   const present = new Set(track.personnel);
   const missing = allPersonnel.map((person) => person.name).filter((name) => !present.has(name));
   if (missing.length === 0) return fullLabel;

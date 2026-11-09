@@ -31,7 +31,13 @@
 .method-muted { color: var(--muted); font-size: var(--fs-sm); line-height: 1.5; }
 .method-note { color: var(--muted); }
 .method-loading, .method-unavailable { color: var(--muted); font-style: italic; }
-.method-example-links, .method-end-link { margin-top: -16px !important; }
+.method-example-links {
+  background: var(--surface);
+  border-left: 3px solid var(--impulse-amber);
+  margin: 0 0 13px !important;
+  padding: 0 14px 12px;
+}
+.method-end-link { margin-top: -16px !important; }
 .method-download { display: inline-block; font-weight: 600; margin: 2px 0 8px; }
 
 .method-ballot { border-top: 1px solid var(--line); padding-top: 30px; }
@@ -53,8 +59,8 @@
 .method-article table { width: 100%; border-collapse: collapse; font-size: var(--fs-md); line-height: 1.5; background: var(--surface); }
 .method-article th { color: var(--muted); font-family: var(--font-display); font-size: var(--fs-sm); font-variant: small-caps; font-weight: 600; letter-spacing: 0.04em; text-align: left; }
 .method-article th, .method-article td { border-bottom: 1px solid var(--line); padding: 9px 10px; vertical-align: top; }
-.method-article th:first-child, .method-article td:first-child { padding-left: 0; }
-.method-article th:last-child, .method-article td:last-child { padding-right: 0; }
+.method-article th:first-child, .method-article td:first-child { padding-left: 12px; }
+.method-article th:last-child, .method-article td:last-child { padding-right: 12px; }
 .method-article tbody tr:last-child td { border-bottom: 0; }
 .method-article code { font-size: var(--fs-sm); }
 .method-tracks-table { min-width: 760px; }
