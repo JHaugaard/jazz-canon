@@ -1,5 +1,5 @@
 // Case/diacritic-insensitive literal matching. No fuzzy search or city search;
-// the only aliasing is the style vocabulary (styles.ts), matched by styleRank.
+// the only aliasing is the style categories (styles.ts), matched by styleRank.
 export const fold = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
 // 0: starts with query; 1: word-prefix; 2: literal substring.

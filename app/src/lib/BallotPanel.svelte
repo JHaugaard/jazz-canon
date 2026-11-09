@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { CandidateDossier } from './methodology-data';
+  import type { CandidateReport } from './methodology-data';
   import { readableCode } from './methodology-data';
 
-  let { dossier, showCouncil = false, showAlbum = true }: { dossier: CandidateDossier; showCouncil?: boolean; showAlbum?: boolean } = $props();
-  let ballot = $derived(dossier.ballot);
+  let { report, showCouncil = false, showAlbum = true }: { report: CandidateReport; showCouncil?: boolean; showAlbum?: boolean } = $props();
+  let ballot = $derived(report.ballot);
 </script>
 
 <section class="method-ballot" aria-labelledby="method-ballot-heading">

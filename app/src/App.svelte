@@ -60,7 +60,7 @@
     where: 'A Jazz Canon — Where',
     about: 'A Jazz Canon — About',
     methodology: 'A Jazz Canon — Methodology',
-    'methodology-example': 'A Jazz Canon — Candidate dossier',
+    'methodology-example': 'A Jazz Canon — Candidate report',
   };
   /* the routes are linkable (D3), so a bookmark or a tab strip has to be able
      to tell them apart */
