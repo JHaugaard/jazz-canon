@@ -36,7 +36,7 @@
   </div>
 
   <p class="method-advisory" role="note">
-    <strong>Advice, not a verdict.</strong> This ballot informs the curator. It does not add the album to the collection.
+    <strong>This AI review ballot advises the curator; it is not the curator's verdict.</strong>
   </p>
 
   {#if showCouncil}

@@ -21,17 +21,25 @@
 
   type Route = 'home' | 'working' | 'where' | 'about' | 'methodology' | 'methodology-example';
 
-  function parseHash(): Route {
+  function parseHash(): Route | null {
     const h = window.location.hash;
     if (h.startsWith('#/working')) return 'working';
     if (h.startsWith('#/where')) return 'where';
     if (h.startsWith('#/methodology/example')) return 'methodology-example';
     if (h.startsWith('#/methodology')) return 'methodology';
     if (h.startsWith('#/about')) return 'about';
-    return 'home';
+    if (h === '' || h === '#' || h === '#/') return 'home';
+    return null;
   }
 
-  let route = $state<Route>(parseHash());
+  let route = $state<Route>(parseHash() ?? 'home');
+
+  function syncRoute() {
+    const next = parseHash();
+    // In-page anchors such as #source-S1 are not application routes. Keep the
+    // current page and let the browser perform its ordinary anchor scroll.
+    if (next) route = next;
+  }
 
   /* One rule for every top-level destination: changing route closes whatever
      panel or window was open. Home used to be the only one that did. */
@@ -77,7 +85,7 @@
   let styleName = $state('');
 </script>
 
-<svelte:window onkeydown={onKeydown} onhashchange={() => (route = parseHash())} />
+<svelte:window onkeydown={onKeydown} onhashchange={syncRoute} />
 
 <div class="shell">
   <header class="masthead">
@@ -127,7 +135,7 @@
       <button class="nav-link" class:active={route === 'home'} onclick={goHome}>Home</button>
       <button class="nav-link" class:active={route === 'working'} onclick={() => go('working')}>Working</button>
       <button class="nav-link" class:active={route === 'where'} onclick={() => go('where')}>Where</button>
-      <button class="nav-link" class:active={route === 'about'} onclick={() => go('about')}>About</button>
+      <button class="nav-link" class:active={route === 'about' || route === 'methodology' || route === 'methodology-example'} onclick={() => go('about')}>About</button>
     </nav>
   </header>
 

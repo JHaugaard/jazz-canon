@@ -55,7 +55,7 @@
             </tbody>
           </table>
         </div>
-        <p class="method-note">Released in {dossier.year}; recorded in 1956. Producer: <strong>{dossier.personnel_record.producer ?? 'Unknown'}</strong>. Engineer: <strong>{dossier.personnel_record.engineer ?? 'Unknown'}</strong>.</p>
+        <p class="method-note">Released in {dossier.year}; the recording dates are shown above. Producer: <strong>{dossier.personnel_record.producer ?? 'Unknown'}</strong>. Engineer: <strong>{dossier.personnel_record.engineer ?? 'Unknown'}</strong>.</p>
       </section>
 
       <section aria-labelledby="method-personnel">
