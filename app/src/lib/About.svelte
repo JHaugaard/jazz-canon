@@ -37,7 +37,6 @@
       a question the sources leave open.
     </p>
     <aside class="editorial">
-      <span class="editorial-label">Editorial note</span>
       Text set in this italic serif is interpretation: a mood, some context,
       or a judgment call about the canon. It is always styled this way so it
       can never be mistaken for a sourced fact.
@@ -45,9 +44,9 @@
 
     <h2 class="display">How albums are chosen</h2>
     <p>
-      AI helps with research and review; the curator listens and makes every
-      final decision. Read the <a href="#/methodology">methodology note and a
-      worked candidate ballot</a>, including the evidence behind it.
+      AI models help with research and review; the curator listens and makes every
+      final decision. Read the <a href="#/methodology">methodology note and an
+      example candidate ballot</a>, including the evidence behind it.
     </p>
 
     <h2 class="display">The eras</h2>
@@ -59,11 +58,8 @@
     </p>
     <p>
       Each line marks an era’s center of gravity. A Bebop record made after
-      1955 is still Bebop, wherever it falls on the timeline.
-    </p>
-    <p>
-      ECM appears as a record-label tag. Each ECM record here was chosen for
-      its music, the same test every other record in the canon passes.
+      1955 is still Bebop, wherever it falls on the timeline. ECM appears as a
+      record-label tag.
     </p>
 
     <h2 class="display">Credits</h2>

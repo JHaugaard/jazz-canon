@@ -20,7 +20,7 @@
       <header class="method-example-header">
         <h1 class="display">{report.album}</h1>
         <p class="method-lede">{report.artist} · {report.year} · {report.label} · {readableCode(report.style_primary)}</p>
-        <p>This example shows what the research assistant and AI reviewers deliver to the curator. The ballot is advice; the curator's listening and decision come afterward.</p>
+        <p>This example shows what the research assistant and reviewing AI models deliver to the curator. The ballot is advice; the curator's listening and decision come afterward.</p>
       </header>
 
       <BallotPanel {report} showAlbum={false} />

@@ -29,7 +29,7 @@
   </div>
 
   <div class="method-recommendation">
-    <h3 class="display">Council recommendation</h3>
+    <h3 class="display">AI review recommendation</h3>
     <p>{ballot.recommendation}</p>
     <p><strong>Disagreement:</strong> {ballot.disagreement ?? 'No disagreement recorded.'}</p>
   </div>
