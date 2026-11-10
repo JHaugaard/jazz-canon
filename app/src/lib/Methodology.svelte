@@ -25,14 +25,14 @@
     <section aria-labelledby="method-purpose">
       <h2 id="method-purpose" class="display">Purpose</h2>
       <p>A Jazz Canon is a personal collection of jazz albums, not a comprehensive catalog. The current scope is 1945–1985, based on the year the album was recorded or originally released. The main test is simple: is this an album I would hand a friend to explain what this music is?</p>
-      <p class="method-lede">AI helps with research and review. It does not choose the collection. I listen to the candidates and make every final decision.</p>
+      <p>AI models help with research and review. They do not choose the collection. I listen to the candidates and make every final decision.</p>
     </section>
 
     <section aria-labelledby="method-roles">
       <h2 id="method-roles" class="display">Who does what</h2>
       <ul>
-        <li><strong>Research assistant:</strong> one AI research assistant proposes candidates, usually two a day, and prepares a research file for each album.</li>
-        <li><strong>Independent reviewers:</strong> two separate AI reviewers assess each research file. A fourth AI model combines their assessments into a ballot, preserving any disagreement.</li>
+        <li><strong>Research assistant:</strong> one AI model proposes candidates, usually two a day, and prepares a research file for each album.</li>
+        <li><strong>Independent reviewers:</strong> two separate AI models assess each research file. A fourth AI model combines their assessments into a ballot, preserving any disagreement.</li>
         <li><strong>Curator:</strong> I read the ballot, listen to the album, and decide whether to include, exclude, or defer it. Mine is the only binding verdict.</li>
         <li><strong>Publishing:</strong> included albums are added to the website in batches. I initiate every website update.</li>
       </ul>
@@ -41,7 +41,7 @@
 
     <section aria-labelledby="method-evaluation">
       <h2 id="method-evaluation" class="display">How candidates are evaluated</h2>
-      <p>Each candidate is assessed on five factors, in rough order of weight:</p>
+      <p>Each candidate album is assessed on five factors, in rough order of weight:</p>
       <ul>
         <li><strong>Consensus:</strong> the album appears repeatedly in independent guides, polls, and musician lists.</li>
         <li><strong>Defining statement:</strong> the album establishes an artist's or a scene's sound.</li>
@@ -56,7 +56,7 @@
       <ol>
         <li><strong>Select and check.</strong> Choose up to two candidates for the daily run. Before research begins, confirm that each album falls within the date range, fits the project's style categories, and is not already in the database. Only then does research begin.</li>
         <li><strong>Gather evidence.</strong> Prepare a research file from published discographies, reference works, album credits, and other cited sources. The target is at least three independent sources per candidate. An AI model's own memory is not accepted as evidence.</li>
-        <li><strong>Review independently.</strong> Two AI reviewers assess the research file against the five factors above. Each prepares a case for and against inclusion. Another AI model combines their work into a ballot. If either reviewer does not answer, the process stops and no ballot is produced.</li>
+        <li><strong>Review independently.</strong> Two AI models assess the research file against the five factors above. Each model prepares a case for and against inclusion. Another AI model combines their work into a ballot. If either model does not answer, the process stops and no ballot is produced.</li>
         <li><strong>Stage for my review.</strong> The album is marked as a candidate and placed in my review queue with its research file and ballot.</li>
         <li><strong>Report and wait.</strong> I receive the candidate names, ballots, and links to the research files. The automated process then stops until I make a decision.</li>
       </ol>
@@ -70,9 +70,9 @@
         <a href="/methodology/steamin-candidate-report.json" download>Download the raw JSON</a>
       </p>
     {:else if reportUnavailable}
-      <p class="method-unavailable">The worked ballot is currently unavailable.</p>
+      <p class="method-unavailable">The example ballot is currently unavailable.</p>
     {:else}
-      <p class="method-loading">Loading the worked ballot…</p>
+      <p class="method-loading">Loading the example ballot…</p>
     {/if}
 
     <section aria-labelledby="method-research">
@@ -130,9 +130,9 @@
     <section aria-labelledby="method-limitations">
       <h2 id="method-limitations" class="display">Known limitations</h2>
       <ul>
-        <li>The initial AI search tends to favor well-known albums. I counter that bias with targeted searches of particular artists, labels, styles, and periods.</li>
+        <li>The initial search by an AI model tends to favor well-known albums. I counter that bias with targeted searches of particular artists, labels, styles, and periods.</li>
         <li>Web links, release information, and streaming availability can change. Citations preserve a route back to the evidence for later checking.</li>
-        <li>The reviewers' ballot is advice, not a decision. Albums enter the collection only after I listen and choose to include them.</li>
+        <li>The AI review ballot is advice, not a decision. Albums enter the collection only after I listen and choose to include them.</li>
       </ul>
     </section>
 
