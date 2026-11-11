@@ -21,7 +21,7 @@ Use the exact runtime resource path for JSON/content changes.
 
 `scripts/deploy.sh` is attended. It:
 
-1. Requires the checksum manifest to name exactly the five canonical exports,
+1. Requires the checksum manifest to name exactly the six canonical exports,
    then verifies every hash. Alternate manifests are dry-run-only test inputs.
 2. Runs `npm --prefix app run check` and `npm --prefix app run build`.
 3. Serves `app/dist`, prints `http://vps8-core:4173/`, and displays the exact
@@ -79,6 +79,7 @@ The checksum gate covers:
 - `graph.json`
 - `places.json`
 - `people-activity.json`
+- `methodology-stats.json`
 
 `places.json` and `people-activity.json` are git-tracked. The first three are
 generated and ignored. `recently-added.json` and the checksum manifest are

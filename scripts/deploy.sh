@@ -21,6 +21,7 @@ DATA_FILES=(
   app/public/data/graph.json
   app/public/data/places.json
   app/public/data/people-activity.json
+  app/public/data/methodology-stats.json
 )
 
 usage() {
@@ -91,7 +92,7 @@ PY
 }
 
 relative_manifest=$(realpath --relative-to="$ROOT" "$CHECKSUM_FILE" 2>/dev/null || printf '%s' "$CHECKSUM_FILE")
-echo "[1/6] Verifying exact five-file data manifest: $relative_manifest"
+echo "[1/6] Verifying exact six-file data manifest: $relative_manifest"
 if ! validate_manifest_paths || ! (cd "$ROOT" && sha256sum --check "$CHECKSUM_FILE"); then
   echo "data drifted since last ship; DM mccoy or ask John." >&2
   exit 1
