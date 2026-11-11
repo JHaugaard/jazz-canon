@@ -33,7 +33,7 @@
       <ul>
         <li><strong>Research assistant:</strong> one AI model proposes candidates, usually two a day, and prepares a research file for each album.</li>
         <li><strong>Independent reviewers:</strong> two separate AI models assess each research file. A fourth AI model combines their assessments into a ballot, preserving any disagreement.</li>
-        <li><strong>Curator:</strong> I read the ballot, listen to the album, and decide whether to include, exclude, or defer it. Mine is the only binding verdict.</li>
+        <li><strong>Curator:</strong> I read the ballot, listen to the album, and decide whether to include, exclude, or defer it.</li>
         <li><strong>Publishing:</strong> included albums are added to the website in batches. I initiate every website update.</li>
       </ul>
       <p><strong>No AI model can add an album to the collection.</strong></p>
@@ -44,7 +44,7 @@
       <p>Each candidate album is assessed on five factors, in rough order of weight:</p>
       <ul>
         <li><strong>Consensus:</strong> the album appears repeatedly in independent guides, polls, and musician lists.</li>
-        <li><strong>Defining statement:</strong> the album establishes an artist's or a scene's sound.</li>
+        <li><strong>Defining statement:</strong> the album establishes an artist's or style's sound.</li>
         <li><strong>Lineage:</strong> the album influenced later work or made later developments possible.</li>
         <li><strong>Session gravity:</strong> the recording session brought together musicians who helped define the era or style.</li>
         <li><strong>Lasting value:</strong> the album offers musical pleasure and interest today, not only historical importance.</li>
@@ -54,8 +54,8 @@
     <section aria-labelledby="method-process">
       <h2 id="method-process" class="display">The candidate process</h2>
       <ol>
-        <li><strong>Select and check.</strong> Choose up to two candidates for the daily run. Before research begins, confirm that each album falls within the date range, fits the project's style categories, and is not already in the database. Only then does research begin.</li>
-        <li><strong>Gather evidence.</strong> Prepare a research file from published discographies, reference works, album credits, and other cited sources. The target is at least three independent sources per candidate. An AI model's own memory is not accepted as evidence.</li>
+        <li><strong>Select and check.</strong> Choose up to two candidates for the daily run. Before research begins, confirm that each album falls within the date range, fits the project's style categories, and is not already in the database.</li>
+        <li><strong>Gather evidence.</strong> Prepare a research file from published discographies, reference works, album credits, and other cited sources. The target is to use at least three independent sources per candidate. An AI model's own memory is not accepted as evidence - all information used must be sourced and cited.</li>
         <li><strong>Review independently.</strong> Two AI models assess the research file against the five factors above. Each model prepares a case for and against inclusion. Another AI model combines their work into a ballot. If either model does not answer, the process stops and no ballot is produced.</li>
         <li><strong>Stage for my review.</strong> The album is marked as a candidate and placed in my review queue with its research file and ballot.</li>
         <li><strong>Report and wait.</strong> I receive the candidate names, ballots, and links to the research files. The automated process then stops until I make a decision.</li>
